@@ -1,0 +1,288 @@
+<?php
+$statusList   = Shared_Model_Code::codes('competition_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        Tipped.create('#help_keyword', "コンペ・企画件名 ／ 本件概要");
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 案件管理者 ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 案件管理者 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 案件管理者 リセット
+    $(document).on('click', '#reset_user', function () {
+		$('#user_name_display').html('');
+		$('#user_name').val('');
+		$('#user_id').val('');
+	});
+	
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    }); 
+
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data: 'target_id=' + targetId,
+		            success: function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/supply-competition/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/supply-competition?page=<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+});
+
+// 案件管理者 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 案件管理者 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/user/list-select?page=' + pageNo,
+    });
+}
+
+// 案件管理者 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	$('#user_name_display').html(name);
+	$('#user_name').val(name);
+	$('#user_id').val(id);
+	$('.btn_close').click();
+}    
+</script>
+<style type="text/css"><!--
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:50px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+a.option {
+background-color:#00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:inline-block;font-size:12px;margin:1px 3px 0 0;padding:5px 10px 3px 10px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+p.condition_title {padding-left:12px;font-size:1.5em;color:#f00;float:left;margin-right:2.0em;}
+.checkbox_item strong {color:#4b4fe8}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/supply-competition/add">新規登録</a>
+            </p>
+	        <span style=""><strong>コンペ</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/supply-competition" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="status" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">案件管理者：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="user_name_display"><?php echo $this->conditions['user_name']; ?></span>
+							<a class="reset_popup" id="reset_user" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_user" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="user_name" name="user_name" value="<?php echo $this->conditions['user_name']; ?>">
+						<input type="hidden" id="user_id" name="user_id" value="<?php echo $this->conditions['user_id']; ?>">
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">キーワード：<span class="popup_help" id="help_keyword">&nbsp;<i class="icon-help-circled"></i></span></p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>">
+					</div>
+				</div>	
+
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索" />
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:16%;"><p>最終更新日</p></th>
+				<th style="width:10%;"><p>コンペID</p></th>
+				<th style="width:12%;"><p>ステータス</p></th>
+				<th><p>コンペ・企画件名</p></th>
+				<th style="width:15%;"><p>案件管理者</p></th>
+				<th style="width:4%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['updated']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['display_id']; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->roundText($this->escape($each['title']), 25); ?></a></p>
+							
+						</td>
+						
+						<td>
+							<p><?php echo $this->roundText($this->escape($each['management_user_name']), 10); ?></p>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p><a href="/supply-competition/detail?id=<?php echo $each['id'] ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+

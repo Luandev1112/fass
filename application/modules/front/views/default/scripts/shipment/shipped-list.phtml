@@ -1,0 +1,231 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+
+$orderSiteList    = Shared_Model_Code::codes('order_site_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        <?php if (!empty($this->condition['shipped_date'])) { ?>
+        	$("#shipped_date").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->condition['shipped_date'])); ?>"); 
+        <?php } ?>
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+
+    // 削除
+    $(document).on('click', '.btn_update', function () {
+    	var targetId = $(this).attr('target-id');
+		$.ajax({
+            type:'POST',
+            dataType:'json',
+            data:'target_id=' + targetId,
+            success:function(res){
+                jAlert('更新しました', '　');
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/shipment/update-shipped'
+        });
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr td {overflow:inherit;}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr th p, table.list_default tr td p {padding-left:0.3em;}
+table.list_default tr th p.center, table.list_default tr td p.center {padding-left:0;}
+.delivery_code {color:#04a127;}
+a.btn_update {cursor:pointer}
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>EC出荷済み履歴</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1" />
+				<input type="hidden" id="page" name="page" value="1" />
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">注文サイト：</p>
+						<select id="order_from_site" name="order_from_site">
+                            <option value="">---</option>
+                            <?php foreach ($orderSiteList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key == $this->conditions['order_from_site']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>	
+					
+					<div class="condition_item">
+						<p class="condition_label">支払方法：</p>
+						<select id="payment_method" name="payment_method">
+                            <option value="">---</option>
+                            <?php foreach ($paymentTypeList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['payment_method']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">配送方法：</p>
+						<select id="delivery_method" name="delivery_method">
+                            <option value="">---</option>
+                            <?php foreach ($deliveryTypeList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key === $this->conditions['delivery_method']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">伝票番号：</p>
+						<input type="text" name="delivery_code" value="<?php echo $this->escape($this->conditions['delivery_code']); ?>" />
+					</div>
+				</div>
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">注文ID：</p>
+						<input type="text" name="relational_order_id" value="<?php echo $this->escape($this->conditions['relational_order_id']); ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">注文者：</p>
+						<input type="text" name="order_customer_name" value="<?php echo $this->escape($this->conditions['order_customer_name']); ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">検品者：</p>
+	                    <select id="inspection_user_id" name="inspection_user_id">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                            <option value="<?php echo $eachUser['id']; ?>" <?php if ($eachUser['id'] == $this->conditions['inspection_user_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+					</div>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+					<input type="submit" style="display:inline-block;width:150px;" value="検索" />
+				</div>
+			</form>
+		</div>
+	</div>
+
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:6%;"><p>サイト</p></th>
+				<th style="width:11%;"><p>注文ID/注文者</p></th>
+				<th style="width:8%;"><p>ステータス</p></th>
+				<th style="width:11%;"><p>注文日時</p></th>
+				<th style="width:11%;"><p>検品日時</p></th>
+				<th style="width:11%;"><p>発送日時</p></th>
+				<th><p>支払方法 / 配送方法・伝票番号</p></th>
+				<th><p>配送先</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<p><?php echo $orderSiteList[$each['order_from_site']]; ?></p>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding">
+								<?php echo $this->escape($each['relational_order_id']); ?><br>
+								<?php echo $this->escape($each['order_customer_name']); ?>
+							</div>
+						</td>
+		
+						<td>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y/m/d H:i', strtotime($each['order_datetime'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y/m/d H:i', strtotime($each['inspection_datetime'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y/m/d H:i', strtotime($each['shipment_datetime'])); ?></p>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding">
+								<?php if (array_key_exists($each['payment_method'], $paymentTypeList)) { echo $paymentTypeList[$each['payment_method']]; } ?><br>
+								<?php echo $deliveryTypeList[$each['delivery_method']]; ?> / <?php echo $each['delivery_code']; ?>
+							</div>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['delivery_name']); ?></p>
+						</td>
+
+						<td>
+							<div class="multirows_padding">
+								<a href="/shipment/detail?id=<?php echo $this->escape($each['id']); ?>">表示</a><br>
+								<a class="btn_update" target-id="<?php echo $this->escape($each['id']); ?>">再反映</a>
+								
+							</div>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="8">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

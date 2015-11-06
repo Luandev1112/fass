@@ -1,0 +1,148 @@
+<?php
+?>
+<link rel="stylesheet" href="/resource/js/switchery-0.8.0/dist/switchery.css" />
+<script src="/resource/js/switchery-0.8.0/dist/switchery.js"></script>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+		var elems = Array.prototype.slice.call(document.querySelectorAll('.switch'));
+		                
+		elems.forEach(function(html) {
+		  var switchery = new Switchery(html, { size: 'small' });
+		});
+		
+    });
+
+	<?php 
+		$confirmMessage = '登録しますか';
+		$succeedMessage = '登録しました';
+		$backmessage    = '登録せずに中止しますか';
+		if (!empty($this->id)) {
+			$confirmMessage = '保存しますか';
+			$succeedMessage = '保存しました';
+			$backmessage    = '保存せずに中止しますか';
+        }
+	?>
+			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+       jConfirm('<?php echo $backmessage; ?>', '　', function(r) {
+            if(r) {
+               location.href = "/connection-progress/progress-list";
+            } else {
+                return false;
+            }
+        });
+	});
+		
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('<?php echo $confirmMessage; ?>', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('<?php echo $succeedMessage; ?>', '　'); 
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/connection-progress/progress-update<?php if (!empty($this->id)) echo '?id=' . $this->id; ?>'
+                });
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/connection-progress/progress-list';
+        }
+    });
+      
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+#horizontalwrap {display:inline;white-space:nowrap;}
+span.note {display:block;margin:4px 0 3px;padding:0 4px;}
+table.list_default tr td.column {border-right:none;}
+table.list_default tr td.column p {padding-left:12px;}
+table.list_default tr td.column input {width:99%}
+table.list_default tr td.column select.short {width:200px}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>実績定義 - <?php if (!empty($this->id)) { echo '編集'; } else { echo '登録'; } ?></strong></span>
+        </div>
+    </div>
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #ccc;background-color:#f1f1f1;">
+                    <p class="label_text strong">情報</p>
+                </th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:13px;"> 
+            <tr>
+                <td class="column" style="width:200px;"><p class="label_text">項目名：</p></td>
+                <td class="column">
+                	<input type="text" name="title" value="<?php echo $this->escape($this->data['title']); ?>" maxlength="" />
+                </td>
+            </tr>
+            
+	        <tr>
+                <td class="column" style="width:200px;"><p class="label_text">表示</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="status" class="switch" name="status" style="display:none;" <?php if (!empty($this->data['status'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+        </table>
+
+	</div><!-- clearfix -->				
+    </form>
+                
+</div>
+</div>
+</div>
+</div>

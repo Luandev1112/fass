@@ -1,0 +1,701 @@
+<?php
+$historyItemStatusList = Shared_Model_Code::codes('card_history_item_status');
+$bankAccountType = Shared_Model_Code::codes('bank_account_type');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var editing = false;
+$(function () {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        $('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+    });
+
+    // 入金解除
+    $(document).on('click', '.remove_receivable_attach', function () {
+    	var rowId = $(this).attr('row-id');
+    	var receivableId = $(this).attr('receivable-id');
+		jConfirm('入金割当を解除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'',
+		            success:function(res){
+						stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+							location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+		                    return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/detach-receivable?row_id=' + rowId + '&receivable_id=' + receivableId,
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    // 出金解除
+    $(document).on('click', '.remove_payable_attach', function () {
+    	var rowId = $(this).attr('row-id');
+    	var payableId = $(this).attr('payable-id');
+		jConfirm('出金割当を解除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'',
+		            success:function(res){
+					    stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+							location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+		                    return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/detach-payable?row_id=' + rowId + '&payable_id=' + payableId,
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    }); 
+    
+    // 総合振込解除
+    $(document).on('click', '.remove_apply', function () {
+    	var rowId = $(this).attr('row-id');
+    	var applyNo = $(this).attr('apply-no');
+		jConfirm('総合振込割当を解除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'',
+		            success:function(res){
+					    stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+							location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+		                    return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/remove-gmo-attach?row_id=' + rowId + '&apply_no=' + applyNo,
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });  
+
+
+
+
+    // 割当完了
+    $(document).on('click', '.btn_finish', function () {
+    	var rowId = $(this).attr('row-id');
+		jConfirm('割当完了にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'',
+		            success:function(res){
+			            stopSpinner();
+					    var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                } else if (obj.result == 'OK') {
+		                    location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/finish-attach?row_id=' + rowId,
+		        });
+			} else {
+			    return false;
+			}
+		});
+    });
+
+    // 割当完了解除
+    $(document).on('click', '.btn_cancel_finish', function () {
+    	var rowId = $(this).attr('row-id');
+		jConfirm('割当完了を解除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'',
+		            success:function(res){
+		            	stopSpinner();
+					    var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                } else if (obj.result == 'OK') {
+		                    location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/cancel-finish-attach?row_id=' + rowId,
+		        });
+			} else {
+			    return false;
+			}
+		});
+    });
+
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+        }
+    });
+
+	$(document).on('click', 'div.desc', function () {
+		var item = $(this);
+		if ($(this).attr('all-content') != '') {
+			$(this).prepend('<div class="caption">' + $(this).attr('all-content') + '</div>');
+		  	setTimeout(function() {
+		    	item.children('.caption').remove();
+		    }, 2000);
+	    }
+	});
+	
+    // 日付 編集
+    $(document).on('click', '.btn_edit_date', function () {
+        if (editing == true) {
+    		jAlert('複数の箇所を同時に編集することはできません', 'エラー');
+    		return false;
+    	} 
+        var targetRow = $(this).attr('target-row');
+        var targetDate = $(this).attr('target-date');
+        $('#display_date_' + targetRow).hide();
+        $('#edit_date_' + targetRow).show();
+        $('input[name="date_' + targetRow + '"]').datepicker("setDate", targetDate);
+
+        editing = true;
+    });
+    
+    // 日付 保存
+    $(document).on('click', '.btn_save_date', function () {
+	    var targetRow = $(this).attr('target-row');
+        var $form = $('#edit_form_date_' + targetRow);
+        var params = $form.serializeArray();
+        
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/transaction-bank/update-date',
+        });
+    });
+
+    // 日付 編集キャンセル
+    $(document).on('click', '.btn_cancel_date', function () {
+		location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+    });
+      
+    // 名前 編集
+    $(document).on('click', '.btn_edit_name', function () {
+		if (editing == true) {
+    		jAlert('複数の箇所を同時に編集することはできません', 'エラー');
+    		return false;
+    	}
+        var targetRow = $(this).attr('target-row');
+        $('#display_name_' + targetRow).hide();
+        $('#edit_name_' + targetRow).show();
+        
+        editing = true;
+    });
+      
+    // 名前 保存
+    $(document).on('click', '.btn_save_name', function () {
+	    var targetRow = $(this).attr('target-row');
+        var $form = $('#edit_form_name_' + targetRow);
+        var params = $form.serializeArray();
+        
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/transaction-bank/update-name',
+        });
+    });
+    
+    // 名前 編集キャンセル
+    $(document).on('click', '.btn_cancel_name', function () {
+		location.href = '/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankData['id']); ?>&pos=' + $(window).scrollTop();
+    });
+    
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/history-item-delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+});   
+</script>
+<style type="text/css">
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:100px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+table.list_default tr td textarea {font-size:0.92em;height:10em;}
+table.list_default tr td input {width:7em;font-size:0.9em;}
+table.list_default tr td a.btn_setting {margin:2px 0 0px 5px;padding:7px 7px 5px 7px;line-height:1;display:block;float:left;cursor:pointer;}
+table.list_default tr td a.btn_setting.btn_edit_date {margin-left:0;}
+table.list_default tr td a.btn_setting.btn_save_date {background-color:#02ad00;margin-left:0;}
+table.list_default tr td a.btn_setting.btn_cancel_date {background-color:#ff0000;margin-left:0;}
+table.list_default tr td a.btn_setting.btn_edit_name {margin-left:0;}
+table.list_default tr td a.btn_setting.btn_save_name {background-color:#02ad00;margin-left:0;}
+table.list_default tr td a.btn_setting.btn_cancel_name {background-color:#ff0000;}
+
+table.list_default tr td p {padding:5px 0 0 5px;line-height:1.6;}
+table.list_default tr td p.align_right{text-align:right;padding:5px 5px 0 5px;}
+table.list_default tr td p.align_center{text-align:center;margin-right:12px;}
+
+tr.finished td {background-color:#f8f2ff}
+tr.selected_row td {background-color:#ffefa6}
+td.gray_out {background-color:#eee}
+.multi_rows_padding {padding:5px 5px 0 5px;line-height:1.6;}
+span.red {color:#f00;}
+
+table.list_default tr th, table.list_default tr td {border-bottom:1px solid #444;}
+table.detail {margin-bottom:0;}
+table.detail tr td {border-right:none;border-bottom:1px dotted #ccc;}
+table.detail tr:last-child td {border-bottom:none;}
+table.detail tr td {padding-left:3px;padding-top:2px;padding-bottom:2px;height:auto;}
+table.detail tr td a.btn_setting {margin-top:0;}
+
+.view_type_list {margin-top:0.3em;}
+.view_type_list a.view_type {display:block;float:left;padding:11px 20px 0;height:22px;line-height:1;text-decoration:none;background-color: #c0f7fa;text-align:center;font-size: 1.1em;margin-right:5px;}
+.view_type_list a.view_type.selected {background-color:#098d94;color:#fff;}
+.attach_status_box {border:1px solid #ccc;background-color:#fafafa;}
+.atatch_status {font-size:1.2em;padding-left:11px;padding-top:10px;font-weight:bold}
+.month_block {float:left;padding:0.6em 11px;width:280px;font-weight:bold}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>金融機関口座履歴管理 - CSV取込内容</strong></span>
+	    </div>
+	</div>
+
+	<div class="item_title clearfix">
+    	<p class="item_name"><?php echo $this->escape($this->bankData['bank_name']) . '　' . $this->escape($this->bankData['branch_name']) . '　' . $bankAccountType[$this->bankData['account_type']] . '　' . $this->escape($this->bankData['account_no']); ?></p>
+    </div>
+
+	<div class="view_type_list clearfix" style="margin-bottom:1.0em;">
+        <a class="view_type <?php if ($this->action == 'import-history') { echo 'selected'; }?>" href="/transaction-bank/import-history?bank_id=<?php echo $this->escape($this->bankId); ?>">取込履歴</span></a>
+        <a class="view_type <?php if ($this->action == 'log-list') { echo 'selected'; }?>" href="/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankId); ?>">JNB・GMO全一覧</span></a>
+	</div>      
+
+	<div class="attach_status_box clearfix" style="margin-bottom:13px;">
+		<p class="atatch_status">割当状況</p>
+		<div class="clearfix">
+			<?php foreach ($this->attachmentList as $each) { ?>
+				<div class="month_block">
+					<?php if (!empty($each['item_count'])) { ?>
+						<strong class="red"><?php echo $this->escape($each['year_month']); ?>　未割り当て<?php echo $this->escape($each['item_count']); ?>件</strong>
+					<?php } else { ?>
+						<?php echo $this->escape($each['year_month']); ?>　未割り当て<?php echo $this->escape($each['item_count']); ?>件
+					<?php } ?>
+				</div>
+			<?php } ?>
+		</div>
+	</div>	
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/transaction-bank/log-list" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<input type="hidden" id="bank_id" name="bank_id" value="<?php echo $this->escape($this->bankId); ?>">
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item clearfix">
+						<p class="condition_label">対象年月：</p>
+                        <select id="year" name="year" style="width:6em;display:block;float:left;">
+                            <option value="">---</option>
+                        	<?php for ($year = date('Y'); $year >= 2018; $year--) { ?>
+                                <option value="<?php echo $year; ?>" <?php if ((string)$year === $this->conditions['year']) echo 'selected="selected"';?>><?php echo $year; ?></option>
+                            <?php } ?>
+                        </select>
+                        <p style="float:left;padding:0.6em;">年</p>
+                        <select id="month" name="month" style="width:6em;display:block;float:left;">
+                            <option value="">---</option>
+                        	<?php for ($month = 1; $month <= 12; $month++) { ?>
+                                <option value="<?php echo $month; ?>" <?php if ((string)$month === $this->conditions['month']) echo 'selected="selected"';?>><?php echo $month; ?></option>
+                            <?php } ?>
+                        </select>
+                        <p style="float:left;padding:0.6em;">月</p>
+					</div>
+				</div>
+
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>
+	
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+        
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:12%"><p style="padding-left:5px;">取引日時/残高</p></th>
+				<th style="width:14%"><p style="padding-left:5px;">項目&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:8%"><p style="padding-left:5px;">出金額/通貨</p></th>
+				<th style="width:9%"><p style="padding-left:5px;">入金額/通貨</p></th>
+				<th><p style="padding-left:5px;">割当情報</p></th>
+				<th style="width:8%;"><p style="padding-left:5px;">処理</p></th>
+			</tr>
+			
+			<?php
+				$payableTable = new Shared_Model_Data_AccountPayable();
+				$receivableTable = new Shared_Model_Data_AccountReceivable();	
+			?>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<?php if ($each['status'] === (string)Shared_Model_Code::BANK_HISTORY_ITEM_STATUS_NONE) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" class="<?php if ($each['status'] !== (string)Shared_Model_Code::CARD_HISTORY_ITEM_STATUS_NONE) { echo 'finished'; } ?> <?php if (!empty($this->targetRow) && $this->targetRow == $each['row_count']) { echo 'selected_row'; } ?>">
+						<td>
+							<form id="edit_form_date_<?php echo $this->escape($each['row_count']); ?>" action="javascript:void(0);" method="post">
+								<div class="multi_rows_padding" id="display_date_<?php echo $this->escape($each['row_count']); ?>">
+									<?php if ($this->bankData['bank_code'] === '0310') { ?>
+										<?php
+											echo $each['target_date'];
+											//echo substr($each['gmo_item_key'],0, 4) . '-' . substr($each['gmo_item_key'],4, 2) . '-' . substr($each['gmo_item_key'],6, 2) .
+											//'&nbsp;' . substr($each['gmo_item_key'],8, 2) . ':' . substr($each['gmo_item_key'],10, 2) . ':' . substr($each['gmo_item_key'],12, 2);
+										?>
+									<?php } else { ?>
+										<?php echo $each['jnb_time']; ?>
+									<?php } ?>
+								</div>
+								<div class="multi_rows_padding" id="edit_date_<?php echo $this->escape($each['row_count']); ?>" style="display:none;">
+									<input type="hidden" name="id" value="<?php echo $this->escape($each['id']); ?>">
+									<input type="hidden" name="row_count" value="<?php echo $this->escape($each['row_count']); ?>">
+									<input type="input" class="datepicker" name="date_<?php echo $this->escape($each['row_count']); ?>">
+									<div class="clearfix" style="margin-bottom:0.4em;">
+										<a class="btn_setting btn_save_date" target-row="<?php echo $this->escape($each['row_count']); ?>">保存</a>
+										<a class="btn_setting btn_cancel_date" target-row="<?php echo $this->escape($each['row_count']); ?>">キャンセル</a>
+									</div>
+								</div>
+							</form>
+							<div class="multi_rows_padding">
+								<?php if (!empty($each['balance_amount'])) { echo number_format($each['balance_amount']); } else { echo '---'; } ?>
+							</div>
+						</td>
+											
+						<td>
+							<form id="edit_form_name_<?php echo $this->escape($each['row_count']); ?>" action="javascript:void(0);" method="post">
+								<div class="multi_rows_padding" id="display_name_<?php echo $this->escape($each['row_count']); ?>">
+									<div class="desc" all-content="<?php echo $this->escape($each['name']); ?>">
+										<?php echo $this->roundText($this->escape($each['name']), 28); ?>
+									</div>
+									
+									<p id="gmo_item_key" style="display:none;"><?php echo $this->escape($each['gmo_item_key']); ?></p>
+								</div>
+								<div class="multi_rows_padding" id="edit_name_<?php echo $this->escape($each['row_count']); ?>" style="display:none;">
+									<input type="hidden" name="id" value="<?php echo $this->escape($each['id']); ?>">
+									<input type="hidden" name="row_count" value="<?php echo $this->escape($each['row_count']); ?>">
+									<textarea name="name_<?php echo $this->escape($each['row_count']); ?>"><?php echo $this->escape($each['name']); ?></textarea>
+									<div class="clearfix" style="margin-bottom:0.4em;">
+										<a class="btn_setting btn_save_name" target-row="<?php echo $this->escape($each['row_count']); ?>">保存</a>
+										<a class="btn_setting btn_cancel_name" target-row="<?php echo $this->escape($each['row_count']); ?>">キャンセル</a>
+									</div>
+								</div>
+							</form>
+						</td>
+
+						<td <?php if (empty($each['paid_amount'])) { ?>class="gray_out"<?php } ?>>
+							<p class="align_right" style="color:#f00;"><?php if (!empty($each['paid_amount'])) { echo number_format($each['paid_amount']) . '<br>' . $this->escape($each['currency_name']); } else { echo '---'; } ?></p>
+						</td>
+
+						<td <?php if (empty($each['received_amount'])) { ?>class="gray_out"<?php } ?>>
+							<p class="align_right"><?php if (!empty($each['received_amount'])) { echo number_format($each['received_amount']) . '<br>' . $this->escape($each['currency_name']); } else { echo '---'; } ?></p>
+						</td>
+
+						<td>
+							<table class="detail">
+								<?php $total = 0; ?>
+								
+								<?php $receivableIds = unserialize($each['receivable_ids']); ?>
+								<?php if (!empty($receivableIds)) { ?>
+									<?php foreach ($receivableIds as $eachId) { ?>
+										<?php
+											$receivableData = $receivableTable->getByIdForAnyGroup($eachId);
+										?>
+										<tr>
+											<td style="width:10%">入金</td>
+											<td style="width:15%">
+												<?php
+													if (!empty($receivableData)) {
+														echo $this->roundText($this->accountTitleList[$receivableData['account_title_id']]['title'], 14);
+													}
+												?>
+											</td>
+											<td>
+												<?php 
+													if (!empty($receivableData)) {
+														echo $this->roundText($this->escape($receivableData['memo']), 13);
+													}
+												?>
+											</td>
+											<td style="width:18%;text-align:right;">
+												<?php
+													if (!empty($receivableData)) {
+														echo number_format($receivableData['total_amount']) . '&nbsp;' . $this->escape($this->currencyList[$receivableData['currency_id']]['name']);
+													}
+													
+													$total = $total + $receivableData['total_amount'];
+												?>
+											</td>
+											<td style="width:22%">
+												<?php if ($receivableData['management_group_id'] === $this->adminProperty['management_group_id']) { ?>
+													<a class="btn_setting" style="float:left;" href="/transaction-recieved/detail?id=<?php echo $this->escape($eachId); ?>&direct=1" target="_blank">表示</a>
+													<?php if ($this->allowEditing === true && $each['status'] === (string)Shared_Model_Code::CARD_HISTORY_ITEM_STATUS_NONE) { ?>
+														<a class="btn_setting remove_receivable_attach" row-id="<?php echo $this->escape($each['id']); ?>" receivable-id="<?php echo $this->escape($receivableData['id']); ?>" style="float:left;background-color:#f00;">解除</a>
+													<?php } ?>
+												<?php } else { ?>
+													　<?php echo $this->roundText($this->escape($this->groupList[$receivableData['management_group_id']]['organization_name']), 8); ?>
+												<?php } ?>
+											</td>
+										</tr>
+									<?php } ?>
+								<?php } ?>
+
+								<?php $payableIds = unserialize($each['payable_ids']); ?>
+								<?php if (!empty($payableIds)) { ?>
+									<?php foreach ($payableIds as $eachId) { ?>
+										<?php
+											$payableData = $payableTable->getByIdForAnyGroup($eachId);
+										?>
+										<tr>
+											<td style="width:10%">出金</td>
+											<td style="width:15%">
+												<?php
+													if (!empty($payableData)) {
+														echo $this->roundText($this->accountTitleList[$payableData['account_title_id']]['title'], 5);
+													}
+												?>
+											</td>
+											<td>
+												<?php 
+													if (!empty($payableData)) {
+														echo $this->roundText($this->escape($payableData['memo']), 13);
+													}
+												?>
+											</td>
+											<td style="width:18%;text-align:right;">
+												<?php
+													if (!empty($payableData)) {
+														echo '<span class="red">-' . number_format($payableData['total_amount']) . '&nbsp;' . $this->escape($this->currencyList[$payableData['currency_id']]['name']) . '</span>';
+													}
+													
+													$total = $total - $payableData['total_amount'];
+												?>
+											</td>
+											<td style="width:22%">
+												<?php if ($payableData['management_group_id'] === $this->adminProperty['management_group_id']) { ?>
+													<a class="btn_setting" style="float:left;" href="/transaction-paid/invoice-detail?id=<?php echo $this->escape($eachId); ?>&direct=1" target="_blank">表示</a>
+													<?php if ($this->allowEditing === true && $each['status'] === (string)Shared_Model_Code::CARD_HISTORY_ITEM_STATUS_NONE) { ?>
+														<a class="btn_setting remove_payable_attach" row-id="<?php echo $this->escape($each['id']); ?>" payable-id="<?php echo $this->escape($payableData['id']); ?>" style="float:left;background-color:#f00;">解除</a>
+													<?php } ?>
+												<?php } else { ?>
+													　<?php echo $this->roundText($this->escape($this->groupList[$payableData['management_group_id']]['organization_name']), 8); ?>
+												<?php } ?>
+											</td>
+										</tr>
+									<?php } ?>
+								<?php } ?>
+
+								<tr>
+									<td style="width:10%"><strong>合計</strong></td>
+									<td style="width:15%"></td>
+									<td></td>
+									<td style="width:18%;text-align:right;">
+										<?php if ($total < 0) { ?>
+											<?php echo '<span class="red"><strong>-' . $this->numberFormat(abs($total)) . '&nbsp;' . $this->escape($each['currency_name']) . '</strong></span>'; ?>
+										<?php } else { ?>
+											<?php echo '<strong>' . $this->numberFormat($total) . '&nbsp;' . $this->escape($each['currency_name']) . '</strong>'; ?>
+										<?php } ?>
+									</td>
+									
+									<td style="width:24%">
+									</td>
+								</tr>
+								
+								<?php $applyNos = unserialize($each['apply_nos']); ?>
+								<?php if (!empty($applyNos)) { ?>
+									<?php foreach ($applyNos as $eachNo) { ?>
+										<tr>
+											<td style="width:20%"><strong>総合振込</strong></td>
+											<td colspan="3">
+												<?php echo $this->escape($eachNo); ?>
+											</td>
+											<td style="width:24%">
+												<a class="btn_setting" style="float:left;" href="/transaction-paid/gmo-transfer-detail?apply_no=<?php echo $this->escape($eachNo); ?>&direct=1" target="_blank">表示</a>
+												<?php if ($this->allowEditing === true && $each['status'] === (string)Shared_Model_Code::BANK_HISTORY_ITEM_STATUS_NONE) { ?>
+													<a class="btn_setting remove_apply" row-id="<?php echo $this->escape($each['id']); ?>" apply-no="<?php echo $this->escape($eachNo); ?>" style="float:left;background-color:#f00;">解除</a>
+												<?php } ?>
+											</td>
+										</tr>				
+									<?php } ?>
+								<?php } ?>
+							</table>
+						</td>
+							
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<?php if ($this->allowEditing === true) { ?>
+								<?php if ($each['status'] === (string)Shared_Model_Code::BANK_HISTORY_ITEM_STATUS_NONE) { ?>
+									<strong class="red">未完了</strong>
+								<?php } else { ?>
+									割当完了
+								<?php } ?>
+							<?php } ?>
+						</td>
+					</tr>
+					<?php } ?>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+		
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+		
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

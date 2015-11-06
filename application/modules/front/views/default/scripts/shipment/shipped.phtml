@@ -1,0 +1,153 @@
+<?php
+$hourList     = Shared_Model_Code::getHourList();
+$minuteList   = Shared_Model_Code::getMinuteList();
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+
+        $("#target_date").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->today)); ?>"); 
+        $("#action_time_day").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->today)); ?>"); 
+    });
+    
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert(obj.count + '件を発送済みにしました\n' + obj.message, '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/shipment/shipped-post'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/shipment/plan-list';
+        }
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%; dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>発送済み処理</strong></span>
+        </div>
+    </div>
+
+    
+    <div class="clearfix">
+		<form id="register_form" action="#" method="post"> 
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+	                    <p class="label_text strong">発送済み実行</p>
+	                </th>
+	            </tr>
+			</table>
+	         
+	        <table class="list_default" style="margin-bottom:13px;">
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">対象発送予定日<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                    <input type="text" class="datepicker" id="target_date" name="target_date" value="" maxlength="10" style="width: 99px; margin-right:10px; dispaly:block; float:left;" />
+	                </td>
+	            </tr>  
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">発送日時<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix" style="width:230px;float:left;">
+                            <input type="text" class="datepicker" id="action_time_day" name="action_time_day" value="" maxlength="10" style="width: 99px; margin-right:10px; dispaly:block; float:left;" />
+
+                            <?php
+                            	$defaultHour = date('H', strtotime($this->today));
+                            	$defaultMin  = date('i', strtotime($this->today));
+                            ?>
+                            <select class="hour_min" name="action_time_hour" style="dispaly:block;float:left;width:50px;">
+                                <option value="">---</option>
+                                <?php foreach ($hourList as $key => $eachHour) { ?>
+                                    <option value="<?php echo $eachHour; ?>" <?php if ($defaultHour == $eachHour) { echo 'selected="selected"'; } ?>><?php echo $eachHour; ?></option>
+                                <?php } ?>
+                            </select>
+                            <p class="hour_min" style="float:left;wiidth:15px;text-align:center;padding-left:0;">：</p>
+                            <select class="hour_min" name="action_time_min" style="dispaly:block;float:left;width:50px;">
+                                <option value="">---</option>
+                                <?php foreach ($minuteList as $key => $eachMinute) { ?>
+                                    <option value="<?php echo $eachMinute; ?>" <?php if ($defaultMin == $eachMinute) { echo 'selected="selected"'; } ?> ><?php echo $eachMinute; ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+	                </td>
+	            </tr>  
+	
+			</table>
+		</form>
+		
+	</div><!-- clearfix -->	
+    
+                
+</div>
+</div>
+</div>
+</div>

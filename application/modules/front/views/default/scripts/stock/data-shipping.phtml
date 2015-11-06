@@ -1,0 +1,158 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+$typeCodeList = Shared_Model_Code::codes('item_type_code');
+$itemTypeList = Shared_Model_Code::codes('item_type');
+$monthList    = Shared_Model_Code::getMonthListFromRelease();
+?>
+<script src="/resource/js/Chart.js/Chart.js"></script>
+<script type="text/javascript">
+var chartData = {
+    type   : 'bar',
+    labels : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['day'] . "',";
+            }
+            ?>],
+    scaleShowGridLines : false,
+    datasets : [
+        {
+            fillColor       : "rgba(24, 181, 22, 1.0)",
+            strokeColor     : "rgba(24, 181, 22, 1.0)",
+            highlightFill   : "rgba(24, 181, 22, 1.0)",
+            highlightStroke : "rgba(24, 181, 22, 1.0)",
+            data : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['count'] . "',";
+            }
+            ?>]
+        }
+    ]  
+};
+ 
+window.onload = function(){
+    var ctx = document.getElementById("canvas").getContext("2d");
+    window.myBar = new Chart(ctx).Bar(chartData, {
+        responsive : true,
+        tooltipTemplate:" <%= value %> ",
+    });
+}
+
+$(function () {
+    // 月選択
+    $(document).on('change', '#month_list', function () {
+	    showSpinner();
+        location.href = '/stock/data-shipping?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>&target_month=' + $('#month_list').val();
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:150px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>在庫管理 - <?php echo $itemTypeList[$this->data['stock_type']]; ?>詳細</strong></span>
+        </div>
+        
+        <div class="clearfix">
+	        <div style="float:left;width:82px;">
+				<img src="<?php echo Shared_Model_Resource_WarehouseItem::getResourceUrl($this->data['id'], $this->data['image_key']); ?>" style="display:block;margin-top:5px;height:82px;border:2px solid #ddd;">
+	        </div>
+	        <div style="float:right;width:1164px;">
+		        <div class="item_title clearfix">
+		        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+		        	<p class="stock">（単位：<?php echo $this->unitTypeList[$this->data['unit_type']]['symbol']; ?>）</p>
+		        	<p class="stock">理論在庫数：<?php echo $this->numberFormat($this->data['stock_count']); ?></p>
+		        </div>
+		    	<?php
+		            echo $this->partial('stock/menu.phtml', array(
+		    			'action'     => $this->action,
+		    			'id'         => $this->data['id'],
+		    			'stockType'  => $this->data['stock_type'],
+		    			'from'       => $this->from,
+		    		));
+		        ?>
+	        </div>
+        </div>
+    </div>
+
+
+	<div style="margin:1.0em 0;">
+	    <div class="item_header clearfix">
+	        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">年間出荷数</span>
+	    </div>
+		<table class="list_default">
+			<tr>
+				<?php foreach ($this->monthlyList as $each) { ?>
+					<td><p><strong><?php $this->escape($each['target_month']); ?></strong></p></td>
+				<?php } ?>
+			</tr>
+			<tr>
+				<?php foreach ($this->monthlyList as $each) { ?>
+					<td><p><?php $this->escape($each['count']); ?></p></td>
+				<?php } ?>
+			</tr>
+		</table>
+	</div>
+
+	<div class="clearfix">
+	    <div class="item_header clearfix">
+	        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">月間出荷数</span>
+	        <select id="month_list" name="month_list" style="width:150px;margin-right:4px;margin-top:4px;display:block;float:right;height:26px;">
+	            <?php foreach ($monthList as $key => $each) { ?>
+	                <option value="<?php echo $key; ?>" <?php if ($this->tagetMonth == $key) { echo 'selected="selected"'; } ?>><?php echo $each; ?></option>
+	            <?php } ?>
+	    	</select>
+	    </div>
+	    
+		<div style="width:900px;float:left">
+			<table class="list_default">
+				<tr>
+					<td><p><strong>月間出荷数</strong></p></td>
+					<td><p>今月(<?php echo $this->escape($this->dayCount); ?>日間)：<?php echo $this->escape($this->totalCount); ?></p></td>
+					<td><p>過去3ヶ月平均：---</p></td>
+				</tr>
+				<tr>
+					<td><p><strong>１日あたり出荷</strong></p></td>
+					<td><p>今月平均(<?php echo $this->escape($this->dayCount); ?>日間)：<?php echo round($this->totalCount / $this->dayCount, 1); ?></p></td>
+					<td><p>過去3ヶ月平均：---</p></td>
+				</tr>
+			</table>
+			
+		    <div style="padding:0 12px 20px 27px;position:relative;">
+		        <div style="margin:3px;">
+		            <canvas id="canvas" height="300" width="694"></canvas>  
+		        </div>
+		        <p style="position:absolute;top:120px;left:-40px;text-align:center;width:10em;font-size:0.92em;transform:rotate(270deg);">出荷数</p>
+		        <p style="position:absolute;bottom:5px;left:auto;text-align:center;width:100%;font-size:0.92em;">（日）</p>
+		    </div>
+		</div>
+	    <div style="width:340px;float:right">
+		    <table class="list_default">
+			    <tr>
+			    	<td><p>日付</p></td>
+			    	<td><p>出荷数</p></td>
+	    		</tr>
+			    <?php if (!empty($this->dataList)) { ?>
+				    <?php foreach($this->dataList as $eachDate) { ?>
+						<tr>
+					    	<td><p><?php echo $this->escape($eachDate['day']); ?></p></td>
+					    	<td><p class="align_right"><?php echo $this->numberFormat($eachDate['count']); ?></p></td>
+			    		</tr>
+			        <?php } ?>
+				<?php } ?>
+			</table> 
+	    </div>
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>

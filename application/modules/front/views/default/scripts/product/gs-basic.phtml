@@ -1,0 +1,806 @@
+<?php
+$priceOpenList      = Shared_Model_Code::codes('gs_price_open');        // GS卸価格提示条件
+$salesStatusList    = Shared_Model_Code::codes('gs_sales_status');      // GS販売状況
+$salesMethodList    = Shared_Model_Code::codes('gs_sales_method');      // GS販売方法
+$priceDiscountList  = Shared_Model_Code::codes('gs_price_discount');    // 割引設定
+$stockStatusLi      = Shared_Model_Code::codes('gs_stock_status');      // GS在庫状況
+$stampList          = Shared_Model_Code::codes('gs_stamp');             // GS画像転載許可
+$stampList          = Shared_Model_Code::codes('gs_use_image');         // GS画像転載許可
+$supplyImageList    = Shared_Model_Code::codes('gs_supply_image');      // GS広告作成用の画像提供
+?>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/product/update-basic?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/product/update-sales-condition?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/product/basic?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/product/basic?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+    
+	// 区分
+    $('.product_classes').change(function() {
+		if ($(this).val() == '<?php echo Shared_Model_Code::PRODUCT_CLASS_OTHER; ?>') {
+			if ($(this).prop('checked')) {
+				$('#product_class_other_text').prop("disabled", false);
+			} else {
+				$('#product_class_other_text').prop("disabled", true);
+			}
+		}
+    }); 
+
+	// 販売状況
+    $('.product_categories').change(function() {
+		if ($(this).val() == '<?php echo Shared_Model_Code::PRODUCT_CATEGORY_OTHER; ?>') {
+			if ($(this).prop('checked')) {
+				$('#product_category_other_text').prop("disabled", false);
+			} else {
+				$('#product_category_other_text').prop("disabled", true);
+			}
+		}
+    });
+    
+    // 調達方法
+    $('.supply_methods').change(function() {
+		if ($(this).val() == '<?php echo Shared_Model_Code::SUPPLY_METHOD_OTHER; ?>') {
+			if ($(this).prop('checked')) {
+				$('#supply_method_other_text').prop("disabled", false);
+			} else {
+				$('#supply_method_other_text').prop("disabled", true);
+			}
+		}
+    });  
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;margin-right:12px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+
+.condition_label{float:left;}
+a.btn_link {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 0 0 10px;float:left;cursor:pointer;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:500px;margin-bottom:500px;">
+<div class="row text-left">
+	<?php
+		$titleName = '';
+		if ($this->data['product_name_type'] === (string)Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) {
+			$titleName = $this->escape($this->data['buying_item_name']);
+		} else {
+			$titleName = $this->escape($this->data['item_name']);
+		}
+	?>     
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>商品管理 - <?php echo $titleName; ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('product/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">基本条件</p></th>
+                <?php /*
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+                */ ?>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品ID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+	                	<?php if (empty($this->data['gs_display_id'])) { ?>
+	                		<div style="float:left;">
+	                			<p>未連携</p>
+	                		</div>
+	                		<div style="float:left;">
+	                			<a class="btn_link" href="/product/gs-item-add?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>">連携する</a>
+	                		</div>
+	                	<?php } else { ?>
+	                		<div style="float:left;">
+	                			<p><?php echo $this->escape($this->data['gs_display_id']); ?></p>
+	                		</div>
+                		<?php } ?>
+                	</div>
+                </td>
+            </tr>
+            
+            <?php if (!empty($this->data['gs_display_id'])) { ?>
+	            <tr>
+	                <td class="column_label"><p class="label_text">GS出店者商品管理番号</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>"><?php
+		                	if (!empty($this->gsData['supplier_item_id'])) {
+		                		echo $this->escape($this->gsData['supplier_item_id']);
+		                	} else {
+			                	echo '---';
+		                	}
+		                ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" name="item_name" value="<?php echo $this->escape($this->gsData['supplier_item_id']); ?>">
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">GS商品名</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->gsData['item_name']); ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" name="item_name" value="<?php echo $this->escape($this->gsData['item_name']); ?>">
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">商品名（ふりがな）</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->gsData['item_name_kana']); ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" name="item_name_kana" value="<?php echo $this->escape($this->gsData['item_name_kana']); ?>">
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">一般商品名称</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->gsData['general_name']); ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" name="general_name" value="<?php echo $this->escape($this->gsData['general_name']); ?>">
+	                	</div>
+	                </td>
+	            </tr>
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text">販売方法</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>">
+		                	<?php 
+			                	if (!empty($this->gsData['sales_method'])) {
+				                	echo $this->escape($this->gsData['sales_method_list'][$this->gsData['sales_method']]);
+			                	} else {
+				                	echo '---';
+			                	}
+			                ?>
+		                </p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<select class="short" id="sales_method" name="sales_method">
+								<option value="">---</option>
+	                            <?php  foreach ($this->gsData['sales_method_list'] as $key => $val) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($this->gsData['gs_category_1'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+	                            <?php } ?>
+	                    	</select>
+	                	</div>
+	                </td>
+	            </tr>
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text">期間限定割引設定</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                		<p>(未実装)</p>
+	                	</div>
+	                </td>
+	            </tr>
+	             
+	            <tr>
+	                <td class="column_label"><p class="label_text">割引開始日</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                		<p>(未実装)</p>
+	                	</div>
+	                </td>
+	            </tr> 
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">割引終了日</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+							<p>(未実装)</p>
+	                	</div>
+	                </td>
+	            </tr>
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text">在庫状況</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>">
+		                	<?php 
+			                	if (!empty($this->gsData['stock_status'])) {
+				                	echo $this->escape($this->gsData['stock_status_list'][$this->gsData['stock_status']]);
+			                	} else {
+				                	echo '---';
+			                	}
+			                ?>
+		                </p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<select class="short" id="sales_method" name="sales_method">
+								<option value="">---</option>
+	                            <?php  foreach ($this->gsData['stock_status_list'] as $key => $val) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($this->gsData['stock_status'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+	                            <?php } ?>
+	                    	</select>
+	                    </div>
+	                </td>
+	            </tr>
+	
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text">対応アピール点</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+		                <?php /*
+	                	<div class="clearfix">
+	                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->gsData['stock_status_list'][$this->gsData['stock_status']]); ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<select class="short" id="sales_method" name="sales_method">
+								<option value="">---</option>
+	                            <?php  foreach ($this->gsData['stock_status_list'] as $key => $val) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($this->gsData['stock_status'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+	                            <?php } ?>
+	                    	</select>
+	                    </div>
+	                    */ ?>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">まとめ買い割引設定</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<?php /*
+	                	<p class="display_value_<?php echo $categoryId; ?>">
+	                		<?php
+	                			if (array_key_exists($this->data['type'], $connectionTypeList)) {
+	                				echo $connectionTypeList[$this->data['type']];
+	                			}
+	                		?>
+	                	</p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;padding-left:9px;">
+		                	<?php foreach ($connectionTypeList as $key => $val) { ?>
+			                	<div class="checkbox_item relation_type_item">
+				                	<label>
+				                    	<input type="radio" name="type" value="<?php echo $key; ?>" <?php if ((string)$key === $this->data['type']) { echo 'checked="checked"'; } ?>><?php echo $val; ?>
+				                    </label>
+			                    </div>
+		                    <?php } ?>
+	                    </div>
+	                    */ ?>
+	                </td>
+	            </tr> 
+            <?php } ?>
+        </table>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <!--
+        <?php
+        /* 商品紹介 */
+        $categoryId = 2;
+        ?>
+        
+        <form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">商品紹介</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+	        
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品枝番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">---</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<p>---</p>
+                	</div>
+                </td>
+            </tr>
+			
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品カテゴリー1</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_category_1" name="gs_category_1">
+							<option value="">---</option>
+                            <?php /* foreach ($productSalesStatusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_category_1'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } */ ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品カテゴリー2</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_category_1" name="gs_category_1">
+							<option value="">---</option>
+                            <?php /* foreach ($productSalesStatusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_category_1'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } */ ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品カテゴリー3</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_category_1" name="gs_category_1">
+							<option value="">---</option>
+                            <?php /* foreach ($productSalesStatusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_category_1'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } */ ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php $this->escape($this->data['gs_item_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="gs_item_name" value="<?php $this->escape($this->data['gs_item_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">GS商品名（ふりがな）</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php $this->escape($this->data['gs_item_name_kana']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="gs_item_name_kana" value="<?php $this->escape($this->data['gs_item_name_kana']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">GS卸価格提示条件</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                	<div style="padding-left:1px;">
+		                	<label>
+		                    	<input type="radio" name="type" value="<?php echo $key; ?>" <?php if ((string)$key == $this->data['type']) { echo 'checked="checked"'; } ?>>最初から公開<br>
+		                    </label>
+		                    <span>　（価格検索にかかるので一番人気）</span>
+	                    </div>
+	                    
+	                	<div style="padding-left:1px;">
+		                	<label>
+		                    	<input type="radio" name="type" value="<?php echo $key; ?>" <?php if ((string)$key == $this->data['type']) { echo 'checked="checked"'; } ?>>承認済みのバイヤーのみ自動提示<br>
+		                    </label>
+		                    <span>　（バイヤー単位で開示。非承認バイヤーは承認依頼を出す）</span>
+	                    </div>
+	                    
+	                	<div style="padding-left:1px;">
+		                	<label>
+		                    	<input type="radio" name="type" value="<?php echo $key; ?>" <?php if ((string)$key == $this->data['type']) { echo 'checked="checked"'; } ?>>見積依頼受け後に自動提示<br>
+		                    </label>
+		                    <span>　（価格検索にかからないが、見積開示相手がすべて把握できる）</span>
+	                    </div>
+	                    
+	                	<div style="padding-left:1px;">
+		                	<label>
+		                    	<input type="radio" name="type" value="<?php echo $key; ?>" <?php if ((string)$key == $this->data['type']) { echo 'checked="checked"'; } ?>>見積依頼後に任意回答<br>
+		                    </label>
+		                    <span>　（特別な商品は、見積依頼後に開示・非開示や見積価格自体を、相手の情報を見てから決定可能。OEM受注は自動的にこれになる）</span>
+	                    </div>
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS販売状況</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($salesStatusList as $key => $val) {
+	                			if (!empty($this->data['gs_sales_status'])) {
+			                		if ($this->data['gs_sales_status'] == (string)$key) {
+			                			$displayString .= $val . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_sales_status" name="gs_sales_status">
+                            <?php foreach ($salesStatusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_sales_status'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">GS販売方法</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($salesMethodList as $key => $val) {
+	                			if (!empty($this->data['gs_sales_method'])) {
+			                		if ($this->data['gs_sales_method'] == (string)$key) {
+			                			$displayString .= $val . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_sales_method" name="gs_sales_method">
+                            <?php foreach ($salesMethodList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_sales_method'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS掲載開始日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">---</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS掲載終了日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">---</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS在庫状況</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($stockStatusLi as $key => $val) {
+	                			if (!empty($this->data['gs_stock_status'])) {
+			                		if ($this->data['gs_stock_status'] == (string)$key) {
+			                			$displayString .= $val . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="gs_stock_status" name="gs_stock_status">
+                            <?php foreach ($stockStatusLi as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($this->data['gs_stock_status'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr> 
+		</table>
+		</form>
+		
+	    <?php
+        /* 商品紹介 */
+        $categoryId = 2;
+        ?>
+        <form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">商品紹介</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">キャッチコピー</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo nl2br($this->escape($this->data['gs_catch_copy'])); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="gs_catch_copy" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['gs_catch_copy']); ?></textarea>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">コメント</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo nl2br($this->escape($this->data['gs_comment'])); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="gs_comment" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['gs_comment']); ?></textarea>
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">商品の競合優位性</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo nl2br($this->escape($this->data['gs_superiority'])); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="gs_superiority" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['gs_superiority']); ?></textarea>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">ブランド名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php $this->escape($this->data['gs_bland_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="gs_bland_name" value="<?php $this->escape($this->data['gs_bland_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">サイズ・容量</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php $this->escape($this->data['gs_bland_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="gs_bland_name" value="<?php $this->escape($this->data['gs_bland_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">規格</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php $this->escape($this->data['gs_bland_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="gs_bland_name" value="<?php $this->escape($this->data['gs_bland_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+
+            <tr>
+                <td class="column_label"><p class="label_text">商品の競合優位性</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo nl2br($this->escape($this->data['gs_attention'])); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="gs_attention" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['gs_attention']); ?></textarea>
+					</div>
+                </td>
+            </tr>      
+            
+        </table>
+        
+        
+	    <?php
+        /* 価格前提条件 */
+        $categoryId = 3;
+        ?>
+        <form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border:1px solid #ddd;"><p class="label_text strong">価格前提条件</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">GS国内小売可否</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><p>&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<p>&nbsp;</p>
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS参考価格種別</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><p>&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<p>&nbsp;</p>
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">GS送料設定</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><p>&nbsp;</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<p>&nbsp;</p>
+                	</div>
+                </td>
+            </tr>
+
+        </table>
+		</form>
+		-->
+        
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>
+

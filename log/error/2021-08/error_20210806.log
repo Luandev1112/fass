@@ -1,0 +1,203 @@
+2021-08-06T15:49:58+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-08-06T15:49:58+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+
+2021-08-06T16:37:03+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:37:03+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:49:56+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:49:56+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:50:20+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:50:20+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:51:15+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:51:15+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:51:33+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:51:33+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:51:54+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:51:54+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 0
+)
+
+2021-08-06T16:52:49+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:52:49+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 179
+)
+
+2021-08-06T16:53:09+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/AccountBank.php(64): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(633): Shared_Model_Data_AccountBank->getById(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->importDetailAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('importDetailAct...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-08-06T16:53:09+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => import-detail
+    [module] => front
+    [id] => 
+    [pos] => 8
+)
+
+2021-08-06T18:50:05+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_account_bank_history.bank_id' in 'where clause' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(44): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->gmoUpdateAction()
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('gmoUpdateAction')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#10 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#11 {main}
+2021-08-06T18:50:05+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => gmo-update
+    [module] => front
+)
+

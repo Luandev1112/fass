@@ -1,0 +1,16 @@
+2021-07-04T20:34:49+09:00 (NOTICE): Invalid controller specified (.git) %info%
+2021-07-04T20:34:49+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .git
+    [action] => config
+    [module] => front
+)
+
+2021-07-04T20:34:52+09:00 (NOTICE): Invalid controller specified (.git) %info%
+2021-07-04T20:34:52+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .git
+    [action] => config
+    [module] => front
+)
+

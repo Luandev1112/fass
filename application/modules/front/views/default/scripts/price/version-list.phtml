@@ -1,0 +1,120 @@
+<?php
+$statusList   = Shared_Model_Code::codes('cost_calc_status');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function () {
+    // 提出完了
+    $(document).on('click', '.btn_copy', function () {    	
+    	var targetVersionId = $(this).attr('version-id');
+		jConfirm('コピーして新しいバージョンを作成しますか？', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data: 'id=<?php echo $this->id ?>&version_id=' + targetVersionId,
+		            success: function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('コピーしました', '　');
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/price/version-copy?id=<?php echo $this->escape($this->id); ?>&base_cost_id=' + targetVersionId,
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/price/version-list?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+        }
+    });
+    
+});    
+</script>
+<style type="text/css">
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;margin-bottom:9px;">
+	        <span style=""><strong>原価計算 - バージョン履歴</strong></span>
+	    </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>バージョンID</p></th>
+				<th style="width:13%;"><p>更新日</p></th>
+				<th style="width:15%;"><p>ステータス</p></th>
+				<th><p>操作</p></th>
+			</tr>
+
+			<?php $versionCopyAppeared = false; ?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['version_id']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $statusList[$each['version_status']]; ?></p>
+						</td>
+						
+						<td>
+							<div class="clearfix">
+								<?php if ($each['version_status'] == Shared_Model_Code::COST_CALC_STATUS_NOT_CREATED || $each['version_status'] == Shared_Model_Code::COST_CALC_STATUS_EDITING) { ?>	
+									<a class="btn_setting" href="/price/cost-profit?id=<?php echo $this->escape($this->id) . '&cost_id=' . $this->escape($each['id']); ?>">編集</a>
+								<?php } else { ?>
+									<a class="btn_setting" href="/price/cost-profit?id=<?php echo $this->escape($this->id) . '&cost_id=' . $this->escape($each['id']); ?>">表示</a>
+								<?php } ?>
+								
+								<?php if ($each['version_status'] == Shared_Model_Code::COST_CALC_STATUS_APPROVED && $versionCopyAppeared === false) { ?>	
+								<a class="btn_setting btn_copy" version-id="<?php echo $this->escape($each['id']); ?>" href="javascript:void(0);">コピーして編集</a>
+								
+								<?php } ?>
+							</div>
+						</td>
+						<?php $versionCopyAppeared = true; ?>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

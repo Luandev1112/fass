@@ -1,0 +1,121 @@
+<?php
+?>
+<script type="text/javascript">
+$(function () {
+
+});    
+</script>
+<style type="text/css">
+
+</style>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong>原単位・梱包資材・作業費</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="condition_items clearfix">
+		<form id="package_condition_form" action="#" method="get">
+			<p class="search_condition_title">検索条件</p>
+
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">XXX：</p>
+                    <select id="status" name="status">
+                        <option value="">---</option>
+                    	<?php foreach ($connectionStatusList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+				
+				<div class="condition_item">
+					<p class="condition_label">XXX：</p>
+                    <select id="type" name="type">
+                        <option value="">---</option>
+                    	<?php foreach ($connectionTypeList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['type']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+
+				<div class="condition_item">
+					<p class="condition_label">XXX：</p>
+                    <select id="relation_type" name="relation_type">
+                        <option value="">---</option>
+                    	<?php foreach ($relationTypeList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['relation_type']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+				
+				<div class="condition_item">
+					<p class="condition_label">XXX：</p>
+                    <select id="sales_relation" name="sales_relation">
+                        <option value="">---</option>
+                    	<?php foreach ($salesRelationList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['sales_relation']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+			</div>	
+
+			
+			<div style="text-align:center">
+				<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+				<input type="button" class="submit" style="display:inline-block;width:150px;" value="検索" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<table class="list_default">
+		<tr>
+			<th style="width:15%;"><p>最終更新日時</p></th>
+			<th><p>名称</p></th>
+			<th style="width:12%;"><p>費用合計(円)</p></th>
+			<th style="width:8%;"><p>詳細</p></th>
+		</tr>
+		
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<tr id="<?php echo $each['id']; ?>">
+					<td>
+						<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+					</td>
+					
+					<td>
+						<p><?php echo $this->escape($each['title']); ?></p>
+					</td>
+
+					<td>
+						<p><?php echo $this->escape($each['total']); ?></p>
+					</td>
+					
+					<td>
+						<a class="option" href="javascript:selectPackage('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['title']); ?>', '<?php echo $this->escape($each['package_cost']); ?>', '<?php echo $this->escape($each['operation_cost']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="3">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

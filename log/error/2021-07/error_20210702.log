@@ -1,0 +1,93 @@
+2021-07-02T17:42:13+09:00 (CRIT): script 'shipment/jaccs-import-invoice-data.phtml' not found in path (/var/www/fass-dev.fresco-co.net/Web/application/modules/front/views/default/scripts/:/var/www/fass-dev.fresco-co.net/Web/application/modules/front/views/scripts/) #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/View/Abstract.php(884): Zend_View_Abstract->_script('shipment/jaccs-...')
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action/Helper/ViewRenderer.php(900): Zend_View_Abstract->render('shipment/jaccs-...')
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action/Helper/ViewRenderer.php(921): Zend_Controller_Action_Helper_ViewRenderer->renderScript('shipment/jaccs-...', NULL)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action/Helper/ViewRenderer.php(960): Zend_Controller_Action_Helper_ViewRenderer->render()
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action/HelperBroker.php(277): Zend_Controller_Action_Helper_ViewRenderer->postDispatch()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(527): Zend_Controller_Action_HelperBroker->notifyPostDispatch()
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('jaccsImportInvo...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#10 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#11 {main}
+2021-07-02T17:42:13+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => shipment
+    [action] => jaccs-import-invoice-data
+    [module] => front
+)
+
+2021-07-02T19:59:06+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'error_data' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query('UPDATE `frs_ord...', Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(634): Zend_Db_Adapter_Pdo_Abstract->query('UPDATE `frs_ord...', Array)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Abstract.php(192): Zend_Db_Adapter_Abstract->update('frs_order', Array, '`warehouse_id` ...')
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/DbAbstract.php(43): Nutex_Data_Db_Abstract->update(Array, Array)
+#6 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/Order.php(439): Shared_Model_Data_DbAbstract->update(Array, Array)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ShipmentController.php(828): Shared_Model_Data_Order->updateById('1', '58', Array)
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ShipmentController->jaccsImportInvoiceDataAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('jaccsImportInvo...')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-02T19:59:06+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => shipment
+    [action] => jaccs-import-invoice-data
+    [module] => front
+)
+
+2021-07-02T19:59:08+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'error_data' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query('UPDATE `frs_ord...', Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(634): Zend_Db_Adapter_Pdo_Abstract->query('UPDATE `frs_ord...', Array)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Abstract.php(192): Zend_Db_Adapter_Abstract->update('frs_order', Array, '`warehouse_id` ...')
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/DbAbstract.php(43): Nutex_Data_Db_Abstract->update(Array, Array)
+#6 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/Order.php(439): Shared_Model_Data_DbAbstract->update(Array, Array)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ShipmentController.php(828): Shared_Model_Data_Order->updateById('1', '58', Array)
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ShipmentController->jaccsImportInvoiceDataAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('jaccsImportInvo...')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-02T19:59:08+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => shipment
+    [action] => jaccs-import-invoice-data
+    [module] => front
+)
+
+2021-07-02T20:06:12+09:00 (CRIT): Serialization of 'SimpleXMLElement' is not allowed #0 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ShipmentController.php(825): serialize(Object(SimpleXMLElement))
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ShipmentController->jaccsImportInvoiceDataAction()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('jaccsImportInvo...')
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#6 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#7 {main}
+2021-07-02T20:06:12+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => shipment
+    [action] => jaccs-import-invoice-data
+    [module] => front
+)
+
+2021-07-02T20:08:02+09:00 (CRIT): Serialization of 'SimpleXMLElement' is not allowed #0 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ShipmentController.php(828): serialize(Object(SimpleXMLElement))
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ShipmentController->jaccsImportInvoiceDataAction()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('jaccsImportInvo...')
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#6 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#7 {main}
+2021-07-02T20:08:02+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => shipment
+    [action] => jaccs-import-invoice-data
+    [module] => front
+)
+

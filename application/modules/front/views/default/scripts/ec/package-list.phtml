@@ -1,0 +1,179 @@
+<?php
+	$packageTypeList = Shared_Model_Code::codes('package_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+});    
+</script>
+<style type="text/css"><!--
+table.list_default tr td{}
+table.list_default tr:hover td {background: #deeeff;}
+table.list_default tr td p {}
+table.list_default tr th p.center, table.list_default tr td p.center {padding-left:0;text-align:center;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/ec/package-add">新規登録</a>
+            </p>
+	        <span style=""><strong>EC商品パッケージ管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">		
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">パッケージ種別：</p>
+                        <select id="user_id_in_charge" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ($key == $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">単発/定期：</p>
+                        <select id="user_id_in_charge" name="stock_status">
+                            <option value="">---</option>
+                        	<?php foreach ($stockStatusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['stock_status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+				
+				<input type="submit" value="検索" />
+			
+			</form>
+		</div>
+	</div>	
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:16%;">
+					<p>商品コード</p>
+				</th>
+				
+				<th style="width:8%;">
+					<p>種別</p>
+				</th>
+				
+				<th style="width:5%;">
+					<p class="center">定期</p>
+				</th>
+				
+				<th>
+					<p>商品パッケージ名</p>
+				</th>
+
+				<th style="width:5%;">
+					<p>商品</p>
+				</th>
+
+				<th style="width:5%;">
+					<p>付属</p>
+				</th>
+					
+				<th style="width:20%;">
+					<p>販売場所</p>
+				</th>			
+
+			</tr>
+			
+			<?php
+				$packageProductTable = new Shared_Model_Data_ItemPackageProduct();
+				$packageBundleTable  = new Shared_Model_Data_ItemPackageBundle();
+			?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr>
+						<td><p><?php echo $this->escape($each['product_code']); ?></p></td>
+						<td><p><?php echo $packageTypeList[$each['package_type']]; ?></p></td>
+						<td><p class="center"><?php if ($each['is_subscription']) { echo '●'; } ?></p></td>
+						<td><p><a href="/ec/package-detail?id=<?php echo $each['id']; ?>"><?php echo $this->escape($each['package_name_domestic']); ?></p></td>
+						
+						<?php 
+							$productItems = $packageProductTable->getProductItemsByPackageId($each['id']);
+	    					$bundleItems = $packageBundleTable->getBundleItemsByPackageId($each['id']);
+						?>
+						
+                		<td>
+            				<?php if (count($productItems) == 0) { ?>
+            					<p style="color:red;font-weight:bold;"><?php echo count($productItems); ?></p>
+            				<?php } else { ?>
+            					<p><?php echo count($productItems); ?></p>
+            				<?php } ?>
+                		</td>
+                		<td>
+                			<p><?php echo count($bundleItems); ?></p>
+                		</td>
+                		<td>
+                			<p><?php
+                			$placeList = array();
+                			
+                			if (!empty($each['store_own_domestic'])) {
+                				$placeList[] = '自社(国内)';
+                			}
+                			if (!empty($each['store_own_overseas'])) {
+                				$placeList[] = '自社(海外)';
+                			}
+                			if (!empty($each['store_own_rakuten'])) {
+                				$placeList[] = '楽天';
+                			}
+                			if (!empty($each['store_own_yahoo_co_jp'])) {
+                				$placeList[] = 'ヤフ';
+                			}
+                			if (!empty($each['store_own_amazon_co_jp'])) {
+                				$placeList[] = 'アマ';
+                			}
+                			if (!empty($placeList)) {
+                				echo implode('/', $placeList);
+                			}
+                			?></p>
+                		</td>
+                	</tr>
+	                	
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

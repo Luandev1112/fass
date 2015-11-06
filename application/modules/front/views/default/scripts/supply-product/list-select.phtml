@@ -1,0 +1,159 @@
+<?php
+$statusList         = Shared_Model_Code::codes('supply_status');
+$usesNotSalesList   = Shared_Model_Code::codes('uses_not_sales');
+?>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong>原料・製品</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="condition_items clearfix">
+		<form id="supply_product_condition_form" action="javascript:$('#search_supply_product').click();" method="get">
+			<p class="search_condition_title">検索条件</p>
+
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">ステータス：</p>
+                    <select id="status" name="status">
+                        <option value="">---</option>
+                    	<?php foreach ($statusList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+
+				<div class="condition_item">
+					<p class="condition_label">一般名称タグ：</p>
+					<div class="input_box_fake">
+						<span class="target_text" id="tag_name_display"><?php echo $this->conditions['tag_name']; ?></span>
+						<a class="reset_popup" id="reset_tag" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+						<a class="select_popup" id="select_tag" href="javascript:void(0);"><span>選択</span></a>
+					</div>
+					<input type="hidden" id="tag_name" name="tag_name" value="<?php echo $this->conditions['tag_name']; ?>" />
+					<input type="hidden" id="tag_id" name="tag_id" value="<?php echo $this->conditions['tag_id']; ?>" />
+				</div>
+				
+				<div class="condition_item">
+					<p class="condition_label">販売用途：</p>
+                    <select id="type" name="use_sale">
+                        <option value="">---</option>
+                		<?php foreach ($this->usesSalesList as $each) { ?>
+		                	<option value="<?php echo $each['id']; ?>" <?php if ($each['id'] === $this->conditions['use_sale']) echo 'selected="selected"';?>><?php echo $this->escape($each['name']); ?></option>
+	                    <?php } ?>
+                    </select>
+				</div>
+
+				<div class="condition_item">
+					<p class="condition_label">非売用途：</p>
+                    <select id="type" name="use_not_sale">
+                        <option value="">---</option>
+                		<?php foreach ($usesNotSalesList as $key => $val) { ?>
+		                	<option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['use_not_sale']) echo 'selected="selected"';?>><?php echo $this->escape($val); ?></option>
+	                    <?php } ?>
+                    </select>
+				</div>
+			</div>	
+
+			<div style="text-align:center">
+				<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+				<input type="submit" id="search_supply_product" style="display:inline-block;width:150px;" value="検索" />
+			</div>
+		</form>
+	</div>
+</div>
+
+<div class="clearfix">
+	<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<table class="list_default">
+		<tr>
+			<th style="width:10%;"><p>原料製品ID</p></th>
+			<th style="width:12%;"><p>ステータス</p></th>
+				<th style="width:18%;"><p>販売用途&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:18%;"><p>非売用途&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th><p>原料製品名&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:8%;">
+				<p>選択</p>
+			</th>
+		</tr>
+	
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<tr id="<?php echo $each['id']; ?>">
+					<td>
+						<p><?php echo $each['display_id']; ?></p>
+					</td>
+
+					<td>
+						<p><?php echo $statusList[$each['status']]; ?></p>
+					</td>
+					
+					<?php
+                		$selected = array();
+                		$usesSales = unserialize($each['uses_sales']);
+
+                		if (!empty($usesSales)) {
+                			foreach ($usesSales as $eachSelected) {
+		                		foreach($this->usesSalesList as $eachUses) {
+			                		if ($eachSelected === $eachUses['id']) {
+			                			$selected[] = $eachUses['name'];
+			                		}
+		                		}
+	                		}
+	                	}
+                	?>
+					<td class="desc" all-content="<?php echo implode(' / ', $selected); ?>">
+						<div class="multi_rows_padding"><?php echo $this->roundText(implode(' / ', $selected), 13); ?></div>
+					</td>
+
+					<?php
+                		$selectedNot = array();
+
+                		$usesNotSales = unserialize($each['uses_not_sales']);
+                		if (!empty($usesNotSales)) {
+                			foreach ($usesNotSales as $eachSelected) {
+		                		foreach($usesNotSalesList as $key => $val) {
+			                		if ($eachSelected === (string)$key) {
+			                			$selectedNot[] = $val;
+			                		}
+		                		}
+	                		}
+	                	}
+                	?>
+					<td class="desc" all-content="<?php echo implode(' / ', $selectedNot); ?>">
+						<div class="multi_rows_padding"><?php echo $this->roundText(implode(' / ', $selectedNot), 13); ?></div>
+					</td>
+					
+					<td class="desc" all-content="<?php echo $this->escape($each['title']); ?>">
+						<div class="multi_rows_padding"><?php echo $this->roundText($this->escape($each['title']), 32); ?></a></div>
+					</td>
+
+					<td>
+						<a class="option" href="javascript:selectSupplyProduct('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['display_id']); ?>', '<?php echo $this->escape($each['title']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="6">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

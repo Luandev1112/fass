@@ -1,0 +1,168 @@
+<?php
+$approvalStatusList = Shared_Model_Code::codes('approval_status');
+$approvalTypeList   = Shared_Model_Code::codes('approval_type');
+
+$groupId = $this->adminProperty['management_group_id'];
+
+function getConfirmUrl($groupId, $each) {
+	$confirmUrl = '';
+	if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_ESTIMATE) {
+		// 見積
+		$confirmUrl = '/price-estimate/confirm?approval_id=' . $each['id'] . '&version_id=' . $each['target_id'];
+		
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_INVOICE) {
+		// 請求書
+		$confirmUrl = '/transaction-invoice/confirm?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+		
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_SUPPLY_COMPETITION) {
+		// コンペ
+		$confirmUrl = '/supply-competition/confirm?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_COST) {
+		// 原価計算
+		$costTable = new Shared_Model_Data_Cost();
+		$costData = $costTable->getById($groupId, $each['target_id']);
+		$confirmUrl = '/price/cost-profit?approval_id=' . $each['id'] . '&id=' . $costData['item_id'] . '&cost_id=' . $each['target_id'];
+
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_ORDERFORM) {
+		// 発注書
+		$confirmUrl = '/transaction-order/confirm?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+	} else if ($each['type'] === (string) Shared_Model_Code::APPROVAL_TYPE_ONLINE_PURCHASE) {
+		// ネット購入委託管理
+		$confirmUrl = '/transaction-order/online-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+		
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_PAYABLE) {
+		// 請求支払申請
+		$confirmUrl = '/transaction-payable/invoice-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_PAYABLE_CARD) {
+		// カード支払申請
+		$confirmUrl = '/transaction-payable/card-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_PAYABLE_TEMPLATE) {
+		// 毎月支払管理
+		$confirmUrl = '/transaction-payable/template-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+		
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_PAYABLE_MONTHLY) {
+		// 毎月支払管理 新規支払予定
+		$confirmUrl = '/transaction-payable/history-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+	
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_ORDER) {
+		// 受注管理
+		$confirmUrl = '/transaction-order-recieved/detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];	
+	
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_RECEIVABLE_TEMPLATE) {
+		// 毎月入金管理
+		$confirmUrl = '/transaction-recieved/template-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+		
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_RECEIVABLE_MONTHLY) {
+		// 毎月入金管理 新規支払予定
+		$confirmUrl = '/transaction-recieved/history-detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+	
+	
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_SAMPLE_WASTE) {
+		// サンプル出荷/在庫破棄
+		$confirmUrl = '/transaction-sample/detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];
+	
+	
+	} else if ($each['type'] === (string)Shared_Model_Code::APPROVAL_TYPE_INVENTORY) {
+		// 在庫棚卸
+		$confirmUrl = '/stock-inventory/detail?approval_id=' . $each['id'] . '&id=' . $each['target_id'];	
+
+	} else {
+		$confirmUrl = 'javascript:void(0)';
+	}
+	
+	return $confirmUrl;
+}
+?>
+<script type="text/javascript">
+$(function () {
+
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr th p {padding-left:10px;}
+table.list_default tr td p {padding-left:10px;padding-top:8px}
+.multi_rows_padding {padding:5px 10px 5px 10px;line-height:1.4}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>承認・確認待ち一覧</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:15%;"><p>承認依頼日時</p></th>
+				<th style="width:10%;"><p>ステータス</p></th>
+				<th style="width:16%;"><p>種別</p></th>
+				<th><p>内容&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:18%;"><p>申請者（利用者ID）</p></th>
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+			
+			<?php $costTable = new Shared_Model_Data_Cost(); ?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<div class="multi_rows_padding">
+								<?php echo date('Y-m-d H:i:s', strtotime($each['created'])); ?><br>
+								<span style="color:#7000ff"><?php echo $this->dateTimeHistory($each['created']); ?></span>
+							</div>
+						</td>
+						
+						<td>
+							<?php if ($each['status'] === (string)Shared_Model_Code::APPROVAL_STATUS_PENDDING) {?>
+								<p><strong style="color:#f00;"><?php echo $approvalStatusList[$each['status']]; ?></strong></p>
+							<?php } else { ?>
+								<p><?php echo $approvalStatusList[$each['status']]; ?></p>
+							<?php } ?>
+						</td>
+						<td><p><strong><?php echo $approvalTypeList[$each['type']]; ?></strong></p></td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['title']); ?>">
+							<div class="multi_rows_padding"><?php echo nl2br($this->roundText($this->escape($each['title']), 60)); ?></div>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding">
+							<?php echo $this->roundText($this->escape($each['applicant_user_name']), 12); ?><br>
+							<?php echo $this->escape($each['display_id']); ?>
+							</div>
+						</td>
+						<td>
+							<p><a href="<?php echo getConfirmUrl($groupId, $each); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">承認待ちはありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

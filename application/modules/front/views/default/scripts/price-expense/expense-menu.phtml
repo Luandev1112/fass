@@ -1,0 +1,6 @@
+<div class="menu_list clearfix">
+<a class="menu <?php if($this->action == 'cost-profit') echo "selected"; ?>" href="/price/cost-profit?id=<?php echo $this->id; ?>">販売価格／想定利益率</a>
+<a class="menu <?php if($this->action == 'cost-manufacture') echo "selected"; ?>" href="/price/cost-manufacture?id=<?php echo $this->id; ?>">製造原価</a>
+<a class="menu <?php if($this->action == 'cost-labor') echo "selected"; ?>" href="/price/cost-labor?id=<?php echo $this->id; ?>">梱包人件費</a>
+<a class="menu <?php if($this->action == 'cost-shipping') echo "selected"; ?>" href="/price/cost-shipping?id=<?php echo $this->id; ?>">発送費用 / 梱包資材</a>
+</div>

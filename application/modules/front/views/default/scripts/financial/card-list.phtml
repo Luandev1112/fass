@@ -1,0 +1,174 @@
+<?php
+$payementMonthlyList = Shared_Model_Code::getPayementMonthlyList();
+?>
+<script type="text/javascript">
+$(function () {
+	$(document).ready(function(){
+	    $('#sortable_column td').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });
+        
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+	});
+	$(document).on('click', '.edit_content_order', function () {
+        $('.display_value').hide();
+        $('.edit_value').show();
+    
+        // ×,保存ボタン
+        $(this).removeClass('edit_content_order').addClass('save_content_order');
+        $(this).html('並び順保存');
+
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+	});
+	
+	$(document).on('click', '.save_content_order', function () {
+        var button = $(this);
+        var $form = $('#register_form');
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/financial/card-update-order',
+        });
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        location.href = '/financial/card-list?pos=' + $(window).scrollTop();
+    });
+    
+    $(".sortable_column").sortable({
+        items:"tr:not(.not-sortable)",
+        update:function(event, ui){
+            var result = $("#sortable_column").sortable("toArray");
+            $('input#hidden_contents_order').val(result);
+        },
+        handle:'.order_btn_frame',
+        delay:100,
+        stop:function (event, ui) {},
+        start:function (event, ui) {}
+    });
+});    
+</script>
+<style type="text/css">
+a.edit_item {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 0 0 3px;float:left;cursor:pointer;}
+.multi_rows_padding {padding:5px 10px 5px 10px;}
+.order_btn_frame {float:left;margin:6px 0 0 14px;}
+.order_btn_frame .icon-up-dir-1 {font-size:14px;color:#000;line-height:1;display:block;}
+.order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#000;line-height:1;display:block;}
+a.btn_setting.save_content_order {background-color:#64bd63}
+.sortable_column tr td {background-color:#fff;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	    	<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+			<p style="position:absolute;width:190px;right:0;">
+				<a class="btn_setting edit_content_order" style="display:block;float:left;width:92px;padding:5px 0;margin:0;border:none;margin-right:5px" href="javascript:void(0);">並び順変更</a>
+                <a class="btn_setting" style="display:block;float:left;width:92px;padding:5px 0;margin:0;border:none;" href="/financial/card-detail">新規登録</a>
+            </p>
+            <?php } ?>
+            
+	        <span><strong>クレジットカード一覧</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<form id="register_form" action="#" method="post"> 
+		<table class="list_default">
+			<tr>
+				<th style="width:35%;"><p>カード名</p></th>
+				<th><p>カード会社名</p></th>
+				<th style="width:11%;"><p>カード番号下4桁</p></th>
+				<th style="width:11%;"><p>締め日</p></th>
+				<th style="width:11%;"><p>支払日</p></th>
+				<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+				<th style="width:9%;"><p>編集</p></th>
+				<?php } ?>
+			</tr>
+			<tbody class="sortable_column" id="sortable_column">
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['card_name']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['card_company']); ?></div>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['card_no_last4']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php if (!empty($each['closing_day'])) { ?>毎月&nbsp;<?php echo $payementMonthlyList[$each['closing_day']]; ?>締め<?php } ?></div>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding"><?php if (!empty($each['payment_day'])) { ?>翌月&nbsp;<?php echo $payementMonthlyList[$each['payment_day']]; ?>支払い<?php } ?></div>
+						</td>
+						
+						<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+							<td>
+								<div class="display_value">
+									<a class="edit_item" href="/financial/card-detail?id=<?php echo $this->escape($each['id']); ?>">編集</a>
+								</div>
+								<div class="edit_value">
+				                    <div class="order_btn_frame edit_value" style="display:none;">
+				                        <i class="icon-up-dir-1"></i>
+				                        <i class="icon-down-dir-1"></i>
+				                    </div>
+								</div>
+							</td>
+						<?php } ?>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>6<?php } else { ?>5<?php } ?>">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+		<input type="hidden" id="hidden_contents_order" name="item_list" value="" />
+		</form>
+		
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

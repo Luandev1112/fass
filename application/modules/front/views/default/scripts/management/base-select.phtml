@@ -1,0 +1,97 @@
+<div class="clearfix" style="margin: 0 0 2.0em;">
+
+<?php
+$categoryId = 1;
+?>
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span><strong><?php echo $this->escape($this->data['company_name']); ?> - 納入先拠点選択</strong></span>
+    </div>
+</div>
+
+<?php if (!empty($this->items)) { ?>
+<?php foreach ($this->items as $eachItem) { ?>
+<table class="list_default connection_base" style="margin-bottom:0px;">
+    <tr>
+        <th class="border-left border-top border-bottom border-right">
+        	<p class="label_text strong" style="float:left"><?php echo $this->escape($eachItem['base_name']); ?></p>
+        	
+        	<?php
+        		$address = $eachItem['zipcode'] . ' ' . $eachItem['prefecture'] . $eachItem['address1'] . $eachItem['address2'];	
+        	?>
+        	<a class="option" style="float:right" href="javascript:selectBase('<?php echo $eachItem['id']; ?>', '<?php echo $this->escape($eachItem['base_name']); ?>', '<?php echo $this->escape($address); ?>');">選択</a>
+        </th>                
+    </tr>
+</table>
+<table class="list_default connection_base" style="margin-bottom:13px;">
+    <tr id="<?php echo $this->escape($eachItem['id']); ?>" <?php /* if ($eachItem['status'] == Shared_Model_Code::CONNECTION_STAFF_STATUS_OLD) { echo 'class="inactive"'; } */ ?>>
+        <td class="column_value" style="width:900px">
+        	<div class="clearfix" style="margin-bottom:5px;">
+				<div class="clearfix">
+					<div style="float:left;width:450px;">
+						<p class="column_label">郵便番号</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['zipcode']); ?></div>
+	                </div>
+				</div>
+				<div class="clearfix">
+	                <p class="column_label">住所</p>
+					<p class="colon">：</p>
+					<div class="multi_rows_padding long"><?php echo $this->escape($eachItem['prefecture'] . $eachItem['address1'] . $eachItem['address2']); ?></div>
+				</div>
+				<div class="clearfix">
+					<div style="float:left;width:450px;">
+						<p class="column_label">電話番号</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['tel']); ?></div>
+	                </div>
+	                <div style="float:left;width:450px;">
+						<p class="column_label">FAX</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['fax']); ?></div>
+					</div>
+				</div>
+				<div class="clearfix">
+					<div style="float:left;width:450px;">
+						<p class="column_label">担当者 氏名</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['person_in_charge']); ?></div>
+	                </div>
+	                <div style="float:left;width:450px;">
+						<p class="column_label">担当者 氏名(カナ)</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['person_in_charge_kana']); ?></div>
+					</div>
+				</div>
+				<div class="clearfix">
+					<div style="float:left;width:450px;">
+						<p class="column_label">担当者メールアドレス</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['mail']); ?></div>
+	                </div>
+	                <div style="float:left;width:450px;">
+						<p class="column_label">担当者携帯</p>
+						<p class="colon">：</p>
+						<div class="multi_rows_padding"><?php echo $this->escape($eachItem['mobile']); ?></div>
+					</div>
+				</div>
+				<div class="clearfix">
+	                <p class="column_label">メモ</p>
+					<p class="colon">：</p>
+					<div class="multi_rows_padding long"><?php echo $this->escape($eachItem['memo']); ?></div>
+				</div>
+			</div>
+		</td>
+	</tr>
+</table>
+<?php } ?>
+<?php } else { ?>
+<div style="margin:2.0em auto;font-size:1.3em;">拠点が登録されていません</div>
+<?php } ?>
+
+</div><!-- clearfix -->	                
+
+

@@ -1,0 +1,41 @@
+2021-07-19T01:28:57+09:00 (NOTICE): Invalid controller specified (wp-login.php) %info%
+2021-07-19T01:28:57+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp-login.php
+    [module] => front
+    [action] => index
+)
+
+2021-07-19T13:54:21+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-07-19T13:54:21+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+
+2021-07-19T19:44:23+09:00 (CRIT): Unable to Connect to ssl://goosa.web-develop.tech:443. Error #0:  #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Http/Client.php(1005): Zend_Http_Client_Adapter_Socket->connect('goosa.web-devel...', 443, true)
+#1 /var/www/fass-dev.fresco-co.net/Web/application/models/Gs/SupplierSetting.php(61): Zend_Http_Client->request('GET')
+#2 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/IndexController.php(110): Shared_Model_Gs_SupplierSetting::getApprovalCount(Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): IndexController->indexAction()
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#8 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#9 {main}
+2021-07-19T19:44:23+09:00 (CRIT): Request Parameters Array
+(
+    [module] => front
+    [controller] => index
+    [action] => index
+)
+
+2021-07-19T23:00:50+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-07-19T23:00:50+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+

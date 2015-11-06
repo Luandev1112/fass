@@ -1,0 +1,295 @@
+<?php
+?>
+<script type="text/javascript">
+var estimateId = 0;
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+function guid() {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+	}
+	return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+
+    });
+
+    // PDFプレビュー
+    $('.btn_estimate_preview').click( function(){
+    	<?php if ($this->versionData['template_id'] == '9') { ?>
+    	window.open('<?php echo Shared_Model_Resource_EstimateUpload::getResourceUrl($this->data['id'], $this->versionId, $this->versionData['file_name']); ?>', '_blank');
+    	<?php } else { ?>
+    	window.open('/price-estimate/preview/<?php echo $this->escape($this->id); ?>/<?php echo $this->escape($this->versionId); ?>/見積書プレビュー_' + getTimeStamp() + '.pdf', '_blank');
+    	<?php } ?>
+    });
+    
+    // 修正依頼
+    $('.btn_mod_request').click( function(){
+        jConfirm('修正依頼しますか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form  = $('#register_form');
+                var query  = $form.serialize();
+                var params = $form.serializeArray();
+                
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('修正依頼しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/price-estimate/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&version_id=<?php echo $this->escape($this->versionId); ?>'
+				});
+            } else {
+                return false;
+            }
+        });
+    });
+    
+    // 却下
+    $('.btn_reject').click( function(){
+        jConfirm('却下しますか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form  = $('#register_form');
+                var query  = $form.serialize();
+                var params = $form.serializeArray();
+                
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('却下しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/price-estimate/reject?approval_id=<?php echo $this->escape($this->approvalId); ?>&version_id=<?php echo $this->escape($this->versionId); ?>'
+				});
+            } else {
+                return false;
+            }
+        });
+    });
+    
+    //
+    // 承認
+    //
+    $('.btn_save').click( function(){
+        jConfirm('この内容で承認しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form  = $('#register_form');
+                var query  = $form.serialize();
+                var params = $form.serializeArray();
+                
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('承認しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/price-estimate/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&version_id=<?php echo $this->escape($this->versionId); ?>'
+				});
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/approval/list';
+        }
+    });
+
+    // 商品選択 ポップアップ表示
+    $(document).on('click', '.select_product', function () {
+    	targetRow = $(this).attr('target-row');
+    	var targetItemId = $('#' + targetRow + '_item_id').val();
+		if (targetItemId != '') {
+		
+	    	$('#data_area').html('');
+			$('#glayLayer').show();
+			$('#overBoxLayer').show();
+			$('.menu_frame').css('height', window.innerHeight - 80);
+			
+			$('#data_area').load('/product/detail-selected?id=' + targetItemId + '&confirm=1');
+    	}
+    });
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+      
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:330px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value p.value {padding-left:0;padding-bottom:3px}
+#from_logo {width:200px;}
+.from p {margin-bottom:0.4em;}
+.from p.company_name {font-size:1.3em}
+table.stamp {width:auto;float:right;}
+table.stamp tr td {border:1px solid #000;text-align:center;width:60px;padding:0;}
+table.estimate_form tr td {padding:0;border-top:1px solid #000;border-bottom:1px solid #000;border-right:1px dotted #000;border-left:1px dotted #000;vertical-align:top}
+table.estimate_form tr td input[type="text"]{border:none;width:100%;}
+table.estimate_form tr td textarea{border:none;width:100%;}
+table.estimate_form tr td.td_item_action {width:50px;border-left:none;border-bottom:none;border-top:none;}
+table.estimate_form tr td.td_item_action .item_btn_frame {float:left;margin:8px 0 0 18px;}
+table.estimate_form tr td.td_item_action .item_btn_frame a {text-decoration:none;color:#000;font-size:1.6em;}
+table.estimate_form tr td.td_item_action .item_btn_frame a.select_product.active {color:#219c11}
+table.estimate_form tr td.td_action {width:50px;border-right:none;border-bottom:none;border-top:none;}
+table.estimate_form tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.estimate_form tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+textarea.flex {resize: none;padding: 8px;line-height: 20px;}
+.align_right {text-align:right;}
+.align_center {text-align:center;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+.multi_rows_padding {padding:5px 4px 5px 4px}
+.add_row_button_frame {height:34px;margin-left:50px;margin-right:50px;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+tr.selected_row td.cell {background-color:#ffefa6}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left base_frame">
+
+	<div class="col-xs-12">
+        <div class="item_title clearfix">
+        	<p class="item_name">使用中テンプレート：<?php echo $this->escape($this->formatData['title']); ?></p>
+        </div>
+	</div>
+	
+    <form id="register_form" action="javascript:void(0);" method="post">
+	    <?php
+            echo $this->partial('price-estimate/template_' . $this->formatData['id'] . '_confirm.phtml', array(
+    			'action'      => $this->action,
+    			'data'        => $this->data,
+    			'versionData' => $this->versionData,
+    			'createdUser' => $this->createdUser,
+    			'isPopup'     => false,
+    			'selectedRow' => $this->selectedRow,
+    			'groupData'   => $this->groupData,
+    		));
+        ?>
+        
+	    <?php if (!empty($this->approvalId)) { ?>
+		    <div class="private_memo">
+		    	<p>社内共有メモ</p>
+		    	<textarea  class="flex_other" name="memo_private" style="height:150px;width:1000px;"><?php echo $this->escape($this->versionData['memo_private']); ?></textarea>
+		    </div>
+		    
+		    <div class="private_memo">
+		    	<p>修正依頼／却下コメント</p>
+		    	<textarea  class="flex_other" name="approval_comment" style="height:150px;width:1000px;"><?php echo $this->escape($this->versionData['approval_comment']); ?></textarea>
+		    </div>
+	    <?php } else { ?>
+		    <div class="private_memo">
+		    	<p>社内共有メモ</p>
+		    	<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->versionData['memo_private'])); ?></div>
+		    </div>
+		    
+		    <div class="private_memo">
+		    	<p>修正依頼／却下コメント</p>
+		    	<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->versionData['approval_comment'])); ?></div>
+		    </div>
+	    <?php } ?>
+    </form>
+                   
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+
+

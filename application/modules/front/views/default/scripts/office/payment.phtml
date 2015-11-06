@@ -1,0 +1,124 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+    
+});    
+</script>
+<style type="text/css">
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:90px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:90px;padding:5px 0;margin:0;border:none;" href="/manufacture/sock-add">新規申請</a>
+            </p>
+	        <span style=""><strong>決裁申請</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>種別</p></th>
+				<th style="width:15%;"><p>備品資材ID</p></th>
+				<th><p>備品資材名</p></th>
+				<th style="width:10%;"><p>現在庫</p></th>
+				<th style="width:15%;"><p>最終更新日</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+
+
+<?php
+
+$items = array();
+/*
+$items[] = array(
+'type' => '製造材料',
+'id'   => 3,
+'name' => 'PAW-RB1原料',
+'stock' => "43.5",
+'unit' => 'kg',
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'type' => '製造消耗品',
+'id'   => 5,
+'name' => '原粉末　スクリュー管',
+'stock' => "96",
+'unit' => '個',
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'type' => '製造消耗品',
+'id'   => 9,
+'name' => 'ユニパックC-8　100h×70w',
+'stock' => "368",
+'unit' => '個',
+'updated' => '2018-09-09 00:00',
+);
+
+$this->items = $items;
+*/
+?>	
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<p><?php echo $each['type']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['id']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['name']); ?></a></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['stock']) . '　' . $this->escape($each['unit']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+						</td>
+
+						<td>
+							<p><a href="/office/payment-detail?id=<?php echo $this->escape($each['id']); ?>">詳細</a></p>
+						</td>					
+						
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">現在この機能は使用できません<?php /* データがありません*/ ?></p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

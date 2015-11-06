@@ -1,0 +1,233 @@
+<?php
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+		
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+
+	if ($('#format_id').val() == '') {
+		jAlert('取込フォーマットを選択してください。', 'エラー');
+  		return;
+	}
+	
+  	if (files.length > 1) {
+  		jAlert('CSVファイルは一枚ずつドロップしてください。', 'エラー');
+  		return;
+	}
+  
+	// アップロード処理へ
+	fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData();
+    formData.append('card_id', $('#card_id').val());
+    formData.append('paying_plan_date', $('#paying_plan_date').val());
+    formData.append('csv', fd);
+    	
+    showSpinner();
+
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url: '/transaction-paid/import-csv',
+      data: formData,
+      dataType :'json'
+    }).done(function(res){
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;
+        } else if (obj.result == 'NG') {
+        	stopSpinner();
+        	jAlert(obj.message, '　');
+        	return;
+        	
+        } else if (obj.result == 'OK') {
+        	stopSpinner();
+        	location.href = '/transaction-paid/card-import-detail?id=' + obj.id;
+        	return;
+        }
+        
+        jAlert('予期せぬエラーが発生しました', 'エラー');
+    });   
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		targetE.addEventListener('dragenter', function () {
+		    innerFlag = true;
+		}, false);
+		
+		targetE.addEventListener('dragover', function () {
+		    innerFlag = false;
+		    targetE.className = 'over';
+		}, false);
+		
+		targetE.addEventListener('dragleave', function () {
+		    if (innerFlag) {
+		        innerFlag = false;
+		    } else {
+		        targetE.className = '';
+		    }
+		}, false);
+    });
+    
+    // クレジットカード 選択ポップアップ表示
+    $(document).on('click', '#select_card', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial/card-list-select', null, function () {stopSpinner();});
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// クレジットカード 選択完了
+function selectCard(id, cardName, last4) {
+	$('#card_name').html(cardName + ' 下4ケタ: ' + last4);
+	$('#card_id').val(id);
+	$('.btn_close').click();
+}
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%; dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+table.list_default tr td.column_value input.datepicker[type="text"]{width:150px;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.menu_frame {background-color:#fff;width:1100px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value {border-right:none;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:120px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {float:left;width:20px;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding {width:280px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding.long {width:740px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value input[type="text"] {width:240px;display:block;float:left;}
+.menu_frame table.list_default tr td textarea{width:620px;height:60px;}
+.menu_frame table.list_default tr td.td_action {width:56px;border-right:none;padding-right:5px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+.menu_frame table.list_default.connection_base tr th {background-color:#bae0ff}
+.menu_frame table.list_default.connection_base tr:hover td {background:#fff;}
+.menu_frame table.list_default .multi_rows_padding {padding:5px 10px 5px 10px;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>カード支払完了確認 - 請求CSV取込</strong></span>
+        </div>
+    </div>
+
+    
+    <div class="clearfix">
+		<form id="register_form" action="#" method="post"> 
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right">
+	                    <p class="label_text strong">CSV取込</p>
+	                </th>
+	            </tr>
+			</table>
+	         
+	        <table class="list_default" style="margin-bottom:13px;">
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">対象カード<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p id="card_name">---</p>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix">
+	                    	<a class="option" id="select_card">カード選択</a>
+	                    	<input type="hidden" id="card_id" name="card_id" value="" />
+	                    </div>
+	                </td>
+	            </tr>
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">支払予定日<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+						<div class="clearfix">
+		                    <input type="text" class="datepicker" id="paying_plan_date" name="paying_plan_date" value="" maxlength="" />
+						</div>
+	                </td>
+	            </tr>
+	            	
+	            <tr>
+	                <td class="column_value" colspan="3">
+						<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)">
+							<span><i class="icon-upload-cloud" style="font-size:40px;color:#999;"></i><br />ファイルをドラッグしてください</span>
+						</div>
+	                </td>
+	            </tr>
+	
+			</table>
+		</form>
+		
+		<div id="import_result">
+		
+		</div>
+		
+	</div><!-- clearfix -->	
+    
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

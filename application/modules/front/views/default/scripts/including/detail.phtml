@@ -1,0 +1,803 @@
+<?php
+$statusList    = Shared_Model_Code::codes('including_plan_status');
+$termTypeList  = Shared_Model_Code::codes('including_plan_term_type');
+$uniqueList    = Shared_Model_Code::codes('including_plan_item_unique');
+$conditionItemList          = Shared_Model_Code::codes('including_plan_condition_item');
+$conditionItemOrderTimeList = Shared_Model_Code::codes('including_plan_condition_item_order_time');
+$conditionItemPurchasedList = Shared_Model_Code::codes('including_plan_condition_item_purchased');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/select2-4.0.5/dist/css/select2.css" />
+<script type="text/javascript" src="/resource/js/select2-4.0.5/dist/js/select2.min.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){        
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        <?php if ($this->data['start_date']) { ?>
+        $("#start_date").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->data['start_date'])); ?>"); 
+        <?php } ?>
+        
+        <?php if ($this->data['end_date']) { ?>
+        $("#end_date").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->data['end_date'])); ?>"); 
+        <?php } ?>
+        
+        $("#status").select2({minimumResultsForSearch: -1});
+        $("#term_type").select2({minimumResultsForSearch: -1});
+        $(".sortable_column .condition_item_id").select2();
+        $(".sortable_column .including_item_id").select2(); 
+    });
+
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+
+        var uuid = guid();
+        
+        if (categoryId == '2') {
+        	$('.column_copy_base_' + categoryId + ' .condition_item_id').attr('id', uuid + '_condition_item_id').attr('name', uuid + '_condition_item_id');
+        	$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-column', uuid);
+        	
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .condition_item_id').attr('id', '');
+	        
+	        $("#" + uuid + "_condition_item_id").select2();
+	        
+	        $('td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+	             
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result); 
+	        
+        } else { 
+	        $('.column_copy_base_' + categoryId + ' .including_item_id').attr('id', uuid + '_including_item_id').attr('name', uuid + '_including_item_id');
+	        $('.column_copy_base_' + categoryId + ' .including_item_amount').attr('id', uuid + '_including_item_amount').attr('name', uuid + '_including_item_amount');
+	        $('.column_copy_base_' + categoryId + ' .including_item_unique').attr('id', uuid + '_including_item_unique').attr('name', uuid + '_including_item_unique');
+	        $('.column_copy_base_' + categoryId + ' .delete_button').attr('target-column', uuid);
+	
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .including_item_id').attr('id', '');
+	        
+	        $("#" + uuid + "_including_item_id").select2();
+	        $("#" + uuid + "_including_item_unique").select2({minimumResultsForSearch: -1});
+	        
+	        $('td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+	             
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result); 
+        }
+    });
+     	
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-column');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+    
+    $(document).on('change', '.condition_type', function () {
+		$('#condition_item_id').val('');
+		$('#condition_subscription_start').val('');
+		$('#condition_subscription_end').val('');
+		$('#condition_subscription_intervals').val('');
+    });
+    	    
+    //
+    // 戻る
+    //
+    $(".btn_back").click(function(){
+   		location.href = "/management/used";
+	});
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+
+        var elems = Array.prototype.slice.call(document.querySelectorAll('.switch_' + categoryId));
+    
+        elems.forEach(function(html) {
+          var switchery = new Switchery(html, { size: 'small' });
+        });
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+        
+        if (categoryId == '2') {
+        	$('.condition_item table.list_default').removeClass('not_editing');
+        	
+        	var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+            
+        } else if (categoryId == '3') {
+        	$('tr.display_value_' + categoryId).remove();
+        	
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        }
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/including/update-basic?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/including/update-condition?id=<?php echo $this->id ?>';	
+		} else if (categoryId == '3') {
+			apiUrl = '/including/update-items?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '/including';
+        	} else {
+            	location.href = '/including/detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/including/detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 削除
+    $(document).on('click', '.btn_delete_menu', function () {
+       jConfirm('本当に削除しますか', '　', function(r) {
+        	if(r) {
+        	   $.ajax({
+                    type:'POST',
+                    dataType:'html',
+                    data: 'id=<?php echo $this->id ?>',
+                    success: function(res){
+                        reloadFlag = true;
+                        deletedFlag = true;
+                        jAlert('削除しました', '　');
+                    },
+                    error: function(){
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/including/delete'
+                });
+                
+        	} else {
+        	    return false;
+        	}
+        });
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td.column_value input.datepicker[type="text"]{width:150px;}
+input[type="radio"] {float:left;padding: 11px 0 0 12px}
+
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+table.list_default tr td.td_including_item_name {width:630px;border-right:none;}
+table.list_default tr td.td_including_item_amount {width:210px;border-right:none;}
+table.list_default tr td.td_including_item_unique {border-right:none;}
+table.list_default tr td.td_action {width:45px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+p.including_item_label {float:left; margin-right: 10px;}
+select.including_item_id {width:530px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;}
+input.including_item_amount {width:100px;}
+select.including_item_unique {width:180px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;}
+.select2-container {margin-top:5px;}
+.condition_item p {padding:11px 0 0 12px;overflow:hidden;height:15px;}
+.condition_item table.list_default tr td {border-bottom:1px solid #ccc;}
+.condition_item table.list_default.not_editing tr:last-child td {border-bottom:none}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>同梱施策 - 詳細</strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">基本情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">施策ID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->data['id']; ?></p>
+                </td>
+            </tr>
+                 
+            <tr>
+                <td class="column_label"><p class="label_text">検品用棚番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['shelf_no']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="shelf_no" value="<?php echo $this->escape($this->data['shelf_no']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">施策名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="name" value="<?php echo $this->escape($this->data['name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">適用</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                        <?php echo $statusList[$this->data['status']]; ?>
+                    </p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+            			<select id="status" name="status" style="width:100px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;">
+	                    	<?php foreach ($statusList as $key => $val) { ?>
+	                            <option value="<?php echo $key; ?>" <?php if ($key == $this->data['status']) { echo 'selected="selected"'; } ?>><?php echo $val; ?></option>
+	                        <?php } ?>
+	                    </select>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">適用期間 判定基準</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+						<?php echo $termTypeList[$this->data['term_type']]; ?>
+					</p>
+					
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+            			<select id="term_type" name="term_type" style="width:280px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;">
+	                    	<?php foreach ($termTypeList as $key => $val) { ?>
+	                            <option value="<?php echo $key; ?>" <?php if ($key == $this->data['term_type']) { echo 'selected="selected"'; } ?> ><?php echo $val; ?></option>
+	                        <?php } ?>
+	                    </select>
+                    </div>
+					
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">適用期間 開始日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php if (!empty($this->data['start_date'])) { echo $this->escape($this->data['start_date']); } else { echo '---'; } ?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                		<input type="text" id="start_date" name="start_date" class="datepicker" value="<?php echo $this->escape($this->data['start_date']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">適用期間 終了日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+					<?php if (!empty($this->data['end_date'])) { echo $this->escape($this->data['end_date']); } else { echo '---'; } ?>
+					</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                		<input type="text" id="end_date" name="end_date" class="datepicker" value="<?php echo $this->escape($this->data['end_date']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+		</table>
+		</form>
+
+	    <?php
+        /* 同梱条件 */
+        $categoryId = 2;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">同梱条件</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <td class="column_label">
+               		<div class="display_value_<?php echo $categoryId; ?> label_text">
+                		<p><i class="<?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ALL) { echo 'icon-check-1'; } else { echo 'icon-check-empty'; } ?>" style="margin-right:3px;"></i>&nbsp;全ての発送に同梱</p>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> label_text" style="display:none;">
+                		<p><label><input type="radio" class="condition_type" name="condition_type" value="<?php echo Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ALL; ?>" <?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ALL){ echo 'checked="checked"'; } ?> />&nbsp;全ての発送に同梱</label></p>
+                	</div>
+                </td>
+                <td class="colon"><p class="label_text">&nbsp;</p></td>
+                <td class="column_value">&nbsp;</td>
+            </tr>
+        </table>
+        <?php /*
+		<table class="list_default" style="margin-bottom:0;">  
+            <tr>
+                <td class="column_label" style="height:34px;">
+               		<div class="display_value_<?php echo $categoryId; ?> label_text">
+                		<p><i class="<?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM) { echo 'icon-check-1'; } else { echo 'icon-check-empty'; } ?>" style="margin-right:3px;"></i>&nbsp;対象商品を含む場合に同梱</p>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> label_text" style="display:none;">
+                		<p><label><input type="radio" class="condition_type" name="condition_type" value="<?php echo Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM; ?>" <?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM){ echo 'checked="checked"'; } ?> />&nbsp;対象商品を含む場合に同梱</label></p>
+                	</div>
+                </td>
+                <td class="colon"><p class="label_text">&nbsp;</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?>">
+                	    <div class="clearfix">
+                	    	<p style="float:left;width:100px;">商品名：</p>
+                	    	<div style="float:left;width:700px;">
+                	    		<?php if (!empty($this->productItems)) { ?>
+	                	    		<?php foreach ($this->productItems as $each) { ?>
+	                	    			<?php if ($each['id'] == $this->data['condition_item_id']) { ?>
+	                	    				<p><?php echo $this->escape($each['item_name']); ?></p>
+	                	    			<?php } ?>
+	                	    		<?php } ?>
+                	    		<?php } ?>
+                	    	</div>
+                	    </div>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<div class="clearfix">
+							<p style="float:left;width:100px;">商品名：</p>
+	                		<select class="condition_item_id" id="condition_item_id" name="condition_item_id" style="display:block;float:left;width:700px;">
+		                    	<option value="">---</option>
+		                    	<?php foreach ($this->productItems as $each) { ?>
+		                            <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] == $this->data['condition_item_id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($each['item_name']); ?></option>
+		                        <?php } ?>
+		                    </select>
+                		</div>
+                	</div>
+                </td>
+            </tr>
+        </table>
+        */ ?>
+        
+        <!--new -->
+    	<div class="condition_item clearfix" style="border-bottom:1px solid #ccc">
+    		<div style="float:left;width:180px;height:34px;">
+			    <div class="display_value_<?php echo $categoryId; ?> label_text">
+            		<p><i class="<?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM) { echo 'icon-check-1'; } else { echo 'icon-check-empty'; } ?>" style="margin-right:3px;"></i>&nbsp;対象商品を含む場合に同梱</p>
+            	</div>
+            	<div class="edit_value_<?php echo $categoryId; ?> label_text" style="display:none;">
+            		<p><label><input type="radio" class="condition_type" name="condition_type" value="<?php echo Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM; ?>" <?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_ORDER_ITEM){ echo 'checked="checked"'; } ?> />&nbsp;対象商品を含む場合に同梱</label></p>
+            	</div>
+    		</div>
+    		<div style="float:left;width:920px;">
+				<table class="list_default not_editing" style="margin-bottom:0;">
+					<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+						<?php if (!empty($this->data['condition_item_ids'] )) { ?>
+							<?php foreach ($this->data['condition_item_ids']  as $eachConditionItem) { ?>
+					            <tr id="<?php echo $eachConditionItem['id']; ?>">
+					                <td class="colon"><p class="label_text">&nbsp;</p></td>
+					                <td class="column_value">
+				                		<div class="clearfix">
+											<p style="float:left;width:100px;">商品名：</p>
+											<div class="display_value_<?php echo $categoryId; ?>" style="float:left;width:700px;">	
+												<?php
+								        		$targetItem = $this->productItems[$eachConditionItem['condition_item_id']];
+				
+								        		$itemName = '';
+								        		if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+													$itemName = $targetItem['item_name'];
+												} else if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+													$itemName = $targetItem['supply_product_name'];
+												} else if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+													$itemName = $targetItem['supply_fixture_name'];
+												} else {
+													$itemName = $targetItem['stock_name'];
+												}
+												
+												?>
+												<p><?php echo $this->escape($itemName); ?></p>
+				                	    	</div>
+											<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:700px;">
+						                		<select class="condition_item_id" id="<?php echo $eachConditionItem['id']; ?>_condition_item_id" name="<?php echo $eachConditionItem['id']; ?>_condition_item_id" style="display:block;width:700px;">
+							                    	<option value="">---</option>
+							                    	<?php foreach ($this->productItems as $each) { ?>
+										        		<?php
+										        		$itemName = '';
+										        		if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+															$itemName = $each['item_name'];
+														} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+															$itemName = $each['supply_product_name'];
+														} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+															$itemName = $each['supply_fixture_name'];
+														} else {
+															$itemName = $each['stock_name'];
+														}
+														?>
+							                            <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] == $eachConditionItem['condition_item_id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($itemName); ?></option>
+							                        <?php } ?>
+							                    </select>
+						                    </div>
+				                		</div>
+					                </td>
+					                <td class="td_action">
+					                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+					                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column="<?php echo $eachConditionItem['id']; ?>"><i class="icon-cancel"></i></a>
+					                	</div>
+					                </td>
+					            </tr>
+				            <?php } ?>
+			            <?php } ?>
+		            </tbody>
+		        </table>
+		        <div class="edit_value_<?php echo $categoryId; ?>" style="height:34px;display:none;">
+		            <p style="text-align:center;padding:0;height:auto;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+		        </div>
+		        <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="item_list" value="" />
+    		</div>
+    	</div>
+        <!--new -->
+
+        
+        <table class="list_default" style="margin-bottom:13px;">    
+            <tr>
+                <td class="column_label">
+               		<div class="display_value_<?php echo $categoryId; ?> label_text">
+                		<p><i class="<?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SINGLE_ORDER) { echo 'icon-check-1'; } else { echo 'icon-check-empty'; } ?>" style="margin-right:3px;"></i>&nbsp;単発注文の場合に同梱</p>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> label_text" style="display:none;">
+                		<p><label><input type="radio" class="condition_type" name="condition_type" value="<?php echo Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SINGLE_ORDER; ?>" <?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SINGLE_ORDER){ echo 'checked="checked"'; } ?> />&nbsp;単発注文の場合に同梱</label></p>
+                	</div>
+                </td>
+                <td class="colon"><p class="label_text">&nbsp;</p></td>
+                <td class="column_value">&nbsp;</td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label" style="height:34px;">
+               		<div class="display_value_<?php echo $categoryId; ?> label_text">
+                		<p><i class="<?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SUBSCRIPTION_ORDER) { echo 'icon-check-1'; } else { echo 'icon-check-empty'; } ?>" style="margin-right:3px;"></i>&nbsp;定期注文の場合に同梱</p>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> label_text" style="display:none;">
+                		<p><label><input type="radio" class="condition_type" name="condition_type" value="<?php echo Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SUBSCRIPTION_ORDER; ?>" <?php if ($this->data['condition_type'] == Shared_Model_Code::INCLUDING_PLAN_CONDITION_TYPE_SUBSCRIPTION_ORDER){ echo 'checked="checked"'; } ?> />&nbsp;定期注文の場合に同梱</label></p>
+                	</div>
+                </td>
+                <td class="colon"><p class="label_text">&nbsp;</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?>">
+                	    <div class="clearfix">
+                	    	<p style="float:left;width:100px;">開始回数：</p>
+                	    	<p style="float:left;width:100px;"><?php if (!empty($this->data['condition_subscription_start'])) { echo $this->escape($this->data['condition_subscription_start']); } else { echo '---'; } ?></p>
+                	    	<p style="float:left;width:100px;">終了回数：</p>
+                	    	<p style="float:left;width:100px;"><?php if (!empty($this->data['condition_subscription_end'])) { echo $this->escape($this->data['condition_subscription_end']); } else { echo '---'; } ?></p>
+                	    	<p style="float:left;width:100px;">間隔(回ごと)：</p>
+                	    	<p style="float:left;width:100px;"><?php if (!empty($this->data['condition_subscription_intervals'])) { echo $this->escape($this->data['condition_subscription_intervals']); } else { echo '---'; } ?></p>
+                	    </div>
+						
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                	    <div class="clearfix">
+                	    	<p style="float:left;width:100px;">開始回数：</p>
+                	    	<div style="float:left;width:100px;"><input style="float:left" type="text" id="condition_subscription_start" name="condition_subscription_start" value="<?php echo $this->escape($this->data['condition_subscription_start']); ?>" /></div>
+                	    	<p style="float:left;width:100px;">終了回数：</p>
+                	    	<div style="float:left;width:100px;"><input style="float:left" type="text" id="condition_subscription_end" name="condition_subscription_end" value="<?php echo $this->escape($this->data['condition_subscription_end']); ?>" /></div>
+                	    	<p style="float:left;width:100px;">間隔(回ごと)：</p>
+                	    	<div style="float:left;width:100px;"><input style="float:left" type="text" id="condition_subscription_intervals" name="condition_subscription_intervals" value="<?php echo $this->escape($this->data['condition_subscription_intervals']); ?>" /></div>
+                	    </div>
+                	</div>
+                	
+                </td>
+            </tr>
+        </table>
+        </form>
+
+		<!--new column add -->
+        <table style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row colon"><p class="label_text">&nbsp;</p></td>
+                <td class="added_row column_value">
+            		<div class="clearfix">
+						<p style="float:left;width:100px;">商品名：</p>	
+						<div style="float:left;width:700px;">
+	                		<select class="condition_item_id" id="$$$_condition_item_id" name="condition_item_id" style="display:block;width:700px;">
+		                    	<option value="">---</option>
+		                    	<?php foreach ($this->productItems as $each) { ?>
+					        		<?php
+					        		$itemName = '';
+					        		if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+										$itemName = $each['item_name'];
+									} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+										$itemName = $each['supply_product_name'];
+									} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+										$itemName = $each['supply_fixture_name'];
+									} else {
+										$itemName = $each['stock_name'];
+									}
+									?>
+		                            <option value="<?php echo $each['id']; ?>"><?php echo $this->escape($itemName); ?></option>
+		                        <?php } ?>
+		                    </select>
+	                    </div>
+            		</div>
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column="$$$"><i class="icon-cancel"></i></a>
+                	</div>
+                </td>
+            </tr>
+        </table>
+        <!--new column add -->
+
+
+	    <?php
+        /* 同梱商品 */
+        $categoryId = 3;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">同梱品</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom: 0px;">
+            <tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+            	<?php if (!empty($this->data['including_items'])) { ?>
+	                <?php foreach ($this->data['including_items'] as $each) { ?>
+	                    <tr id="<?php echo $each['id']; ?>">
+	                        <td class="td_including_item_name">
+	                            <p class="including_item_label">同梱品：</p>
+
+			        			<?php
+				        		$targetItem = $this->includingItemList[$each['item_id']];
+
+				        		$itemName = '';
+				        		if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+									$itemName = $targetItem['item_name'];
+								} else if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+									$itemName = $targetItem['supply_product_name'];
+								} else if ($targetItem['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+									$itemName = $targetItem['supply_fixture_name'];
+								} else {
+									$itemName = $targetItem['stock_name'];
+								}
+								
+								?>
+											
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $itemName; ?></p>
+			                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+				                	<select class="including_item_id" name="<?php echo $each['id']; ?>_including_item_id">
+				                    	<option value="">---</option>
+				                    	<?php foreach ($this->includingItemList as $eachSelection) { ?>
+							        		<?php
+							        		$itemName = '';
+							        		if ($eachSelection['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+												$itemName = $eachSelection['item_name'];
+											} else if ($eachSelection['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+												$itemName = $eachSelection['supply_product_name'];
+											} else if ($eachSelection['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+												$itemName = $eachSelection['supply_fixture_name'];
+											} else {
+												$itemName = $eachSelection['stock_name'];
+											}
+											?>
+				                            <option value="<?php echo $eachSelection['id']; ?>" <?php if ($eachSelection['id'] == $each['item_id']) { echo 'selected="selected"'; } ?>><?php echo $itemName; ?></option>
+				                        <?php } ?>
+				                    </select>
+			                    </div>
+	                        </td>
+							<td class="td_including_item_amount">
+								<p class="including_item_label">数量：</p>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($each['item_amount']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+									<input type="text" class="including_item_amount" name="<?php echo $each['id']; ?>_including_item_amount" value="<?php echo $this->escape($each['item_amount']); ?>" />
+								</div>
+							</td>
+							<td class="td_including_item_unique">
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $uniqueList[$each['item_unique']]; ?></p>
+			                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+				                	<select class="including_item_unique" name="<?php echo $each['id']; ?>_including_item_unique">
+				                    	<?php foreach ($uniqueList as $key => $val) { ?>
+				                    		<option value="<?php echo $key; ?>" <?php if ($key == $each['item_unique']) { echo 'selected="selected"'; } ?>><?php echo $val; ?></option>
+				                    	<?php } ?>
+				                    </select>
+			                    </div>
+							</td>
+	                        <td class="td_action">
+			                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+			                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column="<?php echo $each['id']; ?>"><i class="icon-cancel"></i></a>
+			                	</div>
+	                        </td>
+	                    </tr>
+	                <?php } ?>
+		       	<?php } else { ?>
+		            <tr class="display_value_<?php echo $categoryId; ?>">
+		                <td colspan="4">
+		                	<p>同梱品が選択されていません</p>
+		                </td>
+		            </tr>
+	            <?php } ?>
+            </tbody>
+        </table>
+        <div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #ccc;height:34px;display:none;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+        <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="item_list" value="" />
+        </form>    
+                   
+        <table style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row td_including_item_name">
+                	<p class="including_item_label">同梱品：</p>
+                	<select class="including_item_id" name="including_item_id">
+                    	<option value="">---</option>
+                    	<?php foreach ($this->includingItemList as $each) { ?>
+			        		<?php
+			        		$itemName = '';
+			        		if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+								$itemName = $each['item_name'];
+							} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+								$itemName = $each['supply_product_name'];
+							} else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+								$itemName = $each['supply_fixture_name'];
+							} else {
+								$itemName = $each['stock_name'];
+							}
+							?>
+                            <option value="<?php echo $each['id']; ?>"><?php echo $each['item_name']; ?></option>
+                        <?php } ?>
+                    </select>
+                </td>
+                <td class="added_row td_including_item_amount">
+                	<p class="including_item_label">数量：</p>
+                	<input type="text" class="including_item_amount" name="including_item_amount" value="1" />
+                </td>
+                <td class="added_row td_including_item_unique">
+                	<select class="including_item_unique" name="including_item_unique">
+                    	<?php foreach ($uniqueList as $key => $val) { ?>
+                    		<option value="<?php echo $key; ?>"><?php echo $val; ?></option>
+                    	<?php } ?>
+                    </select>
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column=""><i class="icon-cancel"></i></a>
+                	</div>
+                </td>
+            </tr>
+        </table>
+
+	</div><!-- clearfix -->
+	                
+</div>
+</div>
+</div>
+</div>
+

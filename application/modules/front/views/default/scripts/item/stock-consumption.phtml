@@ -1,0 +1,155 @@
+<?php
+$statusList    = Shared_Model_Code::codes('item_status');
+$typeList      = Shared_Model_Code::codes('item_type');
+$subActionList = Shared_Model_Code::codes('stock_sub_search');
+?>
+<script type="text/javascript"><!--
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+
+        <?php if (!empty($this->conditions['from'])) { ?>
+        $("#from").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->conditions['from'])); ?>"); 
+        <?php } ?>
+           
+        <?php if (!empty($this->conditions['to'])) { ?>
+        $("#to").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->conditions['to'])); ?>"); 
+        <?php } ?> 
+    }); 
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:150px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>在庫管理 - <?php echo $typeList[$this->data['item_type']]; ?>詳細</strong></span>
+        </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        	<p class="stock">引当可能在庫数：<?php echo $this->escape($this->data['useable_count']); ?></p>
+        	<p class="stock">実在庫数：<?php echo $this->escape($this->data['stock_count']); ?></p>
+        </div>
+    	<?php
+            echo $this->partial('item/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    			'itemType'  => $this->data['item_type'],
+    		));
+        ?>
+    </div>
+    
+    <div class="clearfix">
+
+	    <?php
+        /* 在庫履歴 */
+        $categoryId = 2;
+        ?>
+        
+		<form id="form_category_<?php echo $categoryId; ?>">
+
+		<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+			<div class="condition_items clearfix">
+				<form action="#" method="get">
+					<p class="search_condition_title">検索条件</p>
+					
+					<div class="condition_items_row clearfix">		
+						<div class="condition_item">
+							<p class="condition_label">アクション：</p>
+	                        <select id="sub_action" name="sub_action">
+	                            <option value="">---</option>
+	                        	<?php foreach ($subActionList as $key => $value) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['sub_action']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+	                            <?php } ?>
+	                        </select>
+						</div>
+
+						<div class="condition_item">
+							<p class="condition_label">日時(From)：</p>
+	                        <input type="text" name="from" id="from" class="datepicker" value="" />
+						</div>
+						
+						<div class="condition_item">
+							<p class="condition_label">日時(To)：</p>
+	                        <input type="text" name="to" id="to" class="datepicker" value="" />
+						</div>
+					</div>
+					
+					<input type="submit" value="検索" />
+				
+				</form>
+			</div>
+		</div>
+
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border:1px solid #ddd;"><p class="label_text strong">出庫履歴</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+			<tr>
+				<td style="width:12%;"><p><strong>出庫ID</strong></p></td>
+				<td style="width:16%;"><p><strong>日時</strong></p></td>
+				<td style="width:13%;"><p><strong>アクション</strong></p></td>
+				<td style="width:12%;"><p><strong>対象在庫ID</strong></p></td>
+				<td style="width:9%;"><p><strong>数量</strong></p></td>
+				<td><p><strong>備考</strong></p></td>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+	                <tr>
+	                	<td><p><?php echo $this->escape($each['id']); ?></p></td>
+	                    <td><p><?php echo date('Y/m/d H:i', strtotime($each['action_date'])); ?></p></td>
+						<td>
+	                    	<p><?php echo $subActionList[$each['action_code']]; ?></p>
+	                    </td>
+						<td>
+	                    	<p><?php echo $this->escape($each['target_stock_id']); ?></p>
+	                    </td>
+	                    <td>
+	                    	<p><?php echo $this->escape($each['sub_count']); ?></p>
+	                    </td>
+	                    <td>
+							&nbsp;
+	                    </td>
+
+	                </tr>
+				<?php } ?>
+			<?php } else { ?>
+                <tr>
+                	<td colspan="8"><p style="text-align:center;">出庫履歴はありません</p></td>
+                </tr>
+			<?php } ?>
+		</table>
+		</form>
+		
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>

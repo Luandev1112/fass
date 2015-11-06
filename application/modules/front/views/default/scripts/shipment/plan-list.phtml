@@ -1,0 +1,463 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+$orderSiteList    = Shared_Model_Code::codes('order_site_type');
+
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        Tipped.create('#help_assign', "本日までの新規注文の検品者割当を行います");
+        Tipped.create('#help_pdf', "納品明細書の印刷をします");
+        Tipped.create('#help_yamato_export', "ヤマトB2クラウドでの送り状印刷データを出力します");
+        Tipped.create('#help_yamato_import', "ヤマトB2クラウドの伝票番号を読み込みます");
+        Tipped.create('#help_ec_cube', "EC-Cube向けに伝票番号を出力します");
+        Tipped.create('#help_shipped', "検品済みの注文を発送済みに変更します");
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+    
+
+
+    // 請求書データ取得
+    $(document).on('click', '#btn_invoice_data', function () {
+		showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'json',
+            data:null,
+            success:function(res){
+            	stopSpinner();
+                reloadFlag = true;
+                jAlert('取得しました', '　');
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/shipment/jaccs-import-invoice-data'
+        });
+    });
+
+    // 明細書PDF出力
+    $(document).on('click', '#btn_export_statement', function () {
+    	var userId = $('#inspection_user_id_statement').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_statement option:selected').text().replace(/\s+/g, '');
+    	
+    	$(this).attr('href', '/shipment/export-statement/' + userId + '/明細書印刷用_' + txt + getTimeStamp() + '.pdf');
+    });
+    
+    // JACCS印刷用データ CSV出力
+    $(document).on('click', '#btn_export_jaccs', function () {
+    	var userId = $('#inspection_user_id_jaccs').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_jaccs option:selected').text().replace(/\s+/g, '');
+    	
+    	$(this).attr('href', '/shipment/export-jaccs/' + userId + '/jaccs' + txt + getTimeStamp() + '.csv');
+    });
+    
+	// ヤマト配送伝票データ出力
+    $(document).on('click', '#btn_export_yamato', function () {
+    	var userId = $('#inspection_user_id_yamato').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_yamato option:selected').text().replace(/\s+/g, '');
+
+    	$(this).attr('href', '/shipment/export-yamato/' + userId + '/B2クラウド印刷用出力_' + txt + getTimeStamp() + '.csv');
+    });
+    
+	// EC-Cube用伝票番号出力
+	/*
+    $(document).on('click', '#btn_export_delivery_code', function () {
+        showSpinner();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:'',
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    location.href = '/shipment/export-delivery-code/EC-Cube用伝票番号出力' + getTimeStamp() + '.csv';
+                } else {
+                    jAlert(obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/shipment/check-delivery-code',
+        });    	
+    });
+    */
+
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/shipment/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+ 
+
+
+ 
+    // ページ再読み込み
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/shipment/plan-list?pos=' + $(window).scrollTop();
+        }
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr td {overflow:inherit;}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:60px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+table.list_default tr th p, table.list_default tr td p {padding-left:0.3em;}
+table.list_default tr th p.center, table.list_default tr td p.center {padding-left:0;}
+.delivery_code {color:#04a127;}
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+    
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:120px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:120px;padding:5px 0;margin:0;border:none;" href="/shipment/import">注文データ取込</a>
+            </p>
+	        <span style=""><strong>未出荷リスト</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">注文サイト：</p>
+						<select id="order_from_site" name="order_from_site">
+                            <option value="">---</option>
+                            <?php foreach ($orderSiteList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key == $this->conditions['order_from_site']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>	
+
+					<div class="condition_item">
+						<p class="condition_label">注文ID：</p>
+						<input type="text" name="relational_order_id" value="<?php echo $this->escape($this->conditions['relational_order_id']); ?>" />
+					</div>
+					
+					<?php /*
+					<div class="condition_item">
+						<p class="condition_label">検品者：</p>
+	                    <select id="inspection_user_id" name="inspection_user_id">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                            <option value="<?php echo $eachUser['id']; ?>" <?php if ($eachUser['id'] == $this->conditions['inspection_user_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+					</div>
+					*/ ?>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+
+			<div class="condition_items_row clearfix">
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">検品担当割当：&nbsp;<span class="popup_help" id="help_assign"><i class="icon-help-circled"></i></span></p>
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/assign">割当設定画面へ</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">アトディーネ印刷データ：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_invoice_data" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="javascript:void(0);">印刷データ取得</a>
+					</div>
+				</div>	
+				
+				<div class="clearfix" style="float:left;width:280px;">
+					<p class="action_title">明細書PDF出力：<span class="popup_help" id="help_pdf"><i class="icon-help-circled"></i></span></p>
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_statement" name="inspection_user_id_statement" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                            <?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_statement" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:380px;">
+					<p class="action_title">アトディーネ印刷データ出力：<span class="popup_help" id="help_pdf"><i class="icon-help-circled"></i></span></p>
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_jaccs" name="inspection_user_id_jaccs" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                            <?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_jaccs" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="">請求書データ出力</a>
+					</div>
+				</div>
+			</div><!-- condition items row -->
+			<div class="condition_items_row clearfix">	
+				<?php /*
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">EC-Cube用伝票番号出力：&nbsp;<span class="popup_help" id="help_ec_cube"><i class="icon-help-circled"></i></span></p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_export_delivery_code" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+				*/ ?>
+
+				<div class="clearfix" style="float:left;width:280px;">
+					<p class="action_title">ヤマト配送伝票データ出力：&nbsp;<span class="popup_help" id="help_yamato_export"><i class="icon-help-circled"></i></span></p>
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_yamato" name="inspection_user_id_yamato" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                    		<?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_yamato" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">ヤマト配送番号取込：&nbsp;<span class="popup_help" id="help_yamato_import"><i class="icon-help-circled"></i></span></p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/b2-import">取り込み画面へ</a>
+					</div>
+				</div>
+				
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">発送済み実行：&nbsp;<span class="popup_help" id="help_shipped"><i class="icon-help-circled"></i></span></p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_shipped" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/shipped">発送済み実行画面へ</a>
+					</div>
+				</div>
+				
+
+			</div>
+		</div>
+	</div>
+	
+	
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>発送予定日</p></th>
+				<?php /*<th style="width:8%;"><p>お届け希望日</p></th>*/ ?>
+				<th style="width:7%;"><p>ステータス</p></th>
+				<th style="width:6%;"><p>サイト</p></th>
+				<th style="width:8%;"><p>注文ID</p></th>
+				<th style="width:3%;"><p class="center">定期</p></th>
+				<th style="width:7%;"><p>注文日</p></th>
+				<th style="width:4%;"><p>日指定</p></th>
+				<th style="width:10%;"><p>支払方法</p></th>
+				<th style="width:3%;"><p class="center">同梱</p></th>
+				<th style="width:11%;"><p>配送方法</p></th>
+				<th><p>配送先</p></th>
+				<th style="width:5%;"><p>明細出力</p></th>
+				<th style="width:5%;"><p class="center">配送番号</p></th>
+				<th style="width:7%;"><p>検品者</p></th>
+				<th style="width:4%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php $today = strtotime(date('Y-m-d')); ?>
+			<?php ini_set('display_errors', false); ?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td <?php if (strtotime($each['shipment_plan_date']) > $today) { echo 'style="background-color:#b3eaff;"'; } ?> >
+							<p><?php echo $this->escape($each['shipment_plan_date']); ?></p>
+						</td>
+						
+						<?php /*
+						<td>
+							<?php if (!empty($each['delivery_request_date']) && $each['delivery_request_date'] !== '0000-00-00') { ?>
+	                			<p><?php echo date('Y-m-d', strtotime($each['delivery_request_date'])); ?></p>
+	                		<?php } else { ?>
+	                			<p>---</p>
+	                		<?php } ?>
+						</td>
+						*/ ?>
+						
+						<td>
+							<p <?php if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_NEW) { echo 'style="color:#f00;"'; } else if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { echo 'style="color:#ff8ddc;font-weight:bold;"'; } ?>><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $orderSiteList[$each['order_from_site']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['relational_order_id']); ?></p>
+						</td>
+
+						<td>
+							<p class="center"><?php if (!empty($each['subscription_id'])) { echo '●'; } ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y-m-d', strtotime($each['order_datetime'])); ?></p>
+						</td>
+						
+						<td>
+							<p class="center"><?php if (!empty($each['delivery_request_date'])) { echo '<span class="delivery_code">●</span>'; } ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $paymentTypeList[$each['payment_method']]; ?></p>
+						</td>
+
+						<td>
+							<?php if (!empty($each['jaccs_with_package'])) { ?>
+								<?php if (!empty($each['jaccs_invoice_data'])) { ?>
+									<p class="center"><span class="delivery_code">●</p>
+								<?php } else { ?>
+									<p class="center">●</p>
+								<?php } ?>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<?php if (empty($each['delivery_method'])) { ?>
+								<p><strong class="red">未設定</strong></p>
+							<?php } else { ?>
+								<p><?php echo $deliveryTypeList[$each['delivery_method']]; ?></p>
+							<?php } ?>
+						</td>
+
+						<td>
+							<p><?php echo $this->roundText($this->escape($each['order_customer_name']), 8); ?></p>
+						</td>
+
+						<td>
+							<p class="center"><?php if (!empty($each['statement_exported'])) { ?><span class="delivery_code">●</span><?php } ?></p>
+						</td>
+						
+						<td>	
+							<p class="center"><?php if (!empty($each['delivery_code'])) { echo '&nbsp;<span class="delivery_code">●</span>'; } ?></p>
+						</td>
+						
+						<td>
+							<?php if (empty($each['inspection_user_name'])) { ?>
+								<p><strong class="red">未割当</strong></p>
+							<?php } else { ?>
+								<p><?php echo $this->roundText($this->escape($each['inspection_user_name']), 5); ?></p>
+							<?php } ?>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_NEW || $each['status'] == Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p><a href="/shipment/detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="15">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

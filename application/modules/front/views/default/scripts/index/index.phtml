@@ -1,0 +1,503 @@
+<?php
+?>
+<script type="text/javascript" src="/resource/js/jquery-match-height-0.7.2/dist/jquery.matchHeight-min.js"></script>
+<script type="text/javascript">
+var pos = 0;
+$(function () {
+	$(document).ready(function(){
+		$('.block').matchHeight();
+	});
+    $(document).on('click', '#btn_shipment', function () {
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		
+    	pos = $(window).scrollTop();
+
+    	$('body').addClass('body_fixed').css({'top':0});
+    	$('.popup_content').html($('.menu_frame_base').html());
+		$('#glayLayer').css('z-index', '500').show();
+		$('#overBoxLayer').show();
+
+		$('#overBoxLayer .container').css('height', window.innerHeight - 80);
+		$('.popup_content').css('height', $('#overBoxLayer .container').height() - $('#overBoxLayer .btn_close_popup').outerHeight());
+		
+    });
+    $(document).on('click', '.btn_close', function () {
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+
+    $(document).on('click', '.select_base', function () {
+		var targetId = $(this).attr('target-id');
+		showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'json',
+            data:null,
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+	                <?php if ($this->allowEditing === true) { ?>
+                    	location.href = '/shipment';
+                    <?php } else { ?>
+                    	location.href = '/stock/list/product';
+                    <?php } ?>
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/shipment/login?target_id=' + targetId,
+        });
+    });
+
+    // ポップアップ閉じる
+    $(document).on('click', '.btn_close_popup', function () {
+    	$('body').removeClass('body_fixed').css({'top':pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    }); 
+});    
+</script>
+<style type="text/css">
+table.list_default tr td.column {border-right:none;}
+table.list_default tr td.column p {padding-left:12px;}
+.main_menu_frame {background-color:#fafafa;}
+.main_menu_frame .col-12{margin-bottom:5px;}
+.main_menu_frame a.block {display:block;background-color:#222;color:#fff;padding:0.4em 0.6em;text-decoration:none;}
+.main_menu_frame a.block:hover{background-color:#63b02d;color:#fff;}
+.main_menu_frame a.block span.title{font-size:1.24em;}
+.main_menu_frame a.block span.contents{font-size:1.0em;display:inline-block;height:2.8em;line-height:1.4}
+/*.main_menu_frame a {display:block;width:100%;height:40px;padding-top:10px;background-color:#63b02d;color:#fff;text-decoration:none;text-align:center;border-radius:5px;margin-bottom:5px;font-size:1.3em;}*/
+.main_menu_frame a.block.gray {background-color:#ccc}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:300px;margin:5.0em auto;font-size:1.3em;}
+.menu_frame p {padding:1.4em 0;margin:0;text-align:center;line-height:1}
+.menu_frame a.select_base {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;}
+.menu_frame a.select_base:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;}
+.main_menu_indicator {background:#f00;width:30px;height:30px;border-radius:50%;font-size:1.3em;position:absolute;right:20px;top:20px;}
+.main_menu_indicator span{display:block;text-align:center;padding-top:3px;}
+
+.fass_label{display:inline-block;color:#fff;width:8em;background-color:#444;text-align:center;padding:0.3em;}
+.goosa_label{display:inline-block;color:#fff;width:8em;background-color:#0f826f;text-align:center;padding:0.3em;}
+.goosca_label{display:inline-block;color:#fff;width:8em;background-color:#00b6e9;text-align:center;padding:0.3em;}
+.approval_count {display:inline-block;padding:0.3em 0.6em 0.2em;line-height:1;color:#fff;border-radius:0.3em;margin-right:1.5em;background-color:#bbb}
+.approval_count.goosa.active {background-color:#0f826f;}
+.approval_count.goosca.active {background-color:#00b6e9;}
+
+.gmo_account {background-color:#dbf6ff;padding:0.6em;margin-bottom:0.6em;}
+.gmo_account p {float:left}
+.gmo_account a {margin-bottom:0;}
+.expired {background-color:#f00;color:#fff;padding-left:0.6em;font-weight:bold;margin:0.1em 0;}
+
+table.list.log tr td {height:2.6em;}
+table.list.log tr td p {padding-top:0.2em;padding-bottom:0.2em;}
+.log p.label_text{padding-top:0.2em;padding-bottom:0.2em;}
+.log p.count{padding-top:0.2em;padding-bottom:0.2em;}
+
+.payment_alert_text {padding:0.4em 0;}
+@media (max-width:991px) {
+	.approval_list strong {display:table;width:100%;margin-bottom:0.2em;border-bottom:1px dotted #000;}
+	.approval_list .label{display:table-cell;vertical-align:top;width:90%}
+	.approval_list .approval_count {display:table-cell;vertical-align:top;margin-bottom:0.2em;text-align:center}
+	.gmo_account a {margin-bottom:0.3em;}
+}
+</style>
+<div class="section anchor">
+	<div class="light-wrapper">
+		<div class="container inner" style="padding-top:0;padding-bottom:10px;min-height:800px;margin-bottom:60px;">
+	    
+	    <div class="row">
+		    <div class="col-12 col-lg-12 col-xl-8 main_menu_frame">
+			    <div class="row">
+				    <?php if (!empty($this->adminProperty['limit_shipping']) || !empty($this->adminProperty['limit_production'])) { ?>
+				    	<?php if (!empty($this->adminProperty['limit_shipping'])) { ?>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class=" block" href="/ec/package-list">
+						    		<span class="title">EC商品パッケージ管理</span><br />
+						    		<span class="contents">EC商品パッケージ管理・ECサイト連携</span>
+						    	</a>
+					    	</div>
+					    	
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" id="btn_shipment" href="javascript:void(0);">
+						    		<span class="title">出荷・在庫管理</span><br />
+						    		<span class="contents">EC出荷・卸出荷・商品在庫管理・入庫予約・入庫処理・ 棚卸報告</span>
+						    	</a>
+					    	</div>
+				    	<?php } ?>
+						<?php if (!empty($this->adminProperty['limit_production'])) { ?>
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/manufacture/management">
+						    		<span class="title">商品製造管理</span><br />
+						    		<span class="contents">生産管理 / 標準作業</span>
+						    	</a>
+							</div>
+						<?php } ?>
+				    <?php } else { ?>
+					    <?php if ($this->allowEditing === true) { ?>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class=" block" href="/ec/package-list">
+						    		<span class="title">EC商品パッケージ管理</span><br />
+						    		<span class="contents">EC商品パッケージ管理・ECサイト連携</span>
+						    	</a>
+					    	</div>
+					    <?php } ?>
+					    
+				    	<div class="col-12 col-md-6 col-lg-4">
+					    	<a class="block" id="btn_shipment" href="javascript:void(0);">
+					    		<span class="title">出荷・在庫管理</span><br />
+					    		<span class="contents">EC出荷・卸出荷・商品在庫管理・入庫予約・入庫処理・ 棚卸報告</span>
+					    	</a>
+				    	</div>
+					    	
+					    <?php if ($this->allowEditing === true) { ?>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/product/list">
+						    		<span class="title">販売商品管理</span><br />
+						    		<span class="contents">&nbsp;</span>
+						    	</a>
+							</div>
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/manufacture/management">
+						    		<span class="title">商品製造管理</span><br />
+						    		<span class="contents">生産管理 / 標準作業</span>
+						    	</a>
+							</div>
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/price/cost">
+						    		<span class="title">商品価格決定・提出見積</span><br />
+						    		<span class="contents">原価計算 / 原単位(輸出・輸入・販管) / 小売価格設定(国内・海外) / 提出見積</span>
+						    	</a>
+					    	</div>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/supply-product">
+						    		<span class="title">仕入・調達管理</span><br />
+						    		<span class="contents">原料・製品 / 製造加工委託  / 業務委託 / 備品・資材 / コンペ</span>
+						    	</a>
+					    	</div>
+					    	<!--
+					    	<a class="block">
+					    		<span class="title">マスタ管理</span><br />
+					    		<span class="contents">取引先 / 倉庫</span>
+					    	</a>
+					    	-->
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/connection-progress">
+						    		<span class="title">取引先・営業管理</span><br />
+						    		<span class="contents">取引先情報 / 議事録 / 契約書管理 / 営業管理</span>
+						    	</a>
+					    	</div>
+						<?php } ?>
+						
+						<div class="col-12 col-md-6 col-lg-4">
+					     	<a class="block" href="/transaction-order-recieved/list">
+					    		<span class="title">取引処理</span><br />
+					    		<span class="contents">受注 / 請求書発行 / 入金完了管理<br>発注 / ネット購入委託管理 / 支払申請 / 支払完了管理 / 会計科目 / 採算コード</span>
+					    	</a>
+				    	</div>
+					    	
+					    
+					    <?php if ($this->allowEditing === true) { ?>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/office-manual">
+						    		<span class="title">社内処理</span><br />
+						    		<span class="contents">マニュアル / 各種精算/ 決裁申請 / 社販申請 / 小口現金</span>
+						    	</a>
+					    	</div>
+							
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/approval/list" style="position:relative;">
+						    		<?php if ($this->approvalPendingCount > 0) { ?>
+						    			<p class="main_menu_indicator"><span><?php echo $this->approvalPendingCount; ?></span></p>
+						    		<?php } ?>
+						    		<span class="title">承認・確認</span><br />
+						    		<span class="contents"></span>
+						    	</a>
+					    	</div>
+							
+							<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/warehouse/list">
+						    		<span class="title">システム設定</span><br />
+						    		<span class="contents">倉庫管理 / 銀行口座・クレジットカード管理 / 各種定義</span>
+						    	</a>
+					    	</div>
+				    	<?php } ?>
+				    	
+				    	
+				    	<?php if (!empty($this->adminProperty['is_master'])) { ?>
+					    	<div class="col-12 col-md-6 col-lg-4">
+						    	<a class="block" href="/user">
+						    		<span class="title">利用者管理</span><br />
+						    		<span class="contents">システム利用者登録</span>
+						    	</a>
+					    	</div>
+						<?php } ?>
+						
+						<div class="col-12 col-md-6 col-lg-4">
+					    	<a class="block" id="btn_shipment" href="javascript:void(0);">
+					    		<span class="title">モール営業管理</span><br />
+					    		<span class="contents">gs出店 / gs公開 / GSC出店 / GSC公開</span>
+					    	</a>
+				    	</div>
+					
+					<?php } ?>
+			    </div>
+		    </div>
+			
+			<div class="col-12 col-lg-12 col-xl-4">
+			    <div class="item_header clearfix">
+			        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">ログインログ</span>
+			    </div>
+			    
+			    <p style="color:#f00;line-height:1.3;margin-bottom:0;padding:0.3em;">失敗が連続している場合や身に覚えのないアクセスがある場合は管理者まで連絡すること。</p>
+			    
+			    <table class="list log" style="margin-bottom:13px;">
+			        <tr>
+			        	<td class="column" style="width:170px;"><p class="label_text"><strong>日時</strong></p></td>
+			            <td class="column" style="width:100px;"><p class="count"><strong>結果</strong></p></td>
+			            <td class="column"><p class="label_text"><strong>接続IPアドレス</strong></p></td>
+			        </tr>
+			        <?php foreach ($this->logList as $eachLog) { ?>
+			            <tr>
+			            	<td class="column"><p class="label_text"><?php echo date('Y/m/d H:i:s', strtotime($eachLog['created'])); ?></p></td>
+			                <td class="column">
+			                    <?php
+									if (!empty($eachLog['login_result'])) {
+										echo '<p class="count status_active">成功</p>';
+									} else {
+										echo '<p class="count" style="color:#f00;">失敗</p>';
+									}
+								?>
+			                </td>
+			                <td class="column"><p><?php echo $this->escape($eachLog['ip_address']); ?></p></td>
+			            </tr>
+			        <?php } ?>
+			    </table>
+		    </div>
+	    </div>
+	  
+	    
+	    <div class="item_header clearfix">
+	        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">サイト連動　入金・支払予定</span>
+	    </div>
+	    <div style="padding:0.6em 0.6em;border-bottom:1px solid #ccc;">
+		    <div class="row">
+		    	<div class="col-12 col-md-2">
+		    		<strong class="goosa">goosa</strong>
+		    	</div>
+
+			    <div class="col-12 col-md-1 payment_alert_text">
+				    <strong><span class="label">支払予定：</span></strong>
+				</div>
+				<div class="col-12 col-md-4 payment_alert_text">
+				    <strong><?php
+				        foreach ($this->goosaPayableItems as $each) {
+				        	echo date('Y/m/d', strtotime($each['paying_plan_date'])) . ' : ' . $each['item_count'] . '件　（' . $this->numberFormat($each['total']) . '円）<br>';
+				        	//echo $each['id'] . '　' . $each['paying_plan_date'] . $each['company_name'] . '　' . $each['total_amount'] . '/' . $each['payment_status'] . '<br>';
+				        }
+				    ?></strong>
+			    </div>
+			    
+		    	<div class="col-12 col-md-1 payment_alert_text">
+				    <strong><span class="label">入金予定：</span></strong>
+				</div>
+				<div class="col-12 col-md-4 payment_alert_text">
+					<?php
+				        if (!empty($this->goosaReceivable['item_count'])) {
+				        	echo '<strong style="color:#e03dd9">' . $this->goosaReceivable['item_count'] . '件　（' . $this->numberFormat($this->goosaReceivable['total']) . '円）' . '</strong>';
+				        } else {
+				        	echo '---';
+				        }
+				    ?>
+			    </div>
+	    	</div>
+	    </div>
+	    <div style="padding:0.6em 0.6em;">
+		    <div class="row">
+		    	<div class="col-12 col-md-2">
+		    		<strong class="goosca">GOOSCA</strong>
+		    	</div>
+			    <div class="col-12 col-md-1 payment_alert_text">
+				    <strong><span class="label">支払予定：</span></strong>
+				</div>
+				<div class="col-12 col-md-4 payment_alert_text">
+				    <strong><?php
+				        foreach ($this->gooscaPayableItems as $each) {
+				        	echo date('Y/m/d', strtotime($each['paying_plan_date'])) . ' : ' . $each['item_count'] . '件　（' . $this->numberFormat($each['total']) . '円）';
+				        	//echo $each['id'] . '　' . $each['paying_plan_date'] . $each['company_name'] . '　' . $each['total_amount'] . '/' . $each['payment_status'] . '<br>';
+				        }
+				    ?></strong>
+			    </div>
+	    	</div>
+	    </div>
+	    
+	    <div class="item_header clearfix">
+	        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">承認待ち</span>
+	    </div>
+	    <div style="padding:0.6em 0.6em;">
+		    <div class="approval_list clearfix" style="margin-bottom:0.6em;">
+			    <strong class="fass_label">FASS</strong>
+			    <?php foreach ($this->approvalItems as $eachItem) { ?>
+			    	<strong>
+			    		<span class="label"><?php echo $this->escape($eachItem['organization_name']); ?>：</span><?php
+				    		$bgColor = '#bbb';
+				    		if (!empty($eachItem['count'])) {
+				    			if (!empty($eachItem['group_header_color'])) {
+				    				$bgColor = '#' . $eachItem['group_header_color'];
+				    			} else {
+				    				$bgColor = '#333';
+				    			}
+				    		}
+			    		?><span class="approval_count" style="background-color:<?php echo $bgColor; ?>;">
+			    			<?php echo $this->escape($eachItem['count']); ?>
+			    		</span>
+			    	</strong>
+			    <?php } ?>
+		    </div>
+		    <div class="approval_list clearfix" style="margin-bottom:0.6em;">
+		    	<strong class="goosa_label">goosa</strong>
+			    <strong><span class="label">見積：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaEstimateApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaEstimateApprovalCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">商品公開：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaEstimateApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaItemPublishApprovalCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">運営管理：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaServiceApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaServiceApprovalCoount); ?>
+			    </span></strong>
+
+	    		<strong><span class="label">営業管理：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaSalesApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaSalesApprovalCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">最終責任：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaFinalApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaFinalApprovalCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">BY登録申請：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaBuyerApplyCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaBuyerApplyCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">一般SP登録申請：</span>
+			    <span class="approval_count goosa <?php if (!empty($this->goosaSupplierApplyCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->goosaSupplierApplyCoount); ?>
+			    </span></strong>
+	    	</div>
+		    <div class="approval_list clearfix">
+		    	<strong class="goosca_label">GOOSCA</strong>
+			    <strong><span class="label">商品公開：</span>
+			    <span class="approval_count goosca <?php if (!empty($this->gooscaItemPublishApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->gooscaItemPublishApprovalCoount); ?>
+			    </span></strong>
+			    
+	    		<strong><span class="label">運営管理：</span>
+			    <span class="approval_count goosca <?php if (!empty($this->gooscaServiceApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->gooscaServiceApprovalCoount); ?>
+			    </span></strong>
+			    
+	    		<strong><span class="label">営業管理：</span>
+			    <span class="approval_count goosca <?php if (!empty($this->gooscaSalesApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->gooscaSalesApprovalCoount); ?>
+			    </span></strong>
+	    	
+	    		<strong><span class="label">最終責任：</span>
+			    <span class="approval_count goosca <?php if (!empty($this->gooscaFinalApprovalCoount)) { echo 'active'; } ?>">
+			    	<?php echo $this->escape($this->gooscaFinalApprovalCoount); ?>
+			    </span></strong>
+			</div>
+	    </div>
+	    
+	    <div class="item_header clearfix">
+	        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">GMO API連携</span>
+	    </div>
+	    
+	    <?php if (!empty($this->expiredList)) { ?>
+	    	<div style="padding:0.6em 0.3em;">
+		    	<?php foreach ($this->expiredList as $each) { ?>
+		    		<div class="expired">
+					    GMO振込予約 承認期限切れ：<?php echo $each['short_name'] . '　' . $each['company_name'] . '　' . $each['paying_plan_date'] . '　' . $this->numberFormat($each['total_amount']); ?>
+				    </div>
+		    	<?php } ?>
+	    	</div>
+	    <?php } ?>
+	    
+	    <div style="padding:0.6em 0.6em;">
+	    	<?php if (!empty($this->gmoAccountList)) { ?>
+				<?php foreach ($this->gmoAccountList as $each) { ?>
+					<div class="gmo_account row">
+						<div class="col-12 col-lg-6">
+							<p><strong><?php echo $this->escape($each['name']); ?>　</strong>
+								<strong>トークン期限：<?php if (!empty($each['gmo_reflesh_token_expired_datetime'])) { echo date('Y/m/d H:i', strtotime($each['gmo_reflesh_token_expired_datetime'])); } else { echo '----/--/-- --:--'; } ?>　</strong>
+						    </p>
+					    </div>
+					    <div class="col-12 col-lg-6">
+						    <a class="btn_setting" href="/oauth?id=<?php echo $this->escape($each['id']); ?>">GMOログイン</a>
+						    <a class="btn_setting" href="/oauth/reflesh?id=<?php echo $this->escape($each['id']); ?>">トークン再取得</a>
+						    <a class="btn_setting" href="/oauth/account?id=<?php echo $this->escape($each['id']); ?>">口座履歴を同期</a>
+				    	</div>
+				    </div>
+			    <?php } ?>
+		    <?php } ?>
+		</div>    
+
+		<?php if (!empty($this->adminProperty['is_master'])) { ?>
+		    <div class="large_only">
+			    <div class="item_header clearfix">
+			        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">全ログインログ</span></span>
+			    </div>
+			    <table class="list log" style="margin-bottom:13px;">
+			        <tr>
+			        	<td class="column" style="width:170px;"><p class="label_text"><strong>日時</strong></p></td>
+			            <td class="column" style="width:100px;"><p class="count"><strong>結果</strong></p></td>
+			            <td class="column" style="width:350px;"><p class="label_text"><strong>failed_mail</strong></p></td>
+			            <td class="column"><p class="label_text"><strong>接続IPアドレス</strong></p></td>
+			        </tr>
+			        <?php foreach ($this->allLogItems as $eachLog) { ?>
+			            <tr>
+			            	<td class="column"><p class="label_text"><?php echo date('Y/m/d H:i:s', strtotime($eachLog['created'])); ?></p></td>
+			                <td class="column">
+			                    <?php
+									if (!empty($eachLog['login_result'])) {
+										echo '<p class="count status_active">成功</p>';
+									} else {
+										echo '<p class="count" style="color:#f00;">失敗</p>';
+									}
+								?>
+			                </td>
+			                <td class="column"><p><?php echo $this->escape($eachLog['failed_mail']); ?></p></td>
+			                <td class="column"><p><?php echo $this->escape($eachLog['ip_address']); ?></p></td>
+			            </tr>
+			        <?php } ?>
+			    </table>
+		    </div>
+	    <?php } ?>
+		</div>
+	</div>
+</div>
+
+<div class="menu_frame_base" style="display:none;">
+	<div class="menu_frame">
+		<p>拠点選択</p>
+		<?php foreach ($this->warehouseList as $each) { ?>
+			<a class="select_base" target-id="<?php echo $each['id']; ?>" href="javascript:void(0);"><?php echo $this->escape($each['name']); ?></a>
+		<?php } ?>
+	</div><!-- menu_frame -->
+</div>

@@ -1,0 +1,574 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<?php echo $this->headTitle(); ?>
+<link rel="shortcut icon" href="/resource/favicon.png">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/common.css" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_layout.css?<?php echo date('ymdHi') ?>" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_module.css?<?php echo date('ymdHi') ?>" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/type/fontello.css">
+<link type="text/css" rel="stylesheet" href="/resource/type/budicons.css">
+<link type="text/css" rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css">
+<link type="text/css" rel="stylesheet" href="/resource/js/jquery.alerts-1.1/jquery.alerts.css">
+<link type="text/css" rel="stylesheet" href="/resource/js/tipped-4.4.2-light/css/tipped/tipped.css">
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/resource/js/spin/spin.js"></script>
+<script type="text/javascript" src="/resource/js/jquery.alerts-1.1/jquery.alerts.js"></script>
+<script type="text/javascript" src="/resource/js/tipped-4.4.2-light/js/tipped/tipped.js"></script>
+<script type="text/javascript">
+// spinner
+var target;
+var spinner;
+function showSpinner() {
+    $('.loading_frame').show();  
+    var opts = {
+      lines:13,length:10,width:7,radius:20,corners:1,rotate:30,color:'#dfdfdf',speed:1,trail:89,
+      shadow:false,hwaccel:false,className:'spinner',zIndex:2e9,top:'47px',left:'47px',position:'absolute',
+    };
+	target = document.getElementById('loading');
+    spinner = new Spinner(opts).spin(target);
+    spinner.spin(target);
+}
+function stopSpinner() {
+    $('.loading_frame').hide();
+    spinner.stop();
+}
+
+$(function(){
+	<?php if(!empty($this->message)){ ?>
+	$(document).ready( function(){
+		jAlert('<?php echo $this->message; ?>', '　');
+	});
+	<?php } ?>
+    $(document).on('click', 'td.desc', function () {
+		var item = $(this);
+		if ($(this).attr('all-content') != '') {
+			$(this).prepend('<div class="caption">' + $(this).attr('all-content') + '</div>');
+		  	setTimeout(function() {
+		    	item.children('.caption').remove();
+		    }, 2000);
+	    }
+	});
+});	
+</script>
+</head>
+<body class="ll-skin-melon">
+<div class="header_menu" <?php if (!empty($this->adminProperty['group_data']['group_header_color'])) { ?>style="background-color:#<?php echo $this->escape($this->adminProperty['group_data']['group_header_color']); ?>"<?php } ?>>
+	<div id="container" class="menu_container clearfix">
+		<p id="header_organization"><?php echo $this->escape($this->adminProperty['group_data']['organization_name']); ?></p>
+		<a id="switch_organization" href="/user/list-switch">組織切替</a>
+		<a id="header_manual_button" href="/office-manual" target="_balnk">マニュアル</a>
+	</div>
+</div>
+
+<div class="main_menu">
+	<div id="container" class="menu_container clearfix">
+    	<h1><a href="/index"><img src="/resource/img/common/fass_logo.png" alt="FASS"></a></h1>
+
+		<?php if ($this->menuCategory == 'shipment') { ?>
+			<p class="main_category_shipment"><?php echo $this->mainCategoryName; ?></p>
+			<p class="base_name">フレスコ倉庫</p>
+		<?php } else { ?>
+			<p class="main_category"><?php echo $this->mainCategoryName; ?></p>
+		<?php } ?>
+		
+        <ul class="right_menu clearfix" id="dropmenu">
+	        <?php if ($this->menuCategory == 'approval') { /* 承認・確認待ち */ ?>
+				<li class="menu1">
+				    <a href="/approval/list" class="lists <?php if($this->menu == 'pending') echo "selected"; ?>">
+				    <i class="icon-download-1"></i>
+				    <span>承認・確認待ち</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/approval/history-list" class="lists <?php if($this->menu == 'history') echo "selected"; ?>">
+				    <i class="icon-th-list"></i>
+				    <span>全履歴</span>
+				    </a>
+				</li>
+				
+			<?php } else if ($this->menuCategory == 'connection') { /* 取引先 */ ?>
+				<li class="menu1">
+				    <a href="/connection/list-history" class="lists <?php if($this->menu === 'list-history') echo "selected"; ?>">
+				    <i class="icon-signal"></i>
+				    <span>更新履歴</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/connection/list" class="lists <?php if($this->menu === 'list') echo "selected"; ?>">
+				    <i class="icon-users"></i>
+				    <span>取引先一覧</span>
+				    </a>
+				</li>
+
+				<li class="menu1">
+				    <a href="/connection-progress" class="lists <?php if($this->menu === 'list-progress') echo "selected"; ?>">
+				    <i class="icon-tags"></i>
+				    <span>営業案件</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/connection-record/list" class="lists <?php if($this->menu === 'list-record') echo "selected"; ?>">
+				    <i class="icon-chat"></i>
+				    <span>議事録／資料</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/connection/list-contract" class="lists <?php if($this->menu === 'list-contract') echo "selected"; ?>">
+				    <i class="icon-doc-1"></i>
+				    <span>契約書管理</span>
+				    </a>
+				</li>
+				<li class="menu1">
+				    <a href="/connection/list-application" class="lists <?php if($this->menu === 'list-application') echo "selected"; ?>">
+				    <i class="icon-inbox-1"></i>
+				    <span>営業決裁</span>
+				    </a>
+				</li>
+				
+        	<?Php } else if ($this->menuCategory == 'transaction') { /* 取引処理 */ ?>
+				
+				<li class="menu1">
+				    <a href="/transaction-sample/list" class="lists <?php if($this->menu === 'sample') echo "selected"; ?>">
+				    <i class="icon-suitcase"></i>
+				    <span>サンプル/破棄</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/transaction-order-recieved/list" class="lists <?php if($this->menu === 'order-recieved') echo "selected"; ?>">
+				    <i class="icon-comment-1"></i>
+				    <span>受注管理</span>
+				    </a>
+				</li>
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'receivable') echo "selected"; ?>">
+				    <i class="icon-clipboard"></i>
+				    <span>入金申請</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-invoice/list">請求書発行</a></li>
+				    	<li><a href="/transaction-recieved/template-list">毎月入金管理</a></li>
+				    	<li><a href="/transaction-receivable/list">その他入金予定申請</a></li>
+				    	<li><a href="/transaction-receivable/card-list">カード返金予定申請</a></li>
+				    </ul>
+				</li>
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'received') echo "selected"; ?>">
+				    <i class="icon-download-1"></i>
+				    <span>入金完了管理</span>
+				    </a>
+				    <ul>
+				    <li><a href="/transaction-recieved/list">入金完了管理</a></li>
+				    <li><a href="/transaction-recieved/site-list">サイト連動入金完了管理</a></li>
+				    </ul>
+				</li>
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'order') echo "selected"; ?>">
+				    <i class="icon-paper-plane"></i>
+				    <span>発注管理</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-order/list">発注管理</a></li>
+				    	<li><a href="/transaction-order/online-list">ネット購入委託管理</a></li>
+					</ul>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'payable') echo "selected"; ?>">
+				    <i class="icon-calendar"></i>
+				    <span>支払申請</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-payable/invoice-list">請求支払申請</a></li>
+				    	<li><a href="/transaction-payable/card-list">カード支払申請</a></li>
+				    	<li><a href="/transaction-payable/template-list">毎月支払管理</a></li>
+					</ul>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'paid') echo "selected"; ?>">
+				    <i class="icon-list-bullet"></i>
+				    <span>支払完了管理</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-paid/invoice-list">支払完了確認</a></li>
+				    	<li><a href="/transaction-paid/site-list">サイト連動支払完了確認</a></li>
+				    	<li><a href="/transaction-paid/card-list">カード支払完了確認</a></li>
+				    	<li><a href="/transaction-paid/gmo-transfer-list">GMO振込予約履歴</a></li>
+				    	<!--<li><a href="/transaction-paid/gmo-transfer-develop-list">GMO振込予約履歴(開発用)</a></li>-->
+					</ul>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu == 'history') echo "selected"; ?>">
+				    <i class="icon-briefcase-1"></i>
+				    <span>口座履歴</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-bank/list">金融機関口座履歴</a></li>
+				    	<li><a href="/transaction-paid/card-import-list">カード利用履歴</a></li>
+					</ul>
+				</li>
+
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'summary' || $this->menu === 'account-totaling') echo "selected"; ?>">
+				    <i class="icon-list-alt"></i>
+				    <span>採算管理</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/transaction-summary">データ集計</a></li>
+				    	<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+				    		<li><a href="/financial-totaling/category-list">設定</a></li>
+				    	<?php } ?>
+					</ul>
+				</li>
+
+				<li class="menu1">
+				    <a href="/office/accounting" class="lists <?php if($this->menu === 'accounting') echo "selected"; ?>">
+				    <i class="icon-list-1"></i>
+				    <span>会計科目一覧</span>
+				    </a>
+				</li>
+						
+			<?php } else if ($this->menuCategory == 'manufacture') { /* 製造管理 */ ?>
+				<li class="menu1">
+				    <a href="/manufacture/management" class="lists <?php if($this->menu === 'management') echo "selected"; ?>">
+				    <i class="icon-sitemap"></i>
+				    <span>生産管理</span>
+				    </a>
+				</li>
+				
+				<!--
+				<li class="menu1">
+				    <a href="/manufacture/performance" class="lists <?php if($this->menu == 'performance') echo "selected"; ?>">
+				    <i class="icon-sitemap"></i>
+				    <span>標準作業</span>
+				    </a>
+				</li>
+				-->
+				
+				<li class="menu1">
+				    <a href="/manufacture/stock" class="lists <?php if($this->menu === 'stock') echo "selected"; ?>">
+				    <i class="icon-th-large"></i>
+				    <span>製造在庫管理</span>
+				    </a>
+				</li>
+				
+			<?php } else if ($this->menuCategory == 'price') { /* 価格決定 */ ?>
+				<li class="menu1">
+				    <a href="/price/cost" class="lists <?php if($this->menu == 'cost') echo "selected"; ?>">
+				    <i class="icon-database"></i>
+				    <span>原価計算</span>
+				    </a>
+				</li>
+
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'expense') echo "selected"; ?>">
+				    <i class="icon-truck"></i>
+				    <span>原単位</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/price-expense/package">原単位・梱包資材・作業費</a></li>
+				    	<li><a href="/price-expense/postage">原単位・送料</a></li>
+				    	<li><a href="/price-expense/export">輸出物流</a></li>
+				    	<?php /*
+				    	<li><a href="/price-expense/payment">輸入物流</a></li>
+				    	<li><a href="/price-expense/auto-payment">販管費</a></li>
+				    	*/ ?>
+					</ul>
+				</li>
+
+				<li class="menu1">
+				    <a href="/price-estimate/list" class="lists <?php if($this->menu === 'estimate') echo "selected"; ?>">
+				    <i class="icon-newspaper"></i>
+				    <span>提出見積管理</span>
+				    </a>
+				</li>
+        	<?php } else if ($this->menuCategory == 'supply') { /* 調達管理 */ ?>
+				<li class="menu1">
+				    <a href="/supply-product" class="lists <?php if($this->menu === 'product') echo "selected"; ?>">
+				    <i class="icon-th-large"></i>
+				    <span>原料・製品</span>
+				    </a>
+				</li>	
+        	
+				<li class="menu1">
+				    <a href="/supply-production" class="lists <?php if($this->menu === 'production') echo "selected"; ?>">
+				    <i class="icon-cog-alt"></i>
+				    <span>製造加工委託</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/supply-subcontracting" class="lists <?php if($this->menu === 'subcontracting') echo "selected"; ?>">
+				    <i class="icon-paste"></i>
+				    <span>業務委託</span>
+				    </a>
+				</li>
+
+				<li class="menu1">
+				    <a href="/supply-fixture" class="lists <?php if($this->menu === 'fixture') echo "selected"; ?>">
+				    <i class="icon-tags"></i>
+				    <span>備品・資材</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/supply-competition" class="lists <?php if($this->menu === 'competition') echo "selected"; ?>">
+				    <i class="icon-users-1"></i>
+				    <span>コンペ</span>
+				    </a>
+				</li>					
+        	<?php } else if ($this->menuCategory == 'shipment') { /* 出荷管理 */ ?>
+        		<?php if ($this->allowEditing === true) { ?>
+					<li class="menu1">
+					    <a href="/shipment/index" class="lists <?php if($this->menu === 'dashboard') echo "selected"; ?>" style="border-left:1px solid rgba(255, 255, 255, 0.9);">
+					    <i class="icon-tasks"></i>
+					    <span>ダッシュボード</span>
+					    </a>
+					</li>
+					
+					<li class="menu1">
+					    <a href="#" class="lists <?php if($this->menu === 'shipment') echo "selected"; ?>">
+					    <?php if (!empty($this->planCount)) { ?><span class="indicator"><?php echo $this->escape($this->planCount); ?></span><?php } ?>
+					    <i class="icon-list-alt"></i>
+					    <span>EC出荷管理</span>
+					    </a>
+					    <ul>
+					    	<li><a href="/shipment/plan-list">EC未出荷リスト<?php if (!empty($this->planCount)) { echo '&nbsp;<span class="alert_count">' . $this->escape($this->planCount) . '</span>'; } ?></a></li>
+					    	<li><a href="/shipment/shipped-list">EC出荷済み履歴</a></li>
+					    	<li><a href="/shipment/canceled-list">キャンセル済みリスト</a></li>
+					    	<li><a href="/shipment/inspection-history">検品履歴</a></li>
+					    	<li><a href="/shipment/monthly">月間出荷</a></li>
+						</ul>
+					</li>
+		
+					<li class="menu1">
+					    <a href="/including" class="lists <?php if($this->menu === 'including') echo "selected"; ?>">
+					    <i class="icon-sitemap"></i>
+					    <span>EC同梱施策</span>
+					    </a>
+					</li>
+					
+					<li class="menu1">
+					    <a href="#" class="lists <?php if($this->menu === 'wholesale') echo "selected"; ?>">
+					    <?php if (!empty($this->wholesalePlanCount)) { ?><span class="indicator"><?php echo $this->escape($this->wholesalePlanCount); ?></span><?php } ?>
+					    <i class="icon-list-alt"></i>
+					    <span>卸出荷管理</span>
+					    </a>
+					    <ul>
+					    	<li><a href="/shipment-wholesale/order-list">卸出荷管理<?php if (!empty($this->wholesalePlanCount)) { echo '&nbsp;<span class="alert_count">' . $this->escape($this->wholesalePlanCount) . '</span>'; } ?></a></li>
+					    	<li><a href="/shipment-wholesale/sample-list">サンプル出荷管理</a></li>
+					    	<li><a href="/stock/consumption-all">全出荷管理</a></li>
+						</ul>
+					</li>
+					
+					<li class="menu1">
+					    <a href="#" class="lists <?php if($this->menu === 'item') echo "selected"; ?>">
+					    <i class="icon-th-large"></i>
+					    <span>在庫管理</span>
+					    </a>
+					    <ul>
+						    <li><a href="/stock/waste-list">破棄管理</a></li>
+					    	<li><a href="/stock/list/product">商品</a></li>
+					    	<li><a href="/stock/list/bundle">付属品</a></li>
+					    	<li><a href="/stock/list/including">同梱品</a></li>
+					    	<li><a href="/stock/list/package">梱包資材</a></li>
+					    	<li><a href="/stock/list/material">原料</a></li>
+					    	<li><a href="/stock/list/manufacturing">製造資材</a></li>
+					    	<li><a href="/stock-inventory/history">棚卸実績</a></li>
+						</ul>
+					</li>
+	
+				
+					<li class="menu1">
+					    <a href="/shipment-data" class="lists <?php if($this->menu === 'data') echo "selected"; ?>">
+					    <i class="icon-chart-line"></i>
+					    <span>データ分析</span>
+					    </a>
+					</li>
+
+					<li class="menu1">
+					    <a href="#" class="lists <?php if($this->menu === 'setting') echo "selected"; ?>">
+					    <i class="icon-cog-alt"></i>
+					    <span>設定</span>
+					    </a>
+					    <ul>
+					    	<li><a href="/setting/basic">基本情報</a></li>
+					    	<li><a href="/shipment/format-list">注文取込フォーマット</a></li>
+					    	<!--
+					    	<li><a href="/warehouse/list">倉庫一覧</a></li>
+					    	<li><a href="/sholesale/client-list">卸先一覧</a></li>
+					    	-->
+						</ul>
+					</li>
+				<?php } else { ?>
+					<li class="menu1">
+					    <a href="#" class="lists <?php if($this->menu === 'item') echo "selected"; ?>">
+					    <i class="icon-th-large"></i>
+					    <span>在庫管理</span>
+					    </a>
+					    <ul>
+						    <li><a href="/stock/waste">破棄管理</a></li>
+					    	<li><a href="/stock/list/product">商品</a></li>
+					    	<li><a href="/stock/list/bundle">付属品</a></li>
+					    	<li><a href="/stock/list/including">同梱品</a></li>
+					    	<li><a href="/stock/list/package">梱包資材</a></li>
+					    	<li><a href="/stock/list/material">原料</a></li>
+					    	<li><a href="/stock-inventory/history">棚卸実績</a></li>
+						</ul>
+					</li>
+
+				<?php } ?>
+			<?php } else if ($this->menuCategory == 'office') { ?>
+				<li class="menu1">
+				    <a href="/office-manual" class="lists <?php if($this->menu === 'manual') echo "selected"; ?>">
+				    <i class="icon-book"></i>
+				    <span>マニュアル</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'expense') echo "selected"; ?>">
+				    <i class="icon-docs-1"></i>
+				    <span>各種清算</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/office-expense/transport">交通宿泊費精算</a></li>
+				    	<li><a href="/office-expense/rebuilding">立替金精算</a></li>
+					</ul>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/office-sales/apply" class="lists <?php if($this->menu === 'office-sales') echo "selected"; ?>">
+				    <i class="icon-feather"></i>
+				    <span>社販購入申請</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="/office/payment" class="lists <?php if($this->menu === 'payment') echo "selected"; ?>">
+				    <i class="icon-folder-open"></i>
+				    <span>決裁申請</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'office-sales-management') echo "selected"; ?>">
+				    <i class="icon-check-1"></i>
+				    <span>各種管理</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/office-management/payment">決裁申請管理</a></li>
+				    	<li><a href="/office-management/office-sales">社販割引管理</a></li>
+				    	<li><a href="/office-management/expense-transport">精算管理</a></li>
+				    	<!-- <li><a href="/office-management/expense-transport">交通宿泊費精算</a></li> -->
+				    	<!-- <li><a href="/office-management/expense-rebuilding">立替金精算</a></li> -->
+					</ul>
+				</li>
+			<?php } else if ($this->menuCategory == 'user') { ?>
+				<li class="menu1">
+				    <a href="/user" class="lists <?php if($this->menu === 'user') echo "selected"; ?>">
+				    <i class="icon-users"></i>
+				    <span>利用者一覧</span>
+				    </a>
+				</li>
+
+				<li class="menu1">
+				    <a href="/user/department-list" class="lists <?php if($this->menu === 'department') echo "selected"; ?>">
+				    <i class="icon-flow-cascade"></i>
+				    <span>部署・事業部門</span>
+				    </a>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'organization') echo "selected"; ?>">
+				    <i class="icon-credit-card"></i>
+				    <spa>組織</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/organization">組織</a></li>
+				    	<li><a href="/organization/gmo">GMOアカウント</a></li>
+					</ul>
+				</li>
+				
+			<?php } else if ($this->menuCategory == 'system') { ?>
+				<li class="menu1">
+				    <a href="/warehouse/list" class="lists <?php if($this->menu === 'warehouse') echo "selected"; ?>">
+				    <i class="icon-check-1"></i>
+				    <span>倉庫管理</span>
+				    </a>
+				</li>
+
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'financial') echo "selected"; ?>">
+				    <i class="icon-credit-card"></i>
+				    <spa>会計関連</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/financial/bank-list">金融機関口座</a></li>
+				    	<li><a href="/financial/card-list">クレジットカード</a></li>
+				    	<li><a href="/financial/currency-list">通貨</a></li>
+					</ul>
+				</li>
+				
+				<li class="menu1">
+				    <a href="#" class="lists <?php if($this->menu === 'define') echo "selected"; ?>">
+				    <i class="icon-check-1"></i>
+				    <span>定義</span>
+				    </a>
+				    <ul>
+				    	<li><a href="/system/country-list">国</a></li>
+				    	<li><a href="/system/industry-category-list">業種</a></li>
+				    	<li><a href="/system/business-list">当社事業</a></li>
+				    	<li><a href="/system/material-kind-list">資料種別</a></li>
+				    	
+					</ul>
+				</li>
+
+				<li class="menu1">
+				    <a href="/system-log/list" class="lists <?php if($this->menu === 'system-log') echo "selected"; ?>">
+				    <i class="icon-alert"></i>
+				    <span>システムログ</span>
+				    </a>
+				</li>
+				
+			<?php } else if ($this->menuCategory === 'index') { ?>
+				<li class="menu1">
+				    <a href="/login/logout" class="lists">
+				    <i class="icon-logout-1"></i>
+				    <span>ログアウト</span>
+				    </a>
+				</li>
+			<?php } ?>
+        </ul>
+    </div>
+</div>
+
+<div class="main_area">
+    <div id="container">
+        <?php echo $this->partialWithParentView($this->bodyLayoutName) ?>
+    </div><!-- container -->
+</div><!-- main area -->
+
+<div class="loading_frame" style="display:none;">
+    <div id="loading"></div>
+</div>
+
+<div id="<?php if (!empty($this->keepFooter)) { ?>page_fotter_fixed<?php } else { ?>page_fotter<?php } ?>">
+	<div id="container" class="clearfix">
+        <p class="copyright">copyright (C)fResco corporation, All Right Reserved.</p> 
+    </div><!-- container -->
+</div><!-- main menu -->
+
+</body>
+</html>

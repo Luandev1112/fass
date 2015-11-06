@@ -1,0 +1,56 @@
+2021-10-10T15:18:37+09:00 (CRIT): SQLSTATE[23000]: Integrity constraint violation: 1052 Column 'status' in where clause is ambiguous #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(123): Nutex_Data_Db_Select->query(2)
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(164): Zend_Paginator_Adapter_DbSelect->setRowCount(Object(Nutex_Data_Db_Select))
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(1060): Zend_Paginator_Adapter_DbSelect->count()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(520): Zend_Paginator->_calculatePageCount()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(966): Zend_Paginator->count()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(626): Zend_Paginator->normalizePageNumber(0)
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getCurrentPageNumber()
+#11 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(317): Zend_Paginator->getCurrentItems()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->logListAction()
+#13 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('logListAction')
+#14 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#15 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#16 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#17 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#18 {main}
+2021-10-10T15:18:37+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => log-list
+    [module] => front
+    [bank_id] => 16
+)
+
+2021-10-10T20:18:17+09:00 (NOTICE): Invalid controller specified (wp-login.php) %info%
+2021-10-10T20:18:17+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp-login.php
+    [module] => front
+    [action] => index
+)
+
+2021-10-10T20:25:58+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_account_payable_template.paying_type' in 'where clause' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionBankController.php(1890): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionBankController->selectPayableAction()
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('selectPayableAc...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#10 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#11 {main}
+2021-10-10T20:25:58+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-bank
+    [action] => select-payable
+    [module] => front
+    [row_id] => 3753
+    [from] => all-list
+)
+

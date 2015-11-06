@@ -1,0 +1,7 @@
+<div class="menu_list clearfix">
+<a class="menu <?php if($this->action == 'basic') echo "selected"; ?>" href="/stock/basic?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>">基本情報</a>
+<a class="menu <?php if($this->action == 'warehouse' || $this->action == 'warehouse-add' || $this->action == 'consumption-add') echo "selected"; ?>" href="/stock/warehouse?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>">入庫履歴</a>
+<a class="menu <?php if($this->action == 'consumption') echo "selected"; ?>" href="/stock/consumption?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>">出庫履歴</a>
+<a class="menu <?php if($this->action == 'data-shipping') echo "selected"; ?>" href="/stock/data-shipping?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>">データ - EC出荷</a>
+<a class="menu <?php if($this->action == 'data-stock') echo "selected"; ?>" href="/stock/data-stock?id=<?php echo $this->escape($this->id); ?>&from=<?php echo $this->escape($this->from); ?>">データ - 在庫推移</a>
+</div>

@@ -1,0 +1,205 @@
+<?php
+$docKindList = Shared_Model_Code::codes('item_doc_kind');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+var deletedFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    $(document).on('click', '.delete_item', function () {
+    	var documentId = $(this).attr('document-id');
+
+        jConfirm('本当に削除しますか', '　', function(r) {
+            if(r) {
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:'',
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {                            
+                    		reloadFlag = true;
+                    		jAlert('削除しました', '　');
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/product/delete-document?id=<?php echo $this->id; ?>&document_id=' + documentId,
+				});
+        
+            } else {
+                return false;
+            }
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/product/document-list?id=<?php echo $this->id; ?>&doc_type=<?php echo $this->escape($this->docType); ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.multi_rows_padding {padding:5px 0 5px 10px;word-wrap:break-word;word-break:break-all;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+a.edit_item {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:5px 0 0 3px;float:left;cursor:pointer;}
+a.delete_item {display:block;background-color:#ea335c;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:5px 0 5px 3px;float:left;cursor:pointer;}
+a.btn_setting {padding:5px 20px 3px 20px;line-height:1.4;margin-top:5px;}
+table.list_default tr td.column_value p.file_size {color:#727ae8;font-weight:bold;padding-left:12px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+	<?php
+		$titleName = '';
+		if ($this->data['product_name_type'] === (string)Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) {
+			$titleName = $this->escape($this->data['buying_item_name']);
+		} else {
+			$titleName = $this->escape($this->data['item_name']);
+		}
+	?>     
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>商品管理 - <?php echo $titleName; ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('product/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'docType'   => $this->docType,
+    			'direct'    => $this->direct,
+    		));
+        ?>
+    </div>
+
+    <div class="clearfix">
+
+	    <?php
+        /* 公開資料 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">資料リスト</p></th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_add_category" id="btn_edit_department" href="/product/document-edit?id=<?php echo $this->escape($this->id); ?>&doc_type=<?php echo $this->escape($this->docType); ?>"><span>新規登録</span></a>
+                </th>
+            </tr>
+        </table>
+        
+		<div class="condition_items clearfix" style="margin-top:5px;">
+			<form id="condition_form" action="/product/document-list" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+				<input type="hidden" id="item_id" name="item_id" value="1">
+				<input type="hidden" id="doc_type" name="doc_type" value="10">
+			
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">種別：</p>
+                        <select id="kind" name="kind">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['kind']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item" style="padding-top:23px;">
+						<input type="button" class="clear_form" style="display:inline-block;width:116px;" value="リセット">
+						<input type="button" class="submit" style="display:inline-block;width:116px;" value="検索">
+					</div>
+				</div>
+			</form>
+		</div>
+        
+        <table class="list_default" style="margin-bottom:0;">
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $each['id']; ?>">
+						<td class="column_value">
+							<div class="clearfix">
+								<div style="float:left;width:30px;padding:5px 0 0 10px;">
+									<i class="budicon-equal" style="color:#aaa;font-size:24px;"></i>
+								</div>
+								<div style="float:left;width:200px;">
+									<div class="multi_rows_padding" style="padding-left:10px;color:#b47ae8;font-weight:bold;">
+										<?php if (!empty($each['kind'])) { ?>
+											<?php echo $this->escape($this->kindList[$each['kind']]['name']); ?>
+										<?php } else { ?>
+											---
+										<?php } ?>
+									</div>
+									<p class="file_size">file size：<?php echo $this->byteFormat(Shared_Model_Resource_ItemDocument::getFileSize($this->data['id'], $each['id'], $each['file_name']), 2); ?></p>
+								</div>
+								<div style="float:left;width:350px;">
+									<div class="multi_rows_padding" style="padding-left:10px;"><?php echo $this->escape($each['file_name']); ?></div>
+								</div>
+								<div style="float:left;width:400px;">
+									<p><strong>概要:</strong></p>
+									<div class="multi_rows_padding">
+										<?php echo nl2br($this->escape($each['summary'])); ?>
+									</div>
+								</div>
+								<div style="float:left;width:150px;">
+									<a class="btn_setting" style="margin-left:12px;" target="_blank" href="/rsrc/item-document/<?php echo $this->escape($this->data['id']); ?>/<?php echo $this->escape($each['id']); ?>/<?php echo urlencode($each['file_name']); ?>">ダウンロード</a>
+								</div>
+							</div>
+						</td>
+	                    <td class="td_action">
+	                    	<div>
+	                    		<a class="edit_item" href="/product/document-edit?id=<?php echo $this->escape($this->id); ?>&doc_type=<?php echo $this->escape($this->docType); ?>&document_id=<?php echo $this->escape($each['id']); ?>">編集</a>
+	                    	</div>
+	                    	<div>
+	                    		<a class="delete_item" href="javascript:void(0);" document-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+	                    	</div>
+	                    </td>
+	                </tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+        </table>
+             			
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>
+

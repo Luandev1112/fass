@@ -1,0 +1,751 @@
+<?php
+$statusList   = Shared_Model_Code::codes('cost_calc_status');
+?>
+<script type="text/javascript">
+var pos = 0;
+var targetColumnPackage = '';
+var targetColumnPostage = '';
+$(function () {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        calculate();
+    });
+
+	<?php if (empty($this->approvalId)) { ?>
+	    //
+	    // 承認申請
+	    //
+	    $('.btn_save').click( function(){
+			jQuery.alerts.yesButton = 'はい';
+			jQuery.alerts.cancelButton = 'もう一度確認'; 
+	        jConfirm('計算や誤字、漏れなどの軽度なミスが無いことを最終チェック済みですか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;jAlert('承認申請しました', '　');return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/apply-apploval?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+		
+	    $(document).on('click', '#popup_ok', function () {
+	    	if (reloadFlag) {
+	    		location.href = '/price/cost-shipping?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>&pos=' + $(window).scrollTop();
+	    	}
+	    });
+	<?php } else { ?>
+	    // 修正依頼
+	    $('.btn_mod_request').click( function(){
+	        jConfirm('修正依頼しますか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	 
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('修正依頼しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });
+	    });
+	    
+	    //
+	    // 承認
+	    //
+	    $('.btn_save').click( function(){
+	        jConfirm('この内容で承認しますか', '　', function(r) {
+	            if(r) {
+					showSpinner();
+					
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	                
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('承認しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+		
+	    $(document).on('click', '#popup_ok', function () {
+	    	if (reloadFlag) {
+	    		location.href = '/approval/list';
+	    	}
+	    });
+	<?php } ?>
+	
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+
+    //
+    // 保存
+    //
+    $(document).on('click', '.btn_save_category', function () {
+		showSpinner();
+
+        var $form = $('#update_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                    
+                } else if(obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('登録しました', '　');
+                    return;
+                    
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/price/update-cost-shipping?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>',
+		});
+	});
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/price/cost-shipping?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>&pos=' + $(window).scrollTop();
+    });
+    
+    // 自動計算
+  	$('input').on('input', function(e) {
+		calculate();
+  	});
+  	
+  	// 送料 ポップアップ表示
+  	$(document).on('click', '.select_cost_postage', function () {
+  		targetColumnPostage = $(this).attr('target-column');
+  		
+    	showSpinner();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/price-expense/postage-select', null, function () {stopSpinner();});
+    });
+    
+	// 送料 条件検索
+    $(document).on('click', '#search_postage', function () {
+		updatePostageList(1);
+    });
+    
+    // 梱包資材・作業費
+  	$(document).on('click', '.select_cost_package', function () {
+  		targetColumnPackage = $(this).attr('target-column');
+  		
+    	showSpinner();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/price-expense/package-select', null, function () {stopSpinner();});
+    });
+
+	// 梱包資材・作業費 条件検索
+    $(document).on('click', '#search_pstagee', function () {
+		updatePostageList(1);
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 送料 一覧ページ切り替え
+function pagePostage(pageNo) {
+	updatePostageList(pageNo)
+}
+
+// 送料 一覧更新
+function updatePostageList (pageNo) {
+    var $form = $('#postage_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/price-expense/postage-select?page=' + pageNo,
+    });
+}
+
+// 送料 選択
+function selectPostage(id, name, price) {
+	console.log('targetColumnPostage:' + targetColumnPostage);
+	console.log('selectPostage id:' + id + 'name:' + name);
+	$('#cost_postage_name_' + targetColumnPostage).html(name);
+	$('#cost_postage_id_' + targetColumnPostage).val(id);
+	
+	// 1件当たり送料
+	$('#postage_unit_price_' + targetColumnPostage).html(separate(price));
+	$('input[name="hidden_postage_unit_price_' + targetColumnPostage + '"]').val(price);
+	
+	calculate();
+	
+	$('.btn_close').click();
+}
+
+// 梱包資材・作業費 一覧ページ切り替え
+function pagePackage(pageNo) {
+	updatePackageList(pageNo)
+}
+
+// 梱包資材・作業費 一覧更新
+function updatePackageList (pageNo) {
+    var $form = $('#package_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/price-expense/package-select?page=' + pageNo,
+    });
+}
+
+// 梱包資材・作業費 選択
+function selectPackage(id, name, packageCost, operationCost) {
+	console.log('targetColumnPackage:' + targetColumnPackage);
+	console.log('selectpackage id:' + id + 'name:' + name);
+	$('#cost_package_name_' + targetColumnPackage).html(name);
+	$('#cost_package_id_' + targetColumnPackage).val(id);
+	
+	// 梱包資材費
+	$('#package_cost_' + targetColumnPackage).html(separate(packageCost));
+	$('input[name="hidden_package_cost_' + targetColumnPackage + '"]').val(packageCost);
+	
+	// 梱包作業費
+	$('#operation_cost_' + targetColumnPackage).html(separate(operationCost));
+	$('input[name="hidden_operation_cost_' + targetColumnPackage + '"]').val(operationCost);
+	
+	// 梱包資材＆作業費／個
+	//var package_total_price = parseFloat(packageCost) + parseFloat(operationCost);
+	//$('#package_total_price_' + targetColumnPackage).html(separate(package_total_price));
+	//$('input[name="hidden_package_total_price_' + targetColumnPackage + '"]').val(package_total_price);
+	
+	calculate();
+	
+	$('.btn_close').click();
+}
+
+
+function separate(num){
+    return String(num).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+}
+function isNumber(n) { return /^-?[\d.]+(?:e-?\d+)?$/.test(n); } 
+function initValue(value) {
+	if (isNumber(value)) {
+		return parseInt(value);
+	}
+	return 0;
+}
+
+function calculate() {
+	for (var i = 1; i <= 15; i++) {	
+		// 1件当たりの輸送個数
+		var amount_per_package  = parseFloat($('input[name="amount_per_package_' + i + '"]').val());
+		
+		// --------------------------------------------------------------
+		
+		var postage_unit_price  = parseFloat($('input[name="hidden_postage_unit_price_' + i + '"]').val());
+		console.log('amount_per_package' + i + ': ' + amount_per_package);
+		console.log('postage_unit_price' + i + ': ' + postage_unit_price);
+		
+		var postage_price_per_item = 0;
+
+		if (amount_per_package && postage_unit_price) {
+			// 1件当たり送料
+			postage_price_per_item = postage_unit_price / amount_per_package;
+		}
+		
+		// A. 送料／個
+		$('#postage_price_' + i).html(separate(postage_price_per_item.toFixed(0)));
+		console.log('postage_price_per_item' + i + ': ' + postage_price_per_item);
+		
+		// --------------------------------------------------------------
+		
+		var package_cost   = parseFloat($('input[name="hidden_package_cost_' + i + '"]').val());
+		var operation_cost = parseFloat($('input[name="hidden_operation_cost_' + i + '"]').val());
+		console.log('package_cost' + i + ': ' + package_cost);
+		console.log('operation_cost' + i + ': ' + operation_cost);
+		
+		// B. 梱包資材＆作業費／個
+		var package_price_per_item = 0;
+		
+		if (amount_per_package && (package_cost || operation_cost)) {
+			package_price_per_item = (package_cost + operation_cost) / amount_per_package;
+		}
+		
+		console.log('package_price_per_item' + i + ': ' + package_price_per_item);
+		$('#package_total_price_' + i).html(separate(package_price_per_item.toFixed(0)));
+		$('input[name="hidden_package_total_price_' + i + '"]').val(package_price_per_item);
+		
+		
+		var shimpent_total = postage_price_per_item + package_price_per_item;
+		console.log('shimpent_total' + i + ': ' + shimpent_total);
+		
+		// 発送費用 (A+B)
+		$('#shimpent_total_' + i).html(separate(shimpent_total.toFixed(0)));
+		
+	}
+}  
+</script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;padding}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+.left_table th, .left_table td {border-right:none !important;}
+.scroll{overflow:auto;white-space:nowrap;width:100%;height:500px;}
+.scroll table{table-layout:fixed;}
+.scroll table tr th, .scroll table tr td{border-left:none;}
+table.detail tr th, table.detail tr td {border:1px solid #000;height:24px;}
+table.detail tr th {border:1px solid #333;color:#fff;font-weight:normal;background-color:#4f6d96;}
+table.detail tr td {border:1px solid #333;white-space:normal;}
+table.detail tr input {width:99%;text-align:right;padding-right:5px;height:18px;}
+table.detail tr p {margin-bottom:0;}
+table.detail tr.row_total th, table.detail tr.row_total td {background-color:#bfd5f5}
+table.detail tr.category_total th, table.detail tr.category_total td {background-color:#e1e9f5}
+.align_center{text-align:center}
+.align_right{text-align:right}
+.bold{font-weight:bold;}
+p.reference_name {height:37px;word-wrap:break-word;word-break:break-all;overflow:hidden;margin-bottom:7px;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;font-weight:bold;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding: 5px 8px 3px 8px;line-height: 1;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;margin-bottom:9px;">
+	        <span style=""><strong>原価計算 - 詳細（<?php echo $statusList[$this->costData['version_status']]; ?>）</strong></span>
+	    </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        </div>
+    	<?php
+            echo $this->partial('price/menu.phtml', array(
+    			'action'     => $this->action,
+    			'id'         => $this->data['id'],
+    			'costId'     => $this->costId,
+    			'approvalId' => $this->approvalId,
+    		));
+        ?> 
+	</div>
+
+    <div class="clearfix">
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="update_form">
+		
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+	        	<?php
+	        	$borderRight = 'border-right';
+	        	if ($this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_NOT_CREATED
+	        	 || $this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_EDITING) {
+	        	 	$borderRight = '';
+	        	}
+	        	?>
+                <th class="border-left border-top border-bottom <?php echo $borderRight; ?>"><p class="label_text strong">発送費用　（通販前提）</p></th>
+                
+                <?php if ($this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_NOT_CREATED || $this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_EDITING) { ?>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+                <?php } ?>
+            </tr>
+        </table>
+
+		<?php
+			$postageDataList = array();
+			$packageDataList = array();
+			
+			$costPostageTable = new Shared_Model_Data_CostPostage();
+			$costPackageTable = new Shared_Model_Data_CostPackage();
+			$grayOut = array();
+			
+			for($count = 1; $count <= 7; $count++) {
+				$postageId = $this->costData['cost_postage_id_' . $count];
+		
+				if (!empty($postageId)) {
+					$postageDataList[(string)$count] = $costPostageTable->getById($this->adminProperty['management_group_id'], $postageId);
+				}
+				
+				$packageId = $this->costData['cost_package_id_' . $count];
+				if (!empty($packageId)) {
+					$packageDataList[(string)$count] = $costPackageTable->getById($this->adminProperty['management_group_id'], $packageId);
+				}				
+			}
+		?>
+
+		<div class="clearfix">
+		<div style="width:240px;float:left;">
+        <table class="detail left_table" style="margin-top:13px;margin-bottom:13px;">
+            <tr>
+                <th><p>項目名</p></th>
+            </tr>
+            
+            <tr>
+				<td><p>1件当たりの輸送個数</p></td>
+            </tr>
+            
+            <tr class="row_total">
+            	<td><p><strong>発送費用 (A+B)／個</strong></p></td>
+            </tr>
+            
+            <tr class="category_total">
+            	<td><p><strong>A 送料／個</strong></p></td>
+            </tr>
+            <tr>
+            	<td style="height:68px"><p>輸送費原単位名</p></td>
+            </tr>
+            <tr>
+            	<td><p>1件当たり送料</p></td>
+            </tr>
+            <tr class="category_total">
+            	<td><p><strong>B 梱包資材＆作業費／個</strong></p></td>
+            </tr>
+            <tr>
+            	<td style="height:68px"><p>梱包仕様名(原単位名)</p></td>
+            </tr>
+            <tr>
+            	<td><p>梱包資材費／件</p></td>
+            </tr>
+            <tr>
+            	<td><p>梱包作業費／件</p></td>
+            </tr>
+        </table>
+		</div>
+
+		<div class="scroll" style="width:860px;float:left;">
+		<table class="detail" style="margin-top:13px;">
+			<tr><!-- 項目名 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+ 					<?php
+                		$grayOut[$count] = '';
+                		$columnName = $this->escape($this->costData['column_name_' . $count]);
+                		if ($columnName === '---') {
+                			$grayOut[$count] = 'gray_out';
+                		}
+                	?>
+	                <th class="<?php echo $grayOut[$count]; ?>" style="width:150px">
+	                	<p class="display_value_<?php echo $categoryId; ?> align_center"><?php echo $columnName; ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+	                		<input type="text" style="text-align:center" name="column_name_<?php echo $count; ?>" value="<?php echo $columnName?>">
+	                	</div>
+	                </th>
+                <?php } ?>
+			</tr>
+
+            <tr><!-- 1件当たりの輸送個数 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $amount = $this->escape($this->costData['amount_per_package_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right"><?php if (!empty($amount)) { echo number_format($amount); } else { echo '---'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" name="amount_per_package_<?php echo $count; ?>" value="<?php if (!empty($amount)) { echo $amount; } ?>">
+                		</div>
+                	</div>
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr class="row_total"><!-- 発送費用 (A+B) -->
+				<?php for($count = 1; $count <= 15; $count++) { ?>
+					<td class="<?php echo $grayOut[$count]; ?>"><p class="align_right"><span id="shimpent_total_<?php echo $count; ?>" class="bold">0</strong></span></td>
+				<?php } ?>
+            </tr>            
+
+            <tr class="category_total"><!-- A 送料／個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php
+                	$postagePrice = 0;
+                	$amount = $this->costData['amount_per_package_' . $count];
+                	if (!empty($amount) && !empty($postageDataList[(string)$count]['standard_price'])) {
+                		$postagePrice = $postageDataList[(string)$count]['standard_price'] / $amount;
+                	}
+                	?>
+                	<p class="align_right"><span id="postage_price_<?php echo $count; ?>" class="bold"><?php echo $postagePrice; ?></strong></span>
+                </td>
+                <?php } ?>
+            </tr>
+            
+            <tr><!-- 輸送費原単位名 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>" style="height:68px;vertical-align:top;">
+                	<?php
+                	$postageName = '---';
+                	if (!empty($postageDataList[(string)$count]['title'])) {
+                		$postageName = $postageDataList[(string)$count]['title'];
+                	}
+                	?>
+                	<p class="reference_name"><span id="cost_postage_name_<?php echo $count; ?>"><?php echo $this->escape($postageName); ?></span></p>
+                	<input type="hidden" id="cost_postage_id_<?php echo $count; ?>" name="cost_postage_id_<?php echo $count; ?>" value="<?php echo $this->costData['cost_postage_id_' . $count]; ?>" />
+                	<?php if (!empty($postageDataList[(string)$count])) { ?>
+                	<div class="display_value_<?php echo $categoryId; ?>">
+                		<a class="option" target="_blank" href="/price-expense/postage-detail?id=<?php echo $this->escape($postageDataList[(string)$count]['id']); ?>&direct=1">表示</a>
+                	</div>
+                	<?php } ?>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<a class="option select_cost_postage" target-column="<?php echo $count; ?>">選択</a>
+                	</div>
+                </td>
+				<?php } ?>
+            </tr>
+            
+            <tr><!-- 1件当たり送料 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php
+                	$postageUnitPrice = 0;
+                	if (!empty($postageDataList[(string)$count]['standard_price'])) {
+                		$postageUnitPrice = $postageDataList[(string)$count]['standard_price'];
+                	}
+                	?>
+            		<p class="align_right"><span id="postage_unit_price_<?php echo $count; ?>"><?php echo number_format($postageUnitPrice); ?></span></p>
+            		<input type="hidden" name="hidden_postage_unit_price_<?php echo $count; ?>" value="<?php echo $postageUnitPrice; ?>" />	
+                </td>
+                <?php } ?>
+            </tr>
+            
+            <tr class="category_total"><!-- B 梱包資材＆作業費／個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php
+                	$packageTotal = 0;
+                	if (!empty($packageDataList[(string)$count]['total'])) {
+                		$packageTotal = $packageDataList[(string)$count]['total'];
+                	}
+                	
+                	?>
+
+            		<p class="align_right"><span id="package_total_price_<?php echo $count; ?>" class="bold"><?php if (!empty($packageTotal)) { echo number_format($packageTotal); } else { echo '0'; } ?></span></p>
+            		<input type="hidden" name="hidden_package_total_price_<?php echo $count; ?>" value="<?php echo $packageTotal; ?>" />	
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr><!-- 梱包仕様名(原単位名) -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>" style="height:68px;vertical-align:top;">
+                	<?php
+                	$packageName = '---';
+                	if (!empty($packageDataList[(string)$count]['title'])) {
+                		$packageName = $packageDataList[(string)$count]['title'];
+                	}
+                	?>
+                	<p class="reference_name"><span id="cost_package_name_<?php echo $count; ?>"><?php echo $this->escape($packageName); ?></span></p>
+                	<input type="hidden" id="cost_package_id_<?php echo $count; ?>" name="cost_package_id_<?php echo $count; ?>" value="<?php echo $this->costData['cost_package_id_' . $count]; ?>" />
+                	<?php if (!empty($packageDataList[(string)$count])) { ?>
+                	<div class="display_value_<?php echo $categoryId; ?>" >
+                		<a class="option" target="_blank" href="/price-expense/package-detail?id=<?php echo $this->escape($packageDataList[(string)$count]['id']); ?>&direct=1">表示</a>
+                	</div>
+                	<?php } ?>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<a class="option select_cost_package" target-column="<?php echo $count; ?>">選択</a>
+                	</div>
+                </td>
+				<?php } ?>
+            </tr>
+
+            <tr><!-- 梱包資材費 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php
+                	$packageCost = 0;
+                	if (!empty($packageDataList[(string)$count]['package_cost'])) {
+                		$packageCost = $packageDataList[(string)$count]['package_cost'];
+                	}
+                	?>
+            		<p class="align_right"><span id="package_cost_<?php echo $count; ?>"><?php echo number_format($packageCost); ?></span></p>
+            		<input type="hidden" name="hidden_package_cost_<?php echo $count; ?>" value="<?php echo $packageCost; ?>" />	
+                </td>
+                <?php } ?>
+            </tr>
+            
+            <tr><!-- 梱包作業費 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td>
+                	<?php
+                	$operationCost = 0;
+                	if (!empty($packageDataList[(string)$count]['operation_cost'])) {
+                		$operationCost = $packageDataList[(string)$count]['operation_cost'];
+                	}
+                	?>
+            		<p class="align_right"><span id="operation_cost_<?php echo $count; ?>"><?php echo number_format($operationCost); ?></span></p>
+            		<input type="hidden" name="hidden_operation_cost_<?php echo $count; ?>" value="<?php echo $operationCost; ?>" />	
+                </td>
+                <?php } ?>
+            </tr>
+
+		</table>
+		</div>
+		</div>
+		
+	    <div class="private_memo">
+	    	<p>発送費用メモ</p>
+	    	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($this->costData['memo_shipping'])); ?></div>
+	    	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+	    		<textarea id="memo_shipping" name="memo_shipping" style="height:150px;width:1000px;"><?php echo $this->escape($this->costData['memo_shipping']); ?></textarea>
+	    	</div>
+	    </div>
+	    
+	    
+		</form>  
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

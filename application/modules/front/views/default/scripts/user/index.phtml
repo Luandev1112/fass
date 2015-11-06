@@ -1,0 +1,128 @@
+<?php
+$statusList = Shared_Model_Code::codes('user_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+    $(document).on('click', '.btn_send_mail', function () {
+    	var targetId = $(this).attr('target-id');
+    	var targetName = $(this).attr('target-name');
+		jConfirm(targetName + ' 宛にログイン情報をメール送信にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                jAlert('送信しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/user/send-mail'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+});    
+</script>
+<style type="text/css">
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/user/detail">新規登録</a>
+            </p>
+	        <span style=""><strong><?php echo $this->escape($this->groupData['organization_name']); ?> / 利用者一覧</strong></span>
+	    </div>
+	</div>
+
+	<div class="menu_list connection clearfix">
+	<a class="menu <?php if($this->action == 'index') echo "selected"; ?>" href="/user">アクティブ</a>
+	<a class="menu <?php if($this->action == 'inactive') echo "selected"; ?>" href="/user/inactive">退職済み</a>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>利用者ID</p></th>
+				<th style="width:14%;"><p>ステータス</p></th>
+				<th style="width:13%;"><p>所属</p></th>
+				<th><p>氏名</p></th>
+				<th style="width:12%;"><p></p></th>
+				<th style="width:8%;"><p>電子印</p></th>
+				<th style="width:15%;"><p>最終ログイン</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+		
+						<td>
+							
+							<p <?php if ($each['status'] === (string)Shared_Model_Code::USER_STATUS_ACTIVE) { echo 'class="status_active"'; } ?>><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['department_name']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['user_name']); ?></p>
+						</td>
+						
+						<td>
+							<?php if ($each['status'] === (string)Shared_Model_Code::USER_STATUS_ACTIVE) { ?>
+								<a class="btn_setting btn_send_mail" target-id="<?php echo $this->escape($each['id']); ?>" target-name="<?php echo $this->escape($each['user_name']); ?>" style="margin:0.2em 0 0.2em 0.3em;font-weight:bold;padding-left:0.6em;padding-right:0.6em;" href="javascript:void(0);">ログイン情報を送信</a>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<img id="photo_image" style="width:56px;height:56px;padding:0.2em" src="<?php echo Shared_Model_Resource_Stamp::getResourceUrl($each['id']); ?>" />
+						</td>
+						
+						<td>
+							<p><?php echo date('Y-m-d H:i:s', strtotime($each['last_logined'])); ?></p>
+						</td>
+						
+						<td>
+							<p><a href="/user/detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

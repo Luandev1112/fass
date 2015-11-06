@@ -1,0 +1,280 @@
+<?php
+$productMarketList        = Shared_Model_Code::codes('product_market');
+$productSalesStatusList   = Shared_Model_Code::codes('product_sales_status');
+$supplyMethodList         = Shared_Model_Code::codes('supply_method');
+$productionProcessList    = Shared_Model_Code::codes('production_process');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+    	Tipped.create('#help_keyword', "販売商品名(日本語) / 販売商品名(英語) / 商品概要 / 販売商品JANコード<br>配送向け内容品表記 / 配送向け内容品表記(英語)");
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/product/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/product/list?page=<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr th {position:relative;}
+table.list_default tr th i{margin-left:5px;font-size:1.2em}
+table.list_default tr td {overflow:inherit;}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.deleted td {background:#ccc}
+table.list_default tr.deleted:hover td {background:#bbb;}
+table.list_default tr td p {height:auto;}
+.multi_rows_padding {padding:5px 10px 5px 10px}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+
+table.list_default tr td a.btn_list_delete {position:absolute;left:50px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:162px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin-right:10px;border:none;" href="/product/add">新規登録</a>
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/product/import">取込</a>
+            </p>
+	        <span style=""><strong>販売商品管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/product/list" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">調達製造区分：</p>
+	                    <select id="product_class" name="product_class">
+	                        <option value="">---</option>
+	                    	<?php foreach ($this->productClassList as $each) { ?>
+	                            <option value="<?php echo $this->escape($each['id']); ?>" <?php if ($each['id'] == $this->conditions['product_class']) echo 'selected="selected"';?>><?php echo $this->escape($each['name']); ?></option>
+	                        <?php } ?>
+	                    </select>
+					</div>
+	
+					<div class="condition_item">
+						<p class="condition_label">商品区分：</p>
+	                    <select id="product_category" name="product_category">
+	                        <option value="">---</option>
+	                    	<?php foreach ($this->productCategoryList as $each) { ?>
+	                            <option value="<?php echo $this->escape($each['id']); ?>" <?php if ($each['id'] == $this->conditions['product_category']) echo 'selected="selected"';?>><?php echo $this->escape($each['name']); ?></option>
+	                        <?php } ?>
+	                    </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">販売状況：</p>
+	                    <select id="product_sales_status" name="product_sales_status">
+	                        <option value="">---</option>
+	                    	<?php foreach ($productSalesStatusList as $key => $value) { ?>
+	                            <option value="<?php echo $this->escape($key); ?>" <?php if ($key == $this->conditions['product_sales_status']) echo 'selected="selected"';?>><?php echo $this->escape($value); ?></option>
+	                        <?php } ?>
+	                    </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">販売可能範囲：</p>
+	                    <select id="product_market" name="product_market">
+	                        <option value="">---</option>
+	                    	<?php foreach ($productMarketList as $key => $value) { ?>
+	                            <option value="<?php echo $this->escape($key); ?>" <?php if ($key == $this->conditions['product_market']) echo 'selected="selected"';?>><?php echo $this->escape($value); ?></option>
+	                        <?php } ?>
+	                    </select>
+					</div>
+				</div>
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">キーワード：<span class="popup_help" id="help_keyword">&nbsp;<i class="icon-help-circled"></i></span></p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+				</div>
+
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>	
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;"><p>商品ID</p></th>
+				<th style="width:15%;"><p>調達製造区分<i class="icon-info-circle"></i></p></th>
+				<th style="width:18%;"><p>商品区分<i class="icon-info-circle"></i></p></th>
+				<th style="width:11%;"><p>販売状況</p></th>
+				<th><p>商品名<i class="icon-info-circle"></i></p></th>
+				<th style="width:4%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>" <?php if ($each['product_sales_status'] === (string)Shared_Model_Code::PRODUCT_SALES_STATUS_NOPLAN || (string)$each['product_sales_status'] == Shared_Model_Code::PRODUCT_SALES_STATUS_FINISHED) { echo 'class="deleted"'; } ?>>
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+
+	                	<?php
+	                		$selected = array();
+	                		$productClasses = unserialize($each['product_classes']);
+	                		if (!empty($productClasses)) {
+	                			foreach ($this->productClassList as $eachItem) {
+			                		foreach($productClasses as $eachSelected) {
+			                			if ($eachSelected === (string)$eachItem['id']) {
+						                	$selected[] .= $eachItem['name'];
+					                	}
+			                		}
+		                		}
+		                		foreach($productClasses as $eachSelected) {
+			                		if ($eachSelected == Shared_Model_Code::PRODUCT_CLASS_OTHER) {
+				                		$selected[] .= Shared_Model_Code::PRODUCT_CLASS_OTHER_TITLE . '　（' . $each['product_class_other_text'] . '）';
+				                	}
+			                	}
+         	
+		                	}
+	                	?>
+						<td class="desc" all-content="<?php echo $this->escape(implode(' / ', $selected)); ?>">
+							<p><?php echo $this->escape($this->roundText(implode(' / ', $selected), 15)); ?></p>
+						</td>
+
+	                	<?php
+	                		$selected = array();
+	                		$productCategories = unserialize($each['product_categories']);
+	                		if (!empty($productCategories)) {
+	                			foreach ($this->productCategoryList as $eachItem) {
+			                		foreach($productCategories as $eachSelected) {
+			                			if ($eachSelected === (string)$eachItem['id']) {
+						                	$selected[] .= $eachItem['name'];
+					                	}
+			                		}
+		                		}
+		                		foreach($productCategories as $eachSelected) {
+			                		if ($eachSelected == Shared_Model_Code::PRODUCT_CATEGORY_OTHER) {
+				                		$selected[] .= Shared_Model_Code::PRODUCT_CATEGORY_OTHER_TITLE . '　（' . $each['product_category_other_text'] . '）';
+				                	}
+			                	}
+         	
+		                	}
+	                	?>
+						<td class="desc" all-content="<?php echo $this->escape(implode(' / ', $selected)); ?>">
+							<p><?php echo $this->escape($this->roundText(implode(' / ', $selected), 15)); ?></p>
+						</td>
+						
+						
+						<td>
+							<?php if ($each['product_sales_status'] === (string)Shared_Model_Code::PRODUCT_SALES_STATUS_PREPARE) { ?>
+								<p class="red"><strong><?php echo $productSalesStatusList[$each['product_sales_status']] ?></strong></p>
+							<?php } else if ($each['product_sales_status'] === (string)Shared_Model_Code::PRODUCT_SALES_STATUS_ON_SALE) { ?>
+								<p class="status_active"><?php echo $productSalesStatusList[$each['product_sales_status']] ?></p>
+							<?php } else { ?>
+								<p><?php echo $productSalesStatusList[$each['product_sales_status']] ?></p>
+							<?php } ?>
+						</td>
+						
+						<?php 
+						$allName = '';
+						if (!empty($each['item_name'])) {
+							$allName .= "<span class='product_name'>商品名</span>&nbsp;" . str_replace("'", '&quot;', $this->escape($each['item_name'])) . '<br />';
+						}
+						
+						if (!empty($each['buying_item_name'])) {
+							$allName .= "<span class='import_name'>仕入名</span>&nbsp;" . str_replace("'", '&quot;', $this->escape($each['buying_item_name'], 40)) . '<br />';
+						}
+						?>
+						<td class="desc" all-content="<?php echo $allName; ?>">
+							<div class="multi_rows_padding">
+								<?php if (!empty($each['item_name'])) { ?>
+								<span class="product_name">商品名</span>&nbsp;<?php echo $this->escape($this->roundText($each['item_name'], 40)); ?><br />
+								<?php } ?>
+								<?php if (!empty($each['buying_item_name'])) { ?>
+								<span class="import_name">仕入名</span>&nbsp;<?php echo $this->escape($this->roundText($each['buying_item_name'], 40)); ?><br />
+								<?php } ?>
+							</div>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p><a href="/product/basic?id=<?php echo $each['id']; ?>&direct=1" target="_blank">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

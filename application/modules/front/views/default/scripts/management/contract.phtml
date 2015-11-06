@@ -1,0 +1,109 @@
+<?php
+
+?>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>取引先 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>   
+    </div>
+
+    <div class="clearfix">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>日時</p>
+				</th>
+
+				<th>
+					<p>タイトル</p>
+				</th>
+				
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+			
+<?php
+
+$items = array();
+
+/*
+$items[] = array(
+'contact_date' => '2018/04/09',
+'title' => '商品販売契約合意書',
+);
+
+
+$items[] = array(
+'contact_date' => '2018/02/09',
+'title' => '基本契約書',
+);
+
+
+$this->items = $items;
+*/
+?>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['contact_date']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['title']); ?></p>
+						</td>
+						
+						<td>
+							<p>
+								<a href="/connection/progress-detail?id=<?php echo $each['id']; ?>">表示</a>
+							</p>
+						</td>
+
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="3">
+						<p style="text-align:center;">現在この機能はまだ利用できません<?php /*データがありません*/ ?></p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div><!-- clearfix -->
+              
+
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,119 @@
+<?php
+
+?>
+<script type="text/javascript"><!--
+$(function() {
+    $(document).ready(function(){
+
+    });
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>製造管理 - 健骨・健歯・健康美　ライシア原粉末</strong></span>
+        </div>
+    	<?php
+            echo $this->partial('manufacture/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    		));
+        ?>   
+    </div>
+
+    <div class="clearfix">
+		<table class="list_default">
+			<tr>
+				<th style="width:15%;">
+					<p>日時</p>
+				</th>
+
+				<th style="width:20%;">
+					<p>生産数</p>
+				</th>
+
+				<th style="width:10%;">
+					<p>担当者ID</p>
+				</th>
+				
+				<th>
+					<p>担当者</p>
+				</th>
+			</tr>
+			
+<?php
+
+$items = array();
+
+$items[] = array(
+'created' => '2018-02-09 00:00',
+'amount' => 50,
+'id'   => 2,
+'user' => '飯島 優希',
+);
+
+
+$items[] = array(
+'created' => '2018-02-09 00:00',
+'amount' => 50,
+'id'   => 1,
+'user' => '山本 祐子',
+);
+
+
+$this->items = $items;
+
+?>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['created']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['amount']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['id']); ?></p>
+						</td>
+												
+						<td>
+							<p><?php echo $this->escape($each['user']); ?></p>
+						</td>
+
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div><!-- clearfix -->
+              
+
+</div>
+</div>
+</div>
+</div>
+

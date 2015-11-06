@@ -1,0 +1,103 @@
+<?php
+$supplierStatusList   = Shared_Model_Code::codes('supplier_status');
+?>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;margin-right:12px;}
+.relation_type_item {margin-right:12px}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.add_image_box {padding:13px 0;}
+table.list_default tr td.column_value input.target_date, table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+a.detail_supplier {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 3px 0 3px;float:left;cursor:pointer;}
+.multi_rows_padding {padding:5px 0 5px 6px}
+.connection_name_title {}
+.status_text {font-size:1.2em;}
+.condition_title {background-color:#bae0ff;padding-left:6px;font-weight:bold;}
+.condition_label{float:left;}
+.condition_row {margin-bottom:5px;border-top:1px solid #ccc}
+
+.main_name {color:#243ebf;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:600px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>原料・製品 - </strong><strong class="main_name"><?php echo $this->escape($this->projectData['title']); ?> </strong></span>
+        </div>
+    </div>
+    
+    <div class="clearfix">
+	    <h2 style="padding-left:0.7em;margin-bottom:0.6em;"><?php echo $this->escape($this->data['individual_name']); ?></h2>
+
+    	<?php
+            echo $this->partial('supply-material/menu.phtml', array(
+    			'action'     => $this->action,
+    			'id'         => $this->id,
+    			'materialId' => $this->materialId,
+    		));
+        ?>
+        
+
+		<table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <th style="width:25%"><p>ファイル名</p></th>
+                <th style="width:10%"><p>バージョン</p></th>
+                <th style="width:15%"><p>登録日</p></th>
+                <th></th>
+            </tr>
+            
+            <?php foreach($this->historyList as $each) { ?>
+				<tr>
+	                <td style="width:30%"><p><?php echo $this->escape($each['default_file_name']); ?></p></td>
+	                <td><p><?php echo $this->escape($each['version_id']); ?></p></td>
+	                <td><p><?php echo date('Y/m/d H:i', strtotime($each['created'])); ?></p></td>
+	                <td><a class="btn_setting" style="margin:3px;padding:2px 35px 0px 35px;" href="/rsrc/material-history/<?php echo $this->escape($each['id']); ?>/<?php echo $this->escape($each['default_file_name']); ?>">ダウンロード</a></td>
+	            </tr>
+            <?php } ?>
+    	</table>
+			
+	</div><!-- clearfix -->				
+    
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

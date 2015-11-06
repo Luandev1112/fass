@@ -1,0 +1,15 @@
+<?php if ($this->conditionColumn == $this->columnName) { ?>
+    <?php if ($this->conditionOrder == 'asc') { ?>
+        <a class="column_order" href="?column=<?php echo $this->columnName; ?>&order=desc">
+        	<div><i class="icon-up-dir-1"></i><i class="icon-down-dir-1 active"></i></div>
+        </a>
+    <?php } else { ?>
+        <a class="column_order" href="?column=<?php echo $this->columnName; ?>&order=asc">
+        	<div><i class="icon-up-dir-1 active"></i><i class="icon-down-dir-1"></i></div>
+        </a>
+    <?php } ?>
+<?php } else { ?>
+    <a class="column_order" href="?column=<?php echo $this->columnName; ?>&order=asc">
+    	<div><i class="icon-up-dir-1"></i><i class="icon-down-dir-1"></i></div>
+    </a>
+<?php } ?>

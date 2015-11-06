@@ -1,0 +1,99 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+    
+    //
+    // 実行
+    //
+    $('.btn_save').click( function(){
+        jConfirm('振り分けを実行しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('実行しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました。', 'エラー');
+                    },
+                    url: '/shipment/assign-post'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+	
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/shipment/plan-list';
+        }
+    });
+});    
+</script>
+<style type="text/css"><!--
+ul li {display:block;margin-bottom:3px;}
+label {display:block;background-color:#fafafa;padding:0.8em 30px;border:1px solid #ccc;}
+label:hover {background-color:#deeeff;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:700px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>検品割り当て</strong></span>
+	    </div>
+	</div>
+
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<p style="padding-left:13px;margin-bottom:1.0em;">検品者を選択してください</p>
+		
+		<form id="register_form" action="#" method="post">
+			<ul>
+				<?php foreach ($this->inspectionUserList as $each) { ?>
+					<li>
+						<label><input type="checkbox" name="user_id[]" value="<?php echo $each['id']; ?>"><?php echo $this->escape($each['user_name']); ?></label>
+					
+					</li>
+				<?php } ?>
+			</ul>
+		</form>  
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

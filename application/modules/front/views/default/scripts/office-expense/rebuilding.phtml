@@ -1,0 +1,158 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+    
+});    
+</script>
+<style type="text/css"><!--
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+a.button.gray {background-color: #ccc;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>立替金精算</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+
+			<div class="condition_items_row clearfix">
+				<div class="clearfix" style="float:left;width:700px;">
+					<p class="action_title">対象月：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="" name="inspection_user_id_yamato" style="float:left;width:100px;margin-right:10px;">
+		                    <option value="">2018年</option>
+		                    <option value="">2017年</option>
+	                    </select>
+	                    <select id="" name="inspection_user_id_yamato" style="float:left;width:50px;margin-right:10px;">
+		                    <option value="">1月</option>
+		                    <option value="">2月</option>
+		                    <option value="">3月</option>
+		                    <option value="">4月</option>
+		                    <option value="">5月</option>
+		                    <option value="">6月</option>
+		                    <option value="">7月</option>
+		                    <option value="">8月</option>
+		                    <option value="" selected="selected">9月</option>
+		                    <option value="">10月</option>
+		                    <option value="">11月</option>
+		                    <option value="">12月</option>
+	                    </select>
+	                    <a class="button" id="" style="float:left;padding:5px 35px 4px;margin-bottom:0;margin-right:20px;" target="_blank" href="javascript:void(0);">表示</a>
+	                    
+	                    <a class="button" id="" style="float:left;padding:5px 35px 4px;margin-bottom:0;margin-right:20px;" target="_blank" href="javascript:void(0);">承認申請</a>
+	                    
+	                    <a class="button gray" id="" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="javascript:void(0);">印刷用PDF</a>
+					</div>
+				</div>
+				
+			</div><!-- condition items row -->
+
+		</div>
+	</div>
+	
+	
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>種別</p></th>
+				<th style="width:15%;"><p>備品資材ID</p></th>
+				<th><p>備品資材名</p></th>
+				<th style="width:10%;"><p>現在庫</p></th>
+				<th style="width:15%;"><p>最終更新日</p></th>
+			</tr>
+
+
+<?php
+
+$items = array();
+/*
+$items[] = array(
+'type' => '製造材料',
+'id'   => 3,
+'name' => 'PAW-RB1原料',
+'stock' => "43.5",
+'unit' => 'kg',
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'type' => '製造消耗品',
+'id'   => 5,
+'name' => '原粉末　スクリュー管',
+'stock' => "96",
+'unit' => '個',
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'type' => '製造消耗品',
+'id'   => 9,
+'name' => 'ユニパックC-8　100h×70w',
+'stock' => "368",
+'unit' => '個',
+'updated' => '2018-09-09 00:00',
+);
+
+$this->items = $items;
+*/
+?>	
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['type']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['id']; ?></p>
+						</td>
+
+						<td>
+							<p><a href="/manufacture/performance?id=<?php echo $each['id'] ?>"><?php echo $each['name']; ?></a></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['stock'] . '　' . $each['unit']; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $each['updated']; ?></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="5">
+						<p style="text-align:center;">現在この機能は使用できません<?php /* データがありません*/ ?></p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,9 @@
+<div class="item_title clearfix">
+	<p class="item_name"><?php echo $this->escape($this->data['description']); ?></p>
+</div>
+<?php if ($this->data['status'] == (string)Shared_Model_Code::RECEIVABLE_TEMPLATE_STATUS_APPROVED) { ?>
+<div class="menu_list clearfix">
+<a class="menu <?php if($this->action == 'template-detail') echo "selected"; ?>" href="/transaction-recieved/template-detail?id=<?php echo $this->escape($this->id); ?>">入金内容詳細</a>
+<a class="menu <?php if($this->action == 'template-history') echo "selected"; ?>" href="/transaction-recieved/template-history?id=<?php echo $this->escape($this->id); ?>">入金履歴</a>
+</div>
+<?php } ?>

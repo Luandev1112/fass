@@ -1,0 +1,128 @@
+<?php
+
+?>
+<script src="/resource/js/Chart.js/Chart.js"></script>
+<script type="text/javascript"><!--
+$(function() {
+    $(document).ready(function(){
+
+    });
+});
+
+var chartData = {
+    type   : 'bar',
+    labels : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['day'] . "',";
+            }
+            ?>],
+    scaleShowGridLines : false,
+    datasets : [
+        {
+            fillColor       : "rgba(24, 181, 22, 1.0)",
+            strokeColor     : "rgba(24, 181, 22, 1.0)",
+            highlightFill   : "rgba(24, 181, 22, 1.0)",
+            highlightStroke : "rgba(24, 181, 22, 1.0)",
+            data : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['count'] . "',";
+            }
+            ?>]
+        }
+    ]  
+};
+ 
+window.onload = function(){
+    var ctx = document.getElementById("canvas").getContext("2d");
+    window.myBar = new Chart(ctx).Bar(chartData, {
+        responsive : true,
+        tooltipTemplate:" <%= value %> ",
+    });
+}
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>製造管理 - 健骨・健歯・健康美　ライシア原粉末</strong></span>
+        </div>
+    	<?php
+            echo $this->partial('manufacture/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    		));
+        ?>   
+    </div>
+
+    <div class="item_header clearfix">
+        <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">月間生産状況</span>
+        <select id="month_list" name="month_list" style="width:150px;margin-right:4px;margin-top:4px;display:block;float:right;height:26px;">
+            <?php foreach ($monthList as $key => $each) { ?>
+                <option value="<?php echo $key; ?>" <?php if ($this->tagetMonth == $key) { echo 'selected="selected"'; } ?>><?php echo $each; ?></option>
+            <?php } ?>
+    	</select>
+    </div>
+        
+    <div style="padding: 0 12px 20px 27px; position:relative;">
+        <div style="margin: 3px;">
+            <canvas id="canvas" height="200" width="694"></canvas>  
+        </div>
+        <p style="position:absolute;top:196px;left:-40px;text-align:center; width:10em; font-size:0.92em; transform: rotate( 270deg ); ">生産数</p>
+        <p style="position:absolute;bottom:5px; eft:auto;text-align:center; width:100%; font-size:0.92em;">（日）</p>
+    </div>
+
+    <div class="clearfix">
+    	<div style="float:left;width:30%;margin-right:20px;">
+		<table class="list_default">
+			<tr><td><p>日付</p></td><td><p>製造数</p></td></tr>
+			<tr><td><p>2018-09-01</p></td><td><p>50</p></td></tr>
+			<tr><td><p>2018-09-02</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-03</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-04</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-05</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-06</p></td><td><p>0</p></td></tr>
+		</table>
+		</div>
+    	<div style="float:left;width:30%;margin-right:20px;">
+		<table class="list_default">
+			<tr><td><p>日付</p></td><td><p>製造数</p></td></tr>
+			<tr><td><p>2018-09-11</p></td><td><p>50</p></td></tr>
+			<tr><td><p>2018-09-12</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-13</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-14</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-15</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-16</p></td><td><p>0</p></td></tr>
+		</table>
+		</div>
+    	<div style="float:left;width:30%">
+		<table class="list_default">
+			<tr><td><p>日付</p></td><td><p>製造数</p></td></tr>
+			<tr><td><p>2018-09-21</p></td><td><p>50</p></td></tr>
+			<tr><td><p>2018-09-22</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-23</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-24</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-25</p></td><td><p>0</p></td></tr>
+			<tr><td><p>2018-09-26</p></td><td><p>0</p></td></tr>
+		</table>
+		</div>
+	</div><!-- clearfix -->
+              
+
+</div>
+</div>
+</div>
+</div>
+

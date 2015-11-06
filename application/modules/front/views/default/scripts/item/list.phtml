@@ -1,0 +1,168 @@
+<?php
+$statusList      = Shared_Model_Code::codes('item_status');
+$stockStatusList = Shared_Model_Code::codes('stock_status');
+$typeList        = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+
+    });
+});    
+</script>
+<style type="text/css"><!--
+table.list_default tr td{height:110px;}
+table.list_default tr td p {height:auto;line-height:1.6;}
+.photo_image {padding:5px;width:100px;}
+.safety {color:#00a2ff;font-weight: bold;}
+.minimum{color:#ff00d2;font-weight: bold;}
+.is_safety {color:#00c486;font-weight:bold;}
+.is_caution {color:#ffba00;font-weight:bold;}
+.is_warning {color:#ff0000;font-weight:bold;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/item/add/<?php echo $this->escape($this->type); ?>">新規登録</a>
+            </p>
+	        <span style=""><strong>在庫管理 - <?php echo $typeList[$this->typeCode]; ?></strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">		
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="user_id_in_charge" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ($key == $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">在庫状況：</p>
+                        <select id="user_id_in_charge" name="stock_status">
+                            <option value="">---</option>
+                        	<?php foreach ($stockStatusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['stock_status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+				
+				<input type="submit" value="検索" />
+			
+			</form>
+		</div>
+	</div>
+	
+	<div class="legend">
+		<img style="display:block;margin:10px auto;" src="/resource/img/stock_legend.png" />
+	</div>
+	
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>画像</p>
+				</th>
+
+				<th style="width:10%;">
+					<p><?php echo $typeList[$this->typeCode]; ?>ID</p>
+				</th>
+				
+				<th style="width:10%;">
+					<p>ステータス</p>
+				</th>
+				
+				<th>
+					<p>アイテム名</p>
+				</th>				
+				
+				<th style="width:16%;">
+					<p style="text-align:center;padding-left:0">最低在庫数 / 安全在庫数</p>
+				</th>
+				
+				<th style="width:11%;">
+					<p style="text-align:center;padding-left:0">実在庫数</p>
+				</th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<img class="photo_image" src="<?php echo Shared_Model_Resource_Item::getResourceUrl($each['id'], $each['image_file_name']); ?>" />
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['item_type_id']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<p>
+								<a href="/item/basic?id=<?php echo $each['id']; ?>"><?php echo $this->escape($each['item_name']); ?></a>
+							</p>
+						</td>
+
+						<td>
+							<p style="text-align:center;padding-left:0"><span class="minimum"><?php echo $this->escape($each['minimum_count']); ?></span>&nbsp;/&nbsp;<span class="safety"><?php echo $this->escape($each['safety_count']); ?></span></p>
+						</td>
+						
+						<td>
+							<?php
+								$class = 'is_safety';
+								if ((int)$each['stock_count'] < (int)$each['minimum_count']) { 
+									$class = 'is_warning';
+								} else if ((int)$each['stock_count'] < (int)$each['safety_count']) {
+									$class = 'is_caution';
+								}
+							
+							?>
+						
+							<p style="font-size:1.6em;text-align:right;padding-right:12px" class="<?php echo $class; ?>"><?php echo $this->escape($each['stock_count']); ?></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

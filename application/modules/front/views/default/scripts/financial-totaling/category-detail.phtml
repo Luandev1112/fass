@@ -1,0 +1,170 @@
+<?php
+?>
+<script type="text/javascript">
+$(function () {
+	$(document).ready(function(){
+	    $('#sortable_column td').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });
+        
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+	});
+	$(document).on('click', '.edit_content_order', function () {
+        $('.display_value').hide();
+        $('.edit_value').show();
+    
+        // ×,保存ボタン
+        $(this).removeClass('edit_content_order').addClass('save_content_order');
+        $(this).html('並び順保存');
+
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+	});
+	
+	$(document).on('click', '.save_content_order', function () {
+        var button = $(this);
+        var $form = $('#register_form');
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/financial-totaling/item-update-order?category_id=<?php echo $this->escape($this->categoryId); ?>',
+        });
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        location.href = '/financial-totaling/category-detail?category_id=<?php echo $this->escape($this->categoryId); ?>&pos=' + $(window).scrollTop();
+    });
+    
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+            var result = $("#sortable_column").sortable("toArray");
+            $('input#hidden_contents_order').val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+a.edit_item {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 0 0 3px;float:left;cursor:pointer;}
+.multi_rows_padding {padding:5px 10px 5px 10px;}
+.order_btn_frame {float:left;margin:6px 0 0 14px;}
+.order_btn_frame .icon-up-dir-1 {font-size:14px;color:#000;line-height:1;display:block;}
+.order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#000;line-height:1;display:block;}
+a.btn_setting.save_content_order {background-color:#64bd63}
+.sortable_column tr td {background-color:#fff;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+    <div class="item_title clearfix" style="margin-bottom:1.0em;">
+    	<p class="item_name" style="padding-top:0.7em;">採算グループ：<?php echo $this->escape($this->data['category_name']); ?></p>
+    	<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+    	<a class="btn_setting" style="float:right;margin:0;" href="/financial-totaling/category-edit?id=<?php echo $this->escape($this->data['id']); ?>">採算グループを編集</a>
+    	<?php } ?>
+    </div>
+	
+	<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:210px;right:0;">
+				<a class="btn_setting edit_content_order" style="display:block;float:left;width:92px;padding:5px 0;margin:0;border:none;margin-right:5px" href="javascript:void(0);">並び順変更</a>
+                <a class="btn_setting" style="display:block;float:left;width:112px;padding:5px 0;margin:0;border:none;" href="/financial-totaling/item-edit?category_id=<?php echo $this->escape($this->data['id']); ?>">新規項目登録</a>
+            </p>
+            <span><strong>&nbsp;</strong></span>
+	    </div>
+	</div>
+	<?php } ?>
+	 
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<form id="register_form" action="#" method="post"> 
+		<table class="list_default">
+			<tr>
+				<th style="width:35%">
+					<p>採算コード名</p>
+				</th>
+				
+				<th><p>説明</p></th>
+
+				<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>	
+				<th style="width:9%;">
+					<p>編集</p>
+				</th>
+				<?php } ?>
+			</tr>
+			<tbody class="sortable_column" id="sortable_column">
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+						<tr id="<?php echo $this->escape($each['id']); ?>">
+							<td>
+								<p><?php echo $this->escape($each['title']); ?></p>
+							</td>
+							
+							
+
+							<td>
+								<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['memo'])); ?></div>
+							</td>
+					
+							<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>
+							<td>
+								<div class="display_value">
+									<a class="edit_item" href="/financial-totaling/item-edit?category_id=<?php echo $this->escape($this->data['id']); ?>&id=<?php echo $this->escape($each['id']); ?>">編集</a>
+								</div>
+								
+								<div class="edit_value">
+				                    <div class="order_btn_frame edit_value" style="display:none;">
+				                        <i class="icon-up-dir-1"></i>
+				                        <i class="icon-down-dir-1"></i>
+				                    </div>
+								</div>
+							</td>
+							<?php } ?>
+						</tr>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>3<?php } else { ?>2<?php } ?>">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</tbody>
+		</table>
+		<input type="hidden" id="hidden_contents_order" name="item_list" value="">
+		</form>   
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+
+

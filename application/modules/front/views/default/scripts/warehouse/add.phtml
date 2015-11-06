@@ -1,0 +1,213 @@
+<?php
+
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/warehouse/list";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/warehouse/add-post'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/warehouse/list';
+        }
+    });
+   
+});
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>倉庫 - 新規登録</strong></span>
+        </div>
+    </div>
+    
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>
+         
+        <table class="list_default" style="margin-bottom:13px;">
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">倉庫名<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="name" value="<?php echo $this->escape($this->data['name']); ?>" maxlength="" />
+                </td>
+            </tr>                   
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">会社名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="company_name" value="" maxlength="" />
+                </td>
+            </tr>   
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">郵便番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="zipcode" value="" maxlength="" />
+                </td>
+            </tr> 
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">都道府県</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="prefecture" value="" maxlength="" />
+                </td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">住所</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="address1" value="" maxlength="" />
+                </td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">建物</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="address2" value="" maxlength="" />
+                </td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">電話番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="tel" value="" maxlength="" />
+                </td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">FAX</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="fax" value="" maxlength="" />
+                </td>
+            </tr> 
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="person_in_charge" value="" maxlength="" />
+                </td>
+            </tr> 
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者メールアドレス</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="mail" value="" maxlength="" />
+                </td>
+            </tr> 
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者携帯</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" name="mobile" value="" maxlength="" />
+                </td>
+            </tr>
+            
+			<tr>
+                <td class="column_label"><p class="label_text">メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value" style="height:auto;">
+                    <textarea name="memo" style="width:99%;height:200px;margin-bottom:5px;"></textarea>
+                </td>
+            </tr>
+		
+		</table>
+		
+	</div><!-- clearfix -->	
+    </form>
+                
+</div>
+</div>
+</div>
+</div>

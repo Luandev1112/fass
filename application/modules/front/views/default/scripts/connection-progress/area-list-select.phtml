@@ -1,0 +1,85 @@
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+   		//Tipped.create('#help_keyword', "");
+    });
+    
+	$("#clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+});    
+</script>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>       
+        <span><strong>営業エリア選択</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="condition_items clearfix">
+		<form id="area_condition_form" action="#" method="get">
+			<p class="search_condition_title">検索条件</p>
+
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">キーワード：</p>
+                    <input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+				</div>
+
+				<div class="condition_item" style="padding-top:23px;">
+					<input type="button" id="clear_form" style="display:inline-block;width:116x;" value="リセット" />
+					<input type="button" id="search_area" style="display:inline-block;width:116px;" value="検索" />
+				</div>
+				
+			</div>
+		</form>
+	</div>
+</div>
+
+<div class="clearfix">
+	<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<form id="register_form" action="#" method="post"> 
+	<table class="list_default">
+		<tr>
+			<th><p>エリア名</p></th>
+			<th style="width:8%;">
+				<p>選択</p>
+			</th>
+		</tr>
+		<tbody class="sortable_column" id="sortable_column">
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['area_name']); ?></div>
+					</td>
+
+					<td>
+						<a class="option" href="javascript:selectArea('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['area_name']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="2">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+		</tbody>
+	</table>
+	
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

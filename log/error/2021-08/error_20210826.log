@@ -1,0 +1,108 @@
+2021-08-26T19:47:44+09:00 (CRIT): SQLSTATE[HY000] [2002] Connection timed out #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Mysql.php(109): Zend_Db_Adapter_Pdo_Abstract->_connect()
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(860): Zend_Db_Adapter_Pdo_Mysql->_connect()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(930): Zend_Db_Adapter_Abstract->quote('6c05174c6e85b0c...', NULL)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(1000): Zend_Db_Adapter_Abstract->quoteInto('mail_hash = ?', '6c05174c6e85b0c...', NULL)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(475): Zend_Db_Select->_where('mail_hash = ?', '6c05174c6e85b0c...', NULL, true)
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/User.php(313): Zend_Db_Select->where('mail_hash = ?', '6c05174c6e85b0c...')
+#6 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/LoginController.php(57): Shared_Model_Data_User->authorizeAdmin('masato_miyano@f...', '6NSuCXoudytNdgu...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): LoginController->indexAction()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#12 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#13 {main}
+2021-08-26T19:47:44+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => login
+    [module] => front
+    [action] => index
+    [redirect] => /
+    [mail] => masato_miyano@fresco-co.net
+    [password] => 6NSuCXoudytNdguSoSu
+    [csrf_block] => 6b53a03ff46f87476e641e4b85bb3fd0
+)
+
+2021-08-26T19:49:40+09:00 (CRIT): SQLSTATE[HY000] [1045] Access denied for user 'fass_dev'@'localhost' (using password: YES) #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Mysql.php(109): Zend_Db_Adapter_Pdo_Abstract->_connect()
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(860): Zend_Db_Adapter_Pdo_Mysql->_connect()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(930): Zend_Db_Adapter_Abstract->quote('6c05174c6e85b0c...', NULL)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(1000): Zend_Db_Adapter_Abstract->quoteInto('mail_hash = ?', '6c05174c6e85b0c...', NULL)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(475): Zend_Db_Select->_where('mail_hash = ?', '6c05174c6e85b0c...', NULL, true)
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/User.php(313): Zend_Db_Select->where('mail_hash = ?', '6c05174c6e85b0c...')
+#6 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/LoginController.php(57): Shared_Model_Data_User->authorizeAdmin('masato_miyano@f...', '6NSuCXoudytNdgu...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): LoginController->indexAction()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#12 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#13 {main}
+2021-08-26T19:49:40+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => login
+    [module] => front
+    [action] => index
+    [redirect] => /
+    [mail] => masato_miyano@fresco-co.net
+    [password] => 6NSuCXoudytNdguSoSu
+    [csrf_block] => 6b53a03ff46f87476e641e4b85bb3fd0
+)
+
+2021-08-26T19:49:44+09:00 (CRIT): SQLSTATE[HY000] [1045] Access denied for user 'fass_dev'@'localhost' (using password: YES) #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Mysql.php(109): Zend_Db_Adapter_Pdo_Abstract->_connect()
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(860): Zend_Db_Adapter_Pdo_Mysql->_connect()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(930): Zend_Db_Adapter_Abstract->quote('6c05174c6e85b0c...', NULL)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(1000): Zend_Db_Adapter_Abstract->quoteInto('mail_hash = ?', '6c05174c6e85b0c...', NULL)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(475): Zend_Db_Select->_where('mail_hash = ?', '6c05174c6e85b0c...', NULL, true)
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/User.php(313): Zend_Db_Select->where('mail_hash = ?', '6c05174c6e85b0c...')
+#6 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/LoginController.php(57): Shared_Model_Data_User->authorizeAdmin('masato_miyano@f...', '6NSuCXoudytNdgu...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): LoginController->indexAction()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#12 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#13 {main}
+2021-08-26T19:49:44+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => login
+    [module] => front
+    [action] => index
+    [redirect] => /
+    [mail] => masato_miyano@fresco-co.net
+    [password] => 6NSuCXoudytNdguSoSu
+    [csrf_block] => 78af39b4acf811b06c70c82c9e83b01d
+)
+
+2021-08-26T19:50:57+09:00 (CRIT): SQLSTATE[HY000] [1045] Access denied for user 'goosa_dev'@'localhost' (using password: YES) #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Mysql.php(109): Zend_Db_Adapter_Pdo_Abstract->_connect()
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(860): Zend_Db_Adapter_Pdo_Mysql->_connect()
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(930): Zend_Db_Adapter_Abstract->quote('6c05174c6e85b0c...', NULL)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(1000): Zend_Db_Adapter_Abstract->quoteInto('mail_hash = ?', '6c05174c6e85b0c...', NULL)
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Select.php(475): Zend_Db_Select->_where('mail_hash = ?', '6c05174c6e85b0c...', NULL, true)
+#5 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/User.php(313): Zend_Db_Select->where('mail_hash = ?', '6c05174c6e85b0c...')
+#6 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/LoginController.php(57): Shared_Model_Data_User->authorizeAdmin('masato_miyano@f...', '6NSuCXoudytNdgu...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): LoginController->indexAction()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#12 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#13 {main}
+2021-08-26T19:50:57+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => login
+    [module] => front
+    [action] => index
+    [redirect] => /
+    [mail] => masato_miyano@fresco-co.net
+    [password] => 6NSuCXoudytNdguSoSu
+    [csrf_block] => 78af39b4acf811b06c70c82c9e83b01d
+)
+
+2021-08-26T22:39:08+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-08-26T22:39:08+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+

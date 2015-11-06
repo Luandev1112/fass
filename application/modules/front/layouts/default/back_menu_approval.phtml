@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta name="viewport" content="width=1300, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<?php echo $this->headTitle(); ?>
+<link rel="shortcut icon" href="/resource/favicon.png">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/common.css" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_layout.css?<?php echo date('ymdHi') ?>" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_module.css?<?php echo date('ymdHi') ?>" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/type/fontello.css">
+<link type="text/css" rel="stylesheet" href="/resource/type/budicons.css">
+<link type="text/css" rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css">
+<link type="text/css" rel="stylesheet" href="/resource/js/jquery.alerts-1.1/jquery.alerts.css">
+<link type="text/css" rel="stylesheet" href="/resource/js/tipped-4.4.2-light/css/tipped/tipped.css">
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/resource/js/spin/spin.js"></script>
+<script type="text/javascript" src="/resource/js/jquery.alerts-1.1/jquery.alerts.js"></script>
+<script type="text/javascript" src="/resource/js/tipped-4.4.2-light/js/tipped/tipped.js"></script>
+<script type="text/javascript">
+// spinner
+var target;
+var spinner;
+function showSpinner() {
+    $('.loading_frame').show();
+    var opts = {
+      lines:13,length:10,width:7,radius:20,corners:1,rotate:30,color:'#dfdfdf',speed:1,trail:89,
+      shadow:false,hwaccel:false,className:'spinner',zIndex:2e9,top:'47px',left:'47px',position:'absolute',
+    };
+	target = document.getElementById('loading');
+    spinner = new Spinner(opts).spin(target);
+    spinner.spin(target);
+}
+function stopSpinner() {
+    $('.loading_frame').hide();
+    spinner.stop();
+}
+
+$(function(){
+	<?php /*
+	$('.main_menu').css('position', 'fixed');
+	$('.main_menu').css('width', window.parent.screen.width);
+	$('.main_menu #container').css('width', window.parent.screen.width);
+	
+	$(window).scroll(function() {
+		//$('.header_menu').css('top', $(window).scrollTop() + 'px');
+		//$('.main_menu').css('top', ($(window).scrollTop() + 24) + 'px');
+		$('.header_menu').css('left', $(window).scrollLeft());window.pageYOffset
+		$('.main_menu').css('left', $(window).scrollLeft());
+		
+		//$('.header_menu').animate({'top':$(window).scrollTop(), 'left':$(window).scrollLeft()}, speed, 'swing');
+		
+		
+		$('#top').html($(window).scrollTop());
+	});
+	*/ ?>
+	
+	<?php if(!empty($this->message)){ ?>
+	$(document).ready( function(){
+		jAlert('<?php echo $this->message; ?>', '　');
+	});
+	<?php } ?>
+	
+    $(document).on('click', 'td.desc', function () {
+		var item = $(this);
+		if ($(this).attr('all-content') != '') {
+			$(this).prepend('<div class="caption">' + $(this).attr('all-content') + '</div>');
+		  	setTimeout(function() {
+		    	item.children('.caption').remove();
+		    }, 2000);
+	    }
+	});
+});
+</script>
+<style>
+.main_menu, .header_menu {
+transform: translate3d(0, 0, 0);
+}
+</style>
+</head>
+<body class="ll-skin-melon">
+<div class="header_menu"  <?php if (!empty($this->adminProperty['group_data']['group_header_color'])) { ?>style="background-color:#<?php echo $this->escape($this->adminProperty['group_data']['group_header_color']); ?>"<?php } ?>>
+	<div id="container" class="menu_container clearfix">
+		<p id="header_organization"><?php echo $this->escape($this->adminProperty['group_data']['organization_name']); ?><span id="top"></span></p>
+		<a id="switch_organization" href="/user/list-switch">組織切替</a>
+		<a id="header_manual_button" href="/office-manual" target="_balnk">マニュアル</a>
+	</div>
+</div>
+
+<div class="main_menu">
+	<div id="container" class="menu_container">
+    	<a href="<?php echo $this->backUrl; ?>" class="btn_back"><i class="budicon-arrow-left-1" style="margin-top:2px; margin-bottom:2px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></a>       
+        <?php if (!empty($this->previewUrl) && $this->previewUrl != '') { ?>
+            <a href="javascript:void(0);" class="btn_estimate_preview" style="float:left">PDFプレビュー</a>
+        <?php } ?>
+
+		<a href="<?php echo $this->saveUrl; ?>" class="btn_save">承認</a>
+		
+		<?php if (!empty($this->showRejectButton)) { ?>
+			<a href="javascript:void(0);" class="btn_reject">却下</a>
+		<?php } ?>
+		
+		<a href="javascript:void(0);" class="btn_mod_request">修正依頼</a>
+    </div>
+</div>
+   
+<div class="main_area">
+    <div id="container">
+    	<?php echo $this->partialWithParentView($this->bodyLayoutName) ?>
+    </div><!-- container -->
+</div><!-- main area -->
+
+<div class="loading_frame" style="display:none;">
+    <div id="loading"></div>
+</div>
+
+<div id="page_fotter">
+	<div id="container" class="clearfix">    	
+        <p class="copyright">copyright (C)fResco corporation, All Right Reserved.</p>
+    </div><!-- container -->
+</div><!-- main menu -->
+
+</body>
+</html>

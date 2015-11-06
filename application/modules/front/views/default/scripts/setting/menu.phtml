@@ -1,0 +1,18 @@
+<?php
+$templateNameList  = Shared_Model_Code::codes('template_type_name');
+?>
+
+<table class="list_default menu_list">
+	<tr>
+		<td><a class="menu <?php if($this->action == 'basic') echo "selected"; ?>" href="/setting/basic">ショップ情報</a></td>
+	</tr>
+	<tr>
+		<td><a class="menu <?php if($this->action == 'statement') echo "selected"; ?>" href="/setting/statement">明細書表示</a></td>
+	</tr>
+	
+	<?php foreach ($templateNameList as $key => $value) { ?>
+	<tr>
+		<td><a class="menu <?php if (strpos($this->action,'template') !== false && $this->templateType == $key) echo "selected"; ?>" href="/setting/template?type=<?php echo $key; ?>"><?php echo $templateNameList[$key]; ?></a></td>
+	</tr>
+	<?php } ?>
+</table>

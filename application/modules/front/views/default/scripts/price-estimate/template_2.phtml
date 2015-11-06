@@ -1,0 +1,168 @@
+<div style="border:1px solid #000;margin:0 120px;">
+	<div class="clearfix" style="padding:50px 50px 40px 50px;">
+		<div class="clearfix" style="float:left;width:400px;">
+			<div style="float:left;width:100%;">
+				<textarea class="flex_company" id="connection_name" name="to_name" style="width:380px;font-size:1.5em;"><?php echo $this->escape($this->versionData['to_name']); ?></textarea>
+			</div>
+			<input type="hidden" id="target_connection_id" name="target_connection_id" value="<?php echo $this->escape($this->versionData['target_connection_id']); ?>" />
+			<a class="option" id="select_connection">提出先変更</a>
+		</div>
+
+		<?php 
+			$companyName = $this->groupData['organization_name'];
+			$address     = '〒' . $this->groupData['postal_code'] . ' ' . $this->groupData['prefecture'] . $this->groupData['city'] . $this->groupData['address'];
+			$tel = $this->groupData['tel'];
+			$fax = $this->groupData['fax'];
+			
+			/*
+			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+				$companyName = $this->groupData['organization_name_en'];
+				$address = $this->groupData['address_en'] . ' ' . $this->groupData['city_en'] . ", " . $this->groupData['prefecture_en'] . ' JAPAN'. ' (Zip: ' . $this->groupData['postal_code'] . ')';
+    			$tel = $this->groupData['tel_int'];
+    			$fax = $this->groupData['fax_int'];
+			}*/
+		?>
+
+		<div class="from" style="float:right;">
+			<div class="clearfix" style="margin:0 auto 10px;text-align:right;">
+				<p style="margin-bottom:0;"><input type="text" class="datepicker" id="estimate_date" placeholder="見積書発行日" name="estimate_date" autocomplete="off" value="" /></p>
+			</div>
+			<img id="from_logo" src="/resource/logo_group/logo.png" style="margin-bottom:10px;" />
+
+			<div class="clearfix">
+				<p class="company_name"><?php echo $this->escape($companyName); ?></p>
+			</div>
+			<div class="clearfix">
+				<p><?php echo $this->escape($address); ?></p>
+			</div>
+			<div class="clearfix">
+				<p>TEL <?php echo $this->escape($tel); ?>　　FAX <?php echo $this->escape($fax); ?></p>
+			</div>
+			
+			<div class="clearfix" style="padding-top:2px;">
+				<p style="float:left;padding-top:5px;" id="creater_user_name">
+					<?php
+                		if (!empty($this->createdUser)) {
+                			echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+                		} else {
+                			echo '---';
+                		}
+					?>
+				</p>
+				<input type="hidden" id="created_user_id" name="created_user_id" value="<?php echo $this->escape($this->versionData['created_user_id']); ?>" />
+				<a class="option" id="select_user" style="padding:3px 10px 1px 10px;margin-top:-3px;margin-right:4px;float:right;">選択</a>
+			</div>
+			<div class="clearfix" style="margin-top:10px">
+				<table class="stamp">
+					<tr>
+						<td>作成</td>
+						<td>承認</td>
+					</tr>
+					<tr>
+						<td style="height:60px;">&nbsp;</td>
+						<td>&nbsp;</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	
+	
+	<div style="margin:0 auto 10px;width: 650px;">
+		<div style="border-bottom:3px solid #000;">
+			<input style="display:block;width:600px;margin:0 auto 10px;font-size:1.8em;text-align:center;" type="text" name="title" value="<?php echo $this->escape($this->versionData['title']); ?>" maxlength="" />		
+		</div>
+		<div class="clearfix" style="padding:0 0 60px;">
+			<div style="float:right;text-align:right;padding-right:5px">
+				見積もり管理番号：<?php echo $this->escape($this->data['display_id']); ?>
+			</div>
+		</div>
+	</div>
+
+
+	<div style="padding-bottom:10px;">
+		<div class="clearfix" style="margin-left:50px;margin-right:50px;border-bottom:2px solid #000;">
+			<?php /*<a class="option" style="float:right" href="">オプション</a>*/ ?>&nbsp;
+		</div>
+		
+		<input type="hidden" name="label_count" value="4">
+		<table class="estimate_form" style="margin:0;">
+			<thead>
+				<tr id="0">
+					<td class="td_item_action">&nbsp;</td>
+					<td style="width:50px;"><textarea class="flex align_center" target-row="0" name="label_1"><?php echo $this->versionData['labels']['label_1']; ?></textarea></td>
+					<td><textarea class="flex" target-row="0" name="label_2"><?php echo $this->versionData['labels']['label_2']; ?></textarea></td>
+					<td style="width:90px;"><textarea class="flex align_center" target-row="0" name="label_3"><?php echo $this->versionData['labels']['label_3']; ?></textarea></td>
+					<td style="width:90px;"><textarea class="flex align_center" target-row="0" name="label_4"><?php echo $this->versionData['labels']['label_4']; ?></textarea></td>
+					<td style="width:80px;"><textarea class="flex align_center" target-row="0" name="label_5"><?php echo $this->versionData['labels']['label_5']; ?></textarea></td>
+					<td style="width:70px;"><textarea class="flex align_center" target-row="0" name="label_6"><?php echo $this->versionData['labels']['label_6']; ?></textarea></td>
+					<td style="width:120px;"><textarea class="flex align_center" target-row="0" name="label_7"><?php echo $this->versionData['labels']['label_7']; ?></textarea></td>
+					<td class="td_action">&nbsp;</td>
+				</tr>
+			</thead>
+			<tbody class="sortable_column" id="sortable_column">
+				<?php if (!empty($this->versionData['item_list'])) { ?>
+				<?php foreach ($this->versionData['item_list'] as $each) {?>
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td class="td_item_action">
+						<div class="item_btn_frame">
+							<a id="<?php echo $this->escape($each['id']); ?>_select_product" class="select_product <?php if (!empty($each['item_id'])) { echo 'active'; } ?>" href="javascript:void(0);" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-th-large"></i></a>
+							<input type="hidden" id="<?php echo $this->escape($each['id']); ?>_item_id" name="<?php echo $this->escape($each['id']); ?>_item_id" value="<?php echo $this->escape($each['item_id']); ?>" />
+						</div>
+					</td>
+					
+					<td><p class="count align_right"><?php echo $this->escape($each['id']); ?></p></td>
+					<td><textarea class="flex" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_item_name"><?php if (!empty($each['item_name'])) { echo $this->escape($each['item_name']); } ?></textarea></td>
+					<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_standard_price_tax"><?php if (!empty($each['standard_price_tax'])) { echo $this->escape($each['standard_price_tax']); } ?></textarea></td>
+					<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_standard_price"><?php if (!empty($each['standard_price'])) { echo $this->escape($each['standard_price']); } ?></textarea></td>
+					
+					<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_unit"><?php if (!empty($each['unit'])) { echo $this->escape($each['unit']); } ?></textarea></td>
+					<td><textarea class="flex align_center" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_wholesale_rate"><?php if (!empty($each['wholesale_rate'])) { echo $this->escape($each['wholesale_rate']); } ?></textarea></td>
+					<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_unit_price"><?php if (!empty($each['unit_price'])) { echo $this->escape($each['unit_price']); } ?></textarea></td>
+		            
+		            <td class="td_action">
+		            	<div class="delete_btn_frame">
+		            		<a class="delete_button" href="javascript:void(0);" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+		            	</div>
+		            </td>
+				</tr>
+				<?php } ?>
+				<?php } ?>
+			</tbody>
+		</table>
+		
+        <div class="add_row_button_frame" style="border-top:2px solid #000;">
+            <p class="align_center"><a class="btn_add_column" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order" name="estimate_item_list" value="" />
+	</div>
+
+
+	<div style="padding:0 50px 50px 50px;">
+		<textarea  class="flex_other" id="memo" name="memo" placeholder="備考欄" style="height:150px;width:760px;"><?php echo $this->escape($this->versionData['memo']); ?></textarea>
+	</div>
+</div>
+
+
+<table style="margin:0;display:none;">
+	<tr class="column_copy_base" id="">
+		<td class="td_item_action">
+			<div class="item_btn_frame">
+				<a id="###_select_product" class="select_product" href="javascript:void(0);" target-row=""><i class="icon-th-large"></i></a>
+				<input type="hidden" class="item_id" name="##_item_id" value="" />
+			</div>
+		</td>
+		<td><p class="count align_right">###</p></td>
+		<td><textarea class="flex item_name" target-row="##" id="##_item_name"></textarea></td>
+		<td><textarea class="flex standard_price_tax" target-row="##" id="##_standard_price_tax"></textarea></td>
+		<td><textarea class="flex standard_price" target-row="##" id="##_standard_price"></textarea></td>
+		<td><textarea class="flex align_right unit" target-row="" id="##_unit"></textarea></td>
+		<td><textarea class="flex align_center wholesale_rate" target-row="" id="##_wholesale_rate"></textarea></td>
+		<td><textarea class="flex align_right unit_price" target-row="" id="##_unit_price"></textarea></td>
+        <td class="td_action">
+        	<div class="delete_btn_frame">
+        		<a class="delete_button" href="javascript:void(0);" target-row=""><i class="icon-cancel"></i></a>
+        	</div>
+        </td>
+	</tr>
+</table>

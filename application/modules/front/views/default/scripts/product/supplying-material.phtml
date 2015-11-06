@@ -1,0 +1,465 @@
+<?php
+$statusList   = Shared_Model_Code::codes('supply_status');
+$supplierStatusList   = Shared_Model_Code::codes('supplier_status');
+?>
+<script type="text/javascript">
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+	$(document).on('change', '#material_kind', function () {
+		location.href = '/product/supplying-material?id=<?php echo $this->escape($this->data['id']); ?><?php if (!empty($this->data['direct'])) { echo '&direct=' . $this->escape($this->data['direct']); } ?>&material_kind=' + $(this).val();
+		
+	});
+});
+
+
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr.inactive td{background:#dfdfdf}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;margin-right:12px;}
+.relation_type_item {margin-right:12px}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+.zip {width:130px;}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+a.btn_setting#btn_copy {padding:1px 8px 0px;float:left;margin-left:20px;margin-top:5px;margin-bottom:0}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.add_image_box {padding:13px 0;}
+table.list_default tr td.column_value input.target_date, table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+a.detail_supplier {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 3px 0 3px;float:left;cursor:pointer;}
+.multi_rows_padding {padding:5px 0 5px 6px}
+.connection_name_title {}
+.status_text {font-size:1.2em;}
+.condition_title {background-color:#bae0ff;padding-left:6px;font-weight:bold;}
+.condition_label{float:left;}
+.condition_row {margin-bottom:5px;border-top:1px solid #ccc;}
+
+
+p.supply_name {background-color:#d6e570;padding:11px 0 9px 12px;font-size:1.1em;}
+p.supplying_title {padding:11px 0 9px 12px;font-weight:bold;}
+p.no_data {padding:11px 0 9px 12px;}
+.bg_gray {font-size:1.2em;}
+
+table.list_default tr th {background-color:#555; color:#fff;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+	<?php
+		$titleName = '';
+		if ($this->data['product_name_type'] === (string)Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) {
+			$titleName = $this->escape($this->data['buying_item_name']);
+		} else {
+			$titleName = $this->escape($this->data['item_name']);
+		}
+	?>
+	<div class="col-xs-12">
+	    <div class="page_title">
+	        <span><strong>商品管理 - <?php echo $titleName; ?></strong></span>
+	    </div>
+		<?php
+	        echo $this->partial('product/menu.phtml', array(
+				'action'    => $this->action,
+				'id'        => $this->id,
+				'direct'    => $this->direct,
+			));
+	    ?>
+	</div>
+
+    <?php 
+    	$productTable        = new Shared_Model_Data_SupplyProduct();
+    	$productionTable     = new Shared_Model_Data_SupplyProduction();
+    	$fixtureTable        = new Shared_Model_Data_SupplyFixture();
+    	$subcontractingTable = new Shared_Model_Data_SupplySubcontracting();
+    ?>
+	
+
+	<div class="clearfix" style="margin-bottom:1em;">    
+		<p style="float:left;margin-right:1.0em;margin-top:1.0em;">資料種別：</p>
+		<select id="material_kind" name="material_kind" style="float:left;width:20em;">
+			<option value="">---</option>
+			<?php foreach ($this->materialKindList as $eachKind) { ?>
+				<option value="<?php echo $this->escape($eachKind['id']); ?>" <?php if ((string)$this->materialKind === (string)$eachKind['id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachKind['name']); ?></option>
+			<?php } ?>
+		</select>  
+	</div>
+    
+    
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom border-right bg_gray"><p class="label_text strong">原料・製品</p></th>
+        </tr>
+    </table>
+    <div style="margin-bottom:1.0em;">
+    <?php if (!empty($this->supplyProductList)) { ?>
+	    <?php foreach ($this->supplyProductList as $eachProduct) { ?>
+	    	<?php
+	    	$items = $productTable->getActiveListByProjectId($this->adminProperty['management_group_id'], $eachProduct['id']);
+	    	
+	    	if (!empty($items)) {
+	    		foreach ($items as $each) {
+					$fileList = json_decode($each['file_list'], true);
+					$fileItems = array();
+					foreach ($fileList as $eachFileItem) {
+						if (empty($this->materialKind) || $this->materialKind === $eachFileItem['material_kind']) {
+							$fileItems[] = $eachFileItem;
+						}
+					}
+					
+					if (!empty($fileItems)) {
+			?>
+					<p class="supply_name"><strong><?php echo $this->escape($eachProduct['title']); ?></strong>　　（原料製品ID：&nbsp;<?php echo $this->escape($eachProduct['display_id']); ?>）</p>
+				
+					<table class="list_default" style="margin-bottom:13px;">
+				        <tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] == Shared_Model_Code::SUPPLIER_STATUS_NOT_USING || $each['status'] == Shared_Model_Code::SUPPLIER_STATUS_FINISHED_USING) { ?>class="inactive"<?php } ?> >
+			                <td class="column_value" style="width:120px">
+			                	<div class="clearfix">
+			                		<p class="status_text"><?php echo $supplierStatusList[$each['status']]; ?></p>
+			                	<div>
+			                </td>
+			                <td class="column_value" style="width:924px">
+			                	<div class="clearfix connection_name_title">
+			                		<div class="multi_rows_padding">取引先名：<?php echo '<strong>' . $this->escape($each['connection_display_id']) . '</strong>　' . $this->escape($each['company_name']); ?></div>
+			                	</div>
+								<div class="condition_title">入手見積書・補足資料</div>
+			                	<?php foreach ($fileItems as $eachFile) { ?>
+									<div class="condition_row clearfix">
+										<div style="float:left;width:620px;">
+											<p><?php echo $this->escape($eachFile['file_name']); ?></p>
+										</div>
+						            	<div style="float:left;width:150px;">
+							            	<p class="condition_label">file size：</p>
+							            	<p><?php echo $this->byteFormat(Shared_Model_Resource_SupplyProduct::getFileSize($each['id'], $eachFile['id'], $eachFile['file_name']), 2); ?></p>
+										</div>
+						            	<div style="float:left;width:190px;">
+							            	<p class="condition_label">入手見積書日付:</p>
+							            	<p>
+												<?php if (empty($eachFile['target_date'])) { ?>
+													---
+												<?php } else { ?>
+													<?php echo date('Y-m-d', strtotime($eachFile['target_date'])); ?>
+												<?php } ?>
+							            	</p>
+										</div>
+										<div style="float:left;width:100px;">
+											<p><a style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplyProduct::getResourceUrl($each['id'], $eachFile['id'], $eachFile['file_name']); ?>">ダウンロード</a></p>
+										</div>
+									</div>
+								<?php } ?>
+							 </td>
+						</tr>
+					</table>
+		<?php
+					}
+				}
+	    	}
+	    }
+	    ?>
+	<?php } else { ?>
+	    <table class="list_default" style="margin-bottom:0px;">
+	        <tr>
+	            <td><p class="label_text">紐付け情報なし</p></td>
+	        </tr>
+	    </table>
+	<?Php } ?>
+	</div>
+
+	
+	
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom border-right bg_gray"><p class="label_text strong">製造加工</p></th>
+        </tr>
+    </table>
+    <div style="margin-bottom:1.0em;">
+    <?php if (!empty($this->supplyProductionList)) { ?>
+	    <?php foreach ($this->supplyProductionList as $eachProduction) { ?>
+	    	<?php
+	    	$items = $productionTable->getActiveListByProjectId($this->adminProperty['management_group_id'], $eachProduction['id']);
+	    	
+	    	if (!empty($items)) {
+	    		foreach ($items as $each) {
+					$fileList = json_decode($each['file_list'], true);
+					$fileItems = array();
+					foreach ($fileList as $eachFileItem) {
+						if (empty($this->materialKind) || $this->materialKind === $eachFileItem['material_kind']) {
+							$fileItems[] = $eachFileItem;
+						}
+					}
+					
+					if (!empty($fileItems)) {
+			?>
+		    	<p class="supply_name"><strong><?php echo $this->escape($eachProduction['title']); ?></strong>　　（製造加工ID：&nbsp;<?php echo $this->escape($eachProduction['display_id']); ?>）</p>
+		    	
+				<table class="list_default" style="margin-bottom:13px;">
+			        <tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] == Shared_Model_Code::SUPPLIER_STATUS_NOT_USING || $each['status'] == Shared_Model_Code::SUPPLIER_STATUS_FINISHED_USING) { ?>class="inactive"<?php } ?> >
+		                <td class="column_value" style="width:120px">
+		                	<div class="clearfix">
+		                		<p class="status_text"><?php echo $supplierStatusList[$each['status']]; ?></p>
+		                	<div>
+		                </td>
+		                <td class="column_value" style="width:924px">
+		                	<div class="clearfix connection_name_title">
+		                		<div class="multi_rows_padding">取引先名：<?php echo '<strong>' . $this->escape($each['connection_display_id']) . '</strong>　' . $this->escape($each['company_name']); ?></div>
+		                	</div>
+							<div class="condition_title">入手見積書・補足資料</div>
+		                	<?php foreach ($fileItems as $eachFile) { ?>
+								<div class="condition_row clearfix">
+									<div style="float:left;width:620px;">
+										<p><?php echo $this->escape($eachFile['file_name']); ?></p>
+									</div>
+					            	<div style="float:left;width:150px;">
+						            	<p class="condition_label">file size：</p>
+						            	<p><?php echo $this->byteFormat(Shared_Model_Resource_SupplyProduction::getFileSize($each['id'], $eachFile['id'], $eachFile['file_name']), 2); ?></p>
+									</div>
+					            	<div style="float:left;width:190px;">
+						            	<p class="condition_label">入手見積書日付:</p>
+						            	<p>
+											<?php if (empty($eachFile['target_date'])) { ?>
+												---
+											<?php } else { ?>
+												<?php echo date('Y-m-d', strtotime($eachFile['target_date'])); ?>
+											<?php } ?>
+						            	</p>
+									</div>
+									<div style="float:left;width:100px;">
+										<p><a style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplyProduction::getResourceUrl($each['id'], $eachFile['id'], $eachFile['file_name']); ?>">ダウンロード</a></p>
+									</div>
+								</div>
+							<?php } ?>
+						 </td>
+					</tr>
+				</table>
+		<?php
+					}
+				}
+	    	}
+	    }
+	    ?>
+	<?php } else { ?>
+	    <table class="list_default" style="margin-bottom:0px;">
+	        <tr>
+	            <td><p class="label_text">紐付け情報なし</p></td>
+	        </tr>
+	    </table>
+	<?Php } ?>
+	</div>
+	
+
+
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom border-right bg_gray"><p class="label_text strong">業務委託</p></th>
+        </tr>
+    </table>
+    <div style="margin-bottom:1.0em;">
+    <?php if (!empty($this->supplySubcontractingList)) { ?>
+	    <?php foreach ($this->supplySubcontractingList as $eachSubcontracting) { ?>
+	    	<?php
+	    	$items = $subcontractingTable->getActiveListByProjectId($this->adminProperty['management_group_id'], $eachSubcontracting['id']);
+	    	
+	    	if (!empty($items)) {
+	    		foreach ($items as $each) {
+					$fileList = json_decode($each['file_list'], true);
+					$fileItems = array();
+					foreach ($fileList as $eachFileItem) {
+						if (empty($this->materialKind) || $this->materialKind === $eachFileItem['material_kind']) {
+							$fileItems[] = $eachFileItem;
+						}
+					}
+					
+					if (!empty($fileItems)) {
+			?>
+
+    
+	    	<p class="supply_name"><strong><?php echo $this->escape($eachProduction['title']); ?></strong>　　（業務委託ID：&nbsp;<?php echo $this->escape($eachProduction['display_id']); ?>）</p>
+	    	
+			<table class="list_default" style="margin-bottom:13px;">
+		        <tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] == Shared_Model_Code::SUPPLIER_STATUS_NOT_USING || $each['status'] == Shared_Model_Code::SUPPLIER_STATUS_FINISHED_USING) { ?>class="inactive"<?php } ?> >
+	                <td class="column_value" style="width:120px">
+	                	<div class="clearfix">
+	                		<p class="status_text"><?php echo $supplierStatusList[$each['status']]; ?></p>
+	                	<div>
+	                </td>
+	                <td class="column_value" style="width:924px">
+	                	<div class="clearfix connection_name_title">
+	                		<div class="multi_rows_padding">取引先名：<?php echo '<strong>' . $this->escape($each['connection_display_id']) . '</strong>　' . $this->escape($each['company_name']); ?></div>
+	                	</div>
+						<div class="condition_title">入手見積書・補足資料</div>
+	                	<?php foreach ($fileItems as $eachFile) { ?>
+							<div class="condition_row clearfix">
+								<div style="float:left;width:620px;">
+									<p><?php echo $this->escape($eachFile['file_name']); ?></p>
+								</div>
+				            	<div style="float:left;width:150px;">
+					            	<p class="condition_label">file size：</p>
+					            	<p><?php echo $this->byteFormat(Shared_Model_Resource_SupplySubcontracting::getFileSize($each['id'], $eachFile['id'], $eachFile['file_name']), 2); ?></p>
+								</div>
+				            	<div style="float:left;width:190px;">
+					            	<p class="condition_label">入手見積書日付:</p>
+					            	<p>
+										<?php if (empty($eachFile['target_date'])) { ?>
+											---
+										<?php } else { ?>
+											<?php echo date('Y-m-d', strtotime($eachFile['target_date'])); ?>
+										<?php } ?>
+					            	</p>
+								</div>
+								<div style="float:left;width:100px;">
+									<p><a style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplySubcontracting::getResourceUrl($each['id'], $eachFile['id'], $eachFile['file_name']); ?>">ダウンロード</a></p>
+								</div>
+							</div>
+						<?php } ?>
+					 </td>
+				</tr>
+			</table>	
+		<?php
+					}
+				}
+	    	}
+	    }
+	    ?>
+	<?php } else { ?>
+	    <table class="list_default" style="margin-bottom:0px;">
+	        <tr>
+	            <td><p class="label_text">紐付け情報なし</p></td>
+	        </tr>
+	    </table>
+	<?Php } ?>
+	</div>
+	
+	
+	
+	
+	
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom border-right bg_gray"><p class="label_text strong">備品・資材</p></th>
+        </tr>
+    </table>
+    <div style="margin-bottom:1.0em;">
+    <?php if (!empty($this->supplyFixtureList)) { ?>
+	    <?php foreach ($this->supplyFixtureList as $eachSupplyFixture) { ?>
+	    	<?php
+	    	$items = $fixtureTable->getActiveListByProjectId($this->adminProperty['management_group_id'], $eachSupplyFixture['id']);
+	    	
+	    	if (!empty($items)) {
+	    		foreach ($items as $each) {
+					$fileList = json_decode($each['file_list'], true);
+					$fileItems = array();
+					foreach ($fileList as $eachFileItem) {
+						if (empty($this->materialKind) || $this->materialKind === $eachFileItem['material_kind']) {
+							$fileItems[] = $eachFileItem;
+						}
+					}
+					
+					if (!empty($fileItems)) {
+			?>
+	    	<p class="supply_name"><strong><?php echo $this->escape($eachSupplyFixture['title']); ?></strong>　　（業務委託ID：&nbsp;<?php echo $this->escape($eachSupplyFixture['display_id']); ?>）</p>
+	    	
+			<table class="list_default" style="margin-bottom:13px;">
+		        <tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] == Shared_Model_Code::SUPPLIER_STATUS_NOT_USING || $each['status'] == Shared_Model_Code::SUPPLIER_STATUS_FINISHED_USING) { ?>class="inactive"<?php } ?> >
+	                <td class="column_value" style="width:120px">
+	                	<div class="clearfix">
+	                		<p class="status_text"><?php echo $supplierStatusList[$each['status']]; ?></p>
+	                	<div>
+	                </td>
+	                <td class="column_value" style="width:924px">
+	                	<div class="clearfix connection_name_title">
+	                		<div class="multi_rows_padding">取引先名：<?php echo '<strong>' . $this->escape($each['connection_display_id']) . '</strong>　' . $this->escape($each['company_name']); ?></div>
+	                	</div>
+						<div class="condition_title">入手見積書・補足資料</div>
+	                	<?php foreach ($fileItems as $eachFile) { ?>
+							<div class="condition_row clearfix">
+								<div style="float:left;width:620px;">
+									<p><?php echo $this->escape($eachFile['file_name']); ?></p>
+								</div>
+				            	<div style="float:left;width:150px;">
+					            	<p class="condition_label">file size：</p>
+					            	<p><?php echo $this->byteFormat(Shared_Model_Resource_SupplyFixture::getFileSize($each['id'], $eachFile['id'], $eachFile['file_name']), 2); ?></p>
+								</div>
+				            	<div style="float:left;width:190px;">
+					            	<p class="condition_label">入手見積書日付:</p>
+					            	<p>
+										<?php if (empty($eachFile['target_date'])) { ?>
+											---
+										<?php } else { ?>
+											<?php echo date('Y-m-d', strtotime($eachFile['target_date'])); ?>
+										<?php } ?>
+					            	</p>
+								</div>
+								<div style="float:left;width:100px;">
+									<p><a style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplyFixture::getResourceUrl($each['id'], $eachFile['id'], $eachFile['file_name']); ?>">ダウンロード</a></p>
+								</div>
+							</div>
+						<?php } ?>
+						
+					 </td>
+				</tr>
+	    	</table>
+		<?php
+					}
+				}
+	    	}
+	    }
+	    ?>
+	<?php } else { ?>
+	    <table class="list_default" style="margin-bottom:13px;">
+	        <tr>
+	            <td><p class="label_text">紐付け情報なし</p></td>
+	        </tr>
+	    </table>
+	<?Php } ?>
+	</div>
+
+	
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

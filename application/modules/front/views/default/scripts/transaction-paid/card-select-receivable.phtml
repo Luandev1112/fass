@@ -1,0 +1,303 @@
+<?php
+$statusList   = Shared_Model_Code::codes('payable_payment_status');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+$(function () {
+	$(document).ready(function(){
+		Tipped.create('#help_memo', "記載例：<br>・〇〇株式会社 A氏とカフェにて打ち合わせ<br>・タクシー　梅田〜新大阪<br>・〇〇社接待　居酒屋XX<br>・東京出張のため新幹線チケット購入 営業部2名<br>・80円切手　30枚<br>・ウイルス対策ソフト　5ライセンス購入");
+    });   
+        
+    // 割当
+    $(document).on('click', '.btn_attach', function () {
+    	var receivableId = $(this).attr('target-id');
+		jConfirm('この入金予定に割当しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'',
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('割当しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-paid/card-attach-receivable?row_id=<?php echo $this->escape($this->rowData['id']); ?>&receivable_id=' + receivableId
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/transaction-paid/card-import-detail?id=<?php echo $this->escape($this->rowData['card_history_id']); ?>';
+        }
+    });
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+</script>
+<style type="text/css">
+.align_right{text-align:right;padding-right:12px;}
+.align_center{text-align:center;margin-right:12px;}
+table.list_default tr td a.show_detail {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#005bd9;color:#fff !important;text-decoration:none;}
+
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#02ad00}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1100px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value {border-right:none;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:120px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {float:left;width:20px;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding {width:280px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding.long {width:740px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value input[type="text"] {width:240px;display:block;float:left;}
+.menu_frame table.list_default tr td textarea{width:620px;height:60px;}
+.menu_frame table.list_default tr td.td_action {width:56px;border-right:none;padding-right:5px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+.menu_frame table.list_default .multi_rows_padding {padding:5px 10px 5px 10px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>カード入金完了確認 - 請求CSVデータ割当</strong></span>
+	    </div>
+		<div class="item_title clearfix">
+			<p class="item_name"><?php echo $this->escape($this->historyData['card_name'] . '　支払予定日：' . date('Y-m-d', strtotime($this->historyData['paying_plan_date']))); ?></p>
+		</div>
+	</div>
+	
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style="color:#f00;"><strong>対象CSVデータ</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>行番号</p></th>
+				<th style="width:10%;"><p>利用日</p></th>
+				<th><p>利用先</p></th>
+				<th style="width:8%"><p>通貨</p></th>
+				<th style="width:14%"><p>請求額</p></th>
+			</tr>
+			<tr>
+				<td>
+					<p><?php echo $this->escape($this->rowData['row_count']); ?></p>
+				</td>
+				
+				<td>
+					<p><?php echo $this->escape($this->rowData['purchased_date']); ?></p>
+				</td>
+				
+				<td>
+					<div class="multi_rows_padding"><?php echo $this->escape($this->rowData['name']); ?></div>
+				</td>
+				
+				<td>
+					<p class="align_center"><?php echo $this->escape($this->rowData['currency_name']); ?></p>
+				</td>
+				
+				<td>
+					<p class="align_right"><?php if (!empty($this->rowData['amount'])) { echo number_format($this->rowData['amount']); } else { echo '---'; } ?></p>
+				</td>
+			</tr>
+		</table>     
+	</div>
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style="color:#f00;"><strong>割当データ選択</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default department" style="margin-bottom:0px;">
+	        <tr>
+	            <th class="border-left border-top border-bottom border-right" style="background-color:#bae0ff;"><p class="label_text strong">有力候補</p></th>
+	        </tr>
+	    </table>
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;"><p>支払予定日</p></th>
+				<th style="width:13%;"><p>支払ステータス</p></th>
+				<th style="width:10%;"><p>会計科目&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:15%;"><p>摘要&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:7%;"><p>通貨単位</p></th>	
+				<th style="width:11%;"><p>金額</p></th>
+				<th><p>支払先&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:6%;"><p>詳細</p></th>
+				<th style="width:8%;"><p>消込</p></th>
+			</tr>
+			<?php if (!empty($this->mainItems)) { ?>
+				<?php foreach ($this->mainItems as $each) { ?>
+					<tr>
+						<td>
+							<p><?php echo date('Y-m-d', strtotime($each['receive_plan_date'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $statusList[$each['payment_status']]; ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->accountTitleList[$each['account_title_id']]['title']; ?>">
+							<p><?php echo $this->roundText($this->accountTitleList[$each['account_title_id']]['title'], 7); ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['memo']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['memo']), 13); ?></p>
+						</td>
+					
+						<td>
+							<p class="align_center"><?php if (!empty($each['currency_id'])) { echo $this->escape($this->currencyList[$each['currency_id']]['name']); } ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$totaltext = '';
+								if (!empty($each['total_amount'])) {
+									$totaltext = $this->escape(number_format($each['total_amount']));
+								}	
+							?>
+							<p class="align_right"><?php echo $totaltext; ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 12); ?></p>
+						</td>
+
+						<td>
+							<a class="show_detail" href="/transaction-paid/invoice-detail?id=<?php echo $this->escape($each['id']); ?>" target="_blank">詳細</a>
+						</td>
+						
+						<td>
+							<a class="btn_setting btn_attach" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>">割当実行</a>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="9">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default department" style="margin-bottom:0px;">
+	        <tr>
+	            <th class="border-left border-top border-bottom border-right" style="background-color:#bae0ff;"><p class="label_text strong">その他候補</p></th>
+	        </tr>
+	    </table>
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;"><p>支払予定日</p></th>
+				<th style="width:13%;"><p>支払ステータス</p></th>
+				<th style="width:10%;"><p>会計科目&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:15%;"><p>摘要&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:7%;"><p>通貨単位</p></th>	
+				<th style="width:11%;"><p>金額</p></th>
+				<th><p>支払先&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:6%;"><p>詳細</p></th>
+				<th style="width:8%;"><p>割当</p></th>
+			</tr>
+			<?php if (!empty($this->otherItems)) { ?>
+				<?php foreach ($this->otherItems as $each) { ?>
+					<tr>
+						<td>
+							<p><?php echo date('Y-m-d', strtotime($each['receive_plan_date'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $statusList[$each['payment_status']]; ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->accountTitleList[$each['account_title_id']]['title']; ?>">
+							<p><?php echo $this->roundText($this->accountTitleList[$each['account_title_id']]['title'], 7); ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['memo']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['memo']), 13); ?></p>
+						</td>
+					
+						<td>
+							<p class="align_center"><?php if (!empty($each['currency_id'])) { echo $this->escape($this->currencyList[$each['currency_id']]['name']); } ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$totaltext = '';
+								if (!empty($each['total_amount'])) {
+									$totaltext = $this->escape(number_format($each['total_amount']));
+								}	
+							?>
+							<p class="align_right"><?php echo $totaltext; ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 12); ?></p>
+						</td>
+
+						<td>
+							<a class="show_detail" href="/transaction-paid/card-detail?id=<?php echo $this->escape($each['id']); ?>" target="_blank">詳細</a>
+						</td>
+							
+						<td>
+							<a class="btn_setting btn_attach" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>">割当実行</a>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="9">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>        
+	</div>
+		
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,114 @@
+<?php
+$payementMonthlyList = Shared_Model_Code::getPayementMonthlyList();
+?>
+<script type="text/javascript">
+$(function () {
+	$(document).ready(function(){
+	});
+	
+	$("#clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+});    
+</script>
+<style type="text/css"><!--
+a.edit_item {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 0 0 3px;float:left;cursor:pointer;}
+.multi_rows_padding {padding:5px 12px 5px 12px;}
+.order_btn_frame {float:left;margin:6px 0 0 14px;}
+.order_btn_frame .icon-up-dir-1 {font-size:14px;color:#000;line-height:1;display:block;}
+.order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#000;line-height:1;display:block;}
+a.btn_setting.save_content_order {background-color:#64bd63}
+.sortable_column tr td {background-color:#fff;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	    	<?php if (!empty($this->adminProperty['allow_editing_search_tag'])) { ?>
+			<p style="position:absolute;width:92px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:92px;padding:5px 0;margin:0;border:none;" href="/supply-product/tag-detail">新規登録</a>
+            </p>
+            <?php } ?>
+            
+	        <span><strong>原料・製品　一般名称タグ管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="tag_condition_form" action="/supply-product/tag-list" method="get">
+				<p class="search_condition_title">検索条件</p>
+	
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+	                    <input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+	
+					<div class="condition_item" style="padding-top:23px;">
+						<input type="button" id="clear_form" style="display:inline-block;width:116x;" value="リセット" />
+						<input type="submit" id="search_tag" style="display:inline-block;width:116px;" value="検索" />
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:30%;"><p>タグ名称</p></th>
+				<th><p>検索ワードリスト</p></th>
+				<?php if (!empty($this->adminProperty['allow_editing_search_tag'])) { ?>
+					<th style="width:9%;"><p>編集</p></th>
+				<?php } ?>
+			</tr>
+			<tbody class="sortable_column" id="sortable_column">
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['tag_name']); ?></div>
+						</td>
+						
+						<td>
+							<?php $serachWordsList = unserialize($each['serach_words_list']); ?>
+							<div class="multi_rows_padding"><?php echo $this->escape(implode(' / ', $serachWordsList)); ?></div>
+						</td>
+						
+						<?php if (!empty($this->adminProperty['allow_editing_search_tag'])) { ?>
+							<td>
+								<div>
+									<a class="edit_item" href="/supply-product/tag-detail?id=<?php echo $this->escape($each['id']); ?>">編集</a>
+								</div>
+							</td>
+						<?php } ?>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="<?php if (!empty($this->adminProperty['allow_editing_search_tag'])) { ?>3<?php } else { ?>2<?php } ?>">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+		
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>  
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

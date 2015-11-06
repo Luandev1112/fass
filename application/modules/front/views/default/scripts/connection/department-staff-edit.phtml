@@ -1,0 +1,281 @@
+<?php
+$staffStatusList = Shared_Model_Code::codes('connection_staff_status');
+?>
+<link rel="stylesheet" href="/resource/js/switchery-0.8.0/dist/switchery.css" />
+<script src="/resource/js/switchery-0.8.0/dist/switchery.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+		var elems = Array.prototype.slice.call(document.querySelectorAll('.switch'));
+		                
+		elems.forEach(function(html) {
+		  var switchery = new Switchery(html, { size: 'small' });
+		});
+		
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        <?php if (!empty($this->staffData['card_exchange_date'])) { ?>
+        	$("#card_exchange_date").datepicker("setDate", "<?php echo date('Y-m-d', strtotime($this->staffData['card_exchange_date'])); ?>");
+        <?php } ?>
+    });
+
+	<?php 
+		$confirmMessage = '登録しますか';
+		$succeedMessage = '登録しました';
+		$backmessage    = '登録せずに中止しますか';
+		if (!empty($this->id)) {
+			$confirmMessage = '保存しますか';
+			$succeedMessage = '保存しました';
+			$backmessage    = '保存せずに中止しますか';
+        }
+	?>
+			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+       jConfirm('<?php echo $backmessage; ?>', '　', function(r) {
+            if(r) {
+               location.href = "/connection/department?id=<?php echo $this->escape($this->id); ?>";
+            } else {
+                return false;
+            }
+        });
+	});
+		
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('<?php echo $confirmMessage; ?>', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('<?php echo $succeedMessage; ?>', '　'); 
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/connection/update-department-staff?id=<?php echo $this->escape($this->id); ?>'
+                     + '<?php if (!empty($this->staffId)) echo '&staff_id=' . $this->staffId; ?>'
+                });
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/connection/department?id=<?php echo $this->escape($this->id); ?>';
+        }
+    });
+
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value input.datepicker[type="text"]{width:120px;}
+table.list_default tr td.column_value select.short {width:300px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:500px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>部門 担当者 - <?php if (!empty($this->id)) { echo '編集'; } else { echo '登録'; } ?></strong></span>
+        </div>
+    </div>
+    
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>
+         
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">所属<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<select class="short" id="connection_department_id" name="connection_department_id">
+                        <option value="">---</option>
+                        <?php foreach ($this->departmentList as $each) { ?>
+                            <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] == $this->staffData['connection_department_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['department_name']); ?></option>
+                        <?php } ?>
+                	</select>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">ステータス<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<select class="short" id="status" name="status">
+                        <option value="">---</option>
+                        <?php foreach ($staffStatusList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ($key == $this->staffData['status']) echo 'selected="selected"'; ?>><?php echo $this->escape($value); ?></option>
+                        <?php } ?>
+                	</select>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者 氏名<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_name" value="<?php echo $this->escape($this->staffData['staff_name']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者 氏名(カナ)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_name_kana" value="<?php echo $this->escape($this->staffData['staff_name_kana']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">名刺交換日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="datepicker" id="card_exchange_date" name="card_exchange_date" value="<?php echo $this->escape($this->staffData['card_exchange_date']); ?>" maxlength="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">DMメール対象</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_flag" class="switch" name="mail_flag" style="display:none;" <?php if (!empty($this->staffData['mail_flag'])) echo 'checked="checked"'; ?> />
+						</div>
+						<p style="float:left;">&nbsp;DMリスト出力の対象にする</p>
+					</div> 
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">役職</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_position" value="<?php echo $this->escape($this->staffData['staff_position']); ?>" maxlength="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">電話番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_tel" value="<?php echo $this->escape($this->staffData['staff_tel']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">FAX番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_fax" value="<?php echo $this->escape($this->staffData['staff_fax']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">携帯</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_mobile" value="<?php echo $this->escape($this->staffData['staff_mobile']); ?>" maxlength="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">メールアドレス</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_mail" value="<?php echo $this->escape($this->staffData['staff_mail']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">郵便番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_postal_code" value="<?php echo $this->escape($this->staffData['staff_postal_code']); ?>" maxlength="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">住所</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="staff_address" value="<?php echo $this->escape($this->staffData['staff_address']); ?>" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<textarea name="staff_memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->staffData['staff_memo']); ?></textarea>
+                </td>
+            </tr>
+                         
+        </table>
+        
+	</div><!-- clearfix -->	
+    </form>
+
+               
+</div>
+</div>
+</div>
+</div>
+

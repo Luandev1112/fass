@@ -1,0 +1,284 @@
+<?php
+$yearList          = Shared_Model_Code::getYearListFromRelease();
+$monthList         = Shared_Model_Code::getMonthList();
+$resultCodeList        = Shared_Model_Code::codes('gmo_api_result_code');
+$bankRegisteredType  = Shared_Model_Code::codes('bank_registered_type');
+?>
+<script type="text/javascript">
+$(function () {
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+
+	// 申請者 ポップアップ表示
+    $(document).on('click', '#select_applicant_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+	});
+    
+	// 申請者 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 申請者 リセット
+    $(document).on('click', '#reset_applicant_user', function () {
+		$('#applicant_user_name_display').html('');
+		$('#applicant_user_name').val('');
+		$('#applicant_user_id').val('');
+	});
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    }); 
+});
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.gray_out td {background-color:#eee}
+table.list_default tr.gray_out:hover td {background:#eee;}
+table.list_default tr th p, table.list_default tr td p {padding-left:5px;}
+table.list_default tr th p.align_right, table.list_default tr td p.align_right {text-align:right;padding-left:0;padding-right:5px;}
+table.list_default tr th p.align_center, table.list_default tr td p.align_center {text-align:center;padding-left:0;}
+
+.view_type_list {}
+.view_type_list a.view_type {display:block;float:left;padding:11px 20px 0;height:22px;line-height:1;text-decoration:none;background-color: #c0f7fa;text-align:center;font-size: 1.1em;margin-right:5px;}
+.view_type_list a.view_type.selected {background-color:#098d94;color:#fff;}
+div.total {border:1px solid #ccc;background-color:#fafafa;padding:10px 11px;}
+div.total p{font-size:1.2em;font-weight:bold;line-height:1.3}
+div.total p.currency {float:left;width:50px;text-align:right}
+div.total p.account_count {float:left;width:60px;text-align:right}
+div.total p.total_amount {float:left;width:170px;text-align:right}
+a.prev, a.next {text-decoration:none;background-color:#42adff;color:#fff;display:block;padding:5px 5px 3px;width:70px;text-align:center;float:left;font-weight:bold}
+a.prev:visited, a.next:visited { color:#fff;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+table.list_default tr td p.attached {color:#2960f6;padding-left:0;text-align:center;}
+
+.btn_setting {margin-top:0.3em;margin-left:0.4em;margin-bottom:0;}
+
+table.list_default tr th p.center,
+table.list_default tr td p.center {padding-left:0;}
+.multi_rows_padding {padding:5px 5px 0 5px}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>GMO振込予約履歴</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/transaction-paid/card-list" method="get">
+				<input type="hidden" id="search" name="search" value="1" />
+				<input type="hidden" id="page" name="page" value="1" />
+
+				<p class="search_condition_title">絞込条件</p>
+
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">口座：</p>
+                        <select id="payment_status" name="payment_status">
+                            <option value="">---</option>
+                        	<?php foreach ($this->accountList as $each) { ?>
+                                <option value="<?php echo $this->escape($each['id']); ?>" <?php if ((string)$each['id'] === $this->conditions['']) echo 'selected="selected"';?>><?php echo $this->escape($each['account_name']); ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">受付番号：</p>
+                        <input type="text" id="relational_id" name="relational_id" value="<?php /*echo $this->conditions['relational_id'];*/ ?>">
+					</div>
+					<div class="condition_item">
+						<p class="condition_label">振込予定日：</p>
+                        <input type="text" class="datepicker" id="relational_id" name="relational_id" value="<?php /*echo $this->conditions['relational_id'];*/ ?>">
+					</div>
+					
+				</div>
+
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索" />
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%"><p>予約実施日</p></th>
+				<th style="width:4%"><p>時間</p></th>
+				<th style="width:6%;"><p>口座</p></th>
+				<th style="width:13%;"><p>受付番号（振込申請番号）</p></th>
+				<th style="width:7%;"><p>振込予定日</p></th>
+				<th style="width:4%;"><p class="center">明細ID</p></th>
+				<th style="width:6%;"><p>予約承認</p></th>
+				<th style=""><p>支払先</p></th>
+                <th style="width:7%;"><p>振込先区分</p></th>
+                <th style="width:7%;"><p class="align_center">振込額</p></th>
+				<th style="width:20%;"><p>不能明細情報</p></th>
+			</tr>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<?php
+						$grayOut = '';
+					?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php echo $grayOut; ?>>
+						<td>
+                            <p><?php echo date('Y-m-d', strtotime($each['created'])); ?></p>
+						</td>
+
+						<td>
+                            <p><?php echo date('H:i', strtotime($each['created'])); ?></p>
+						</td>
+						
+						<td>
+                            <p><?php echo $this->accountList[$each['account_id']]['short_name']; ?></p>
+						</td>
+						
+						<td>
+                            <p><?php echo $this->escape($each['apply_no']); ?></p>
+						</td>
+
+						<td>
+                            <p><?php echo date('Y-m-d', strtotime($each['paying_plan_date'])); ?></p>
+						</td>
+						
+						<td>
+                            <p class="center"><?php echo $this->escape($each['item_id']); ?></p>
+						</td>
+						
+						<td>
+							<?php if ($each['result_code'] === (string)Shared_Model_Code::GMO_API_TRANSFER_RESULT_CODE_APPLOVED) { ?>
+								<p class="status_active"><?php echo $resultCodeList[$each['result_code']]; ?></p>
+							<?php } else { ?>
+								<p><?php echo $resultCodeList[$each['result_code']]; ?></p>
+							<?php } ?>
+						</td>
+
+						<td>
+                            <div class="multi_rows_padding"><?php echo $this->escape($each['company_name']); ?></div>
+						</td>
+
+						<td>
+							<?php if (!empty($each['transfer_to_bank_code'])) { ?>
+								<p個別</p>
+							<?php } else { ?>
+								<p><?php
+								if (!empty($each['bank_registered_type'])) {
+									echo $bankRegisteredType[$each['bank_registered_type']];
+								} else {
+									echo '(旧データ)';
+								} ?></p>
+							<?php } ?>
+						</td>
+
+						<td>
+                            <p class="align_right"><?php echo $this->numberFormat($each['total_amount']); ?></p>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding">
+							<?php if ($each['result_code'] === (string)Shared_Model_Code::GMO_API_TRANSFER_RESULT_CODE_APPLOVED) { ?>
+								<a class="btn_setting" href="/oauth/cancel?account_id=<?php echo $this->escape($each['account_id']); ?>&apply_no=<?php echo $this->escape($each['apply_no']); ?>">取消</a>
+							<?php } ?>
+							<?php 
+								$info = unserialize($each['unable_detail_info']);
+								
+								if (!empty($info)) {
+									foreach ($info as $eachInfo) {
+										if ($eachInfo['transferDetailStatus'] === '1') {
+											echo '振込詳細ステータス：手続済<br>';
+										} else if ($eachInfo['transferDetailStatus'] === '2') {
+											echo '振込詳細ステータス：手続不成立<br>';
+										}
+										
+										if ($eachInfo['refundStatus'] === '1') {
+											echo '組戻ステータス：組戻手続中';
+										} else if ($eachInfo['refundStatus'] === '2') {
+											echo '組戻ステータス：組戻済';
+										} else if ($eachInfo['refundStatus'] === '3') {
+											echo '組戻ステータス：組戻不成立';
+										}
+										
+										if (!empty($eachInfo['isRepayment'])) {
+											echo '資金返却あり<br>';
+											echo '資金返却日：' . $eachInfo['repaymentDate'] . '<br>';
+										}
+									}
+								}
+							?>
+							</div>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="13">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

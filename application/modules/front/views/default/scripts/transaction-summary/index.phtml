@@ -1,0 +1,61 @@
+<?php
+?>
+<script type="text/javascript">
+$(function () {
+	$(document).ready(function(){
+	});
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>採算管理 - データ集計</strong></span>
+	    </div>
+	</div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th>
+					<p>採算グループ名</p>
+				</th>
+
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<p><?php echo $this->escape($each['category_name']); ?></p>
+						</td>
+
+						<td>
+							<p><a href="/transaction-summary/category?category_id=<?php echo $this->escape($each['id']); ?>">詳細</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="2">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+
+

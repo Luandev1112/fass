@@ -1,0 +1,1064 @@
+<?php
+$supplierStatusList   = Shared_Model_Code::codes('supplier_status');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var pos = 0;
+var editing = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(id, e) {
+	$('#' + id + '_add_image_box').removeClass('over');
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('ファイルは一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(id, files[0]);
+}
+
+function fileUpload(id, fd) {
+    var formData = new FormData();
+    formData.append('file', fd);
+	
+	showSpinner();
+	
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url:'/supply-product/upload?id=<?php echo $this->data['id']; ?>',
+      data:formData,
+      dataType:'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;            
+        } else if(obj.result == true) {
+        	$('#' + id + '_file_name_text').html(obj.file_name);
+        	$('#' + id + '_file_name').val(obj.file_name);
+        	$('#' + id + '_temp_file_name').val(obj.temp_file_name);
+        } else {
+        	jAlert('予期せぬエラーが発生しました', 'エラー');
+        }
+    });
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+		Tipped.create('#help_base_name', "支店,支社,営業所,工場等の名称");
+		
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+    	if (editing == true) {
+    		jAlert('複数のカテゴリを同時に編集することはできません', 'エラー');
+    		return false;
+    	}
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+       
+        if (categoryId =='4' || categoryId =='5') {
+        	var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	    }
+	    
+	    editing = true;
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/supply-product/update-content?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/supply-product/update-supplier?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '3') {
+			apiUrl = '/supply-product/update-basic?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '4') {
+			apiUrl = '/supply-product/update-condition?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '5') {
+			apiUrl = '/supply-product/update-file-list?id=<?php echo $this->escape($this->id); ?>';
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/supply-product/supplier-detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/supply-product/supplier-detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 取引先選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+
+
+
+    $('#material_kind').change(function() {
+		location.href = '/supply-product/supplier-detail?id=<?php echo $this->escape($this->id); ?>&material_kind=' + $(this).val() + '&pos=' + $(window).scrollTop();
+    });
+
+
+
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay:100,
+        stop:function (event, ui) {},
+        start:function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+		if (categoryId == '4') {
+        	var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .lot_amount').attr('id', uuid + '_lot_amount').attr('name', uuid + '_lot_amount');
+	        $('.column_copy_base_' + categoryId + ' .lot_unit').attr('id', uuid + '_lot_unit').attr('name', uuid + '_lot_unit');
+	        $('.column_copy_base_' + categoryId + ' .help_lot_unit').attr('id', uuid + '_help_lot_unit');
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', uuid + '_unit_price').attr('name', uuid + '_unit_price');
+	        $('.column_copy_base_' + categoryId + ' .currency').attr('id', uuid + '_currency').attr('name', uuid + '_currency').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .total_price').attr('id', uuid + '_total_price').attr('name', uuid + '_total_price');
+	        $('.column_copy_base_' + categoryId + ' .currency_total').attr('id', uuid + '_currency_total');
+	        $('.column_copy_base_' + categoryId + ' .delivery_cost').attr('id', uuid + '_delivery_cost').attr('name', uuid + '_delivery_cost');
+	        $('.column_copy_base_' + categoryId + ' .currency_delivery').attr('id', uuid + '_currency_delivery').attr('name', uuid + '_currency_devivery'); 
+			$('.column_copy_base_' + categoryId + ' .condition_memo').attr('id', uuid + '_condition_memo').attr('name', uuid + '_condition_memo');
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+			
+			
+	        $('.column_copy_base_' + categoryId + ' .lot_amount').attr('id', uuid + '_lot_amount').attr('name', uuid + '_lot_amount');
+	        $('.column_copy_base_' + categoryId + ' .lot_unit').attr('id', uuid + '_lot_unit').attr('name', uuid + '_lot_unit');
+	        $('.column_copy_base_' + categoryId + ' .help_lot_unit').attr('id', uuid + '_help_lot_unit');
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', uuid + '_unit_price').attr('name', uuid + '_unit_price');
+	        $('.column_copy_base_' + categoryId + ' .currency').attr('id', uuid + '_currency').attr('name', uuid + '_currency').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .total_price').attr('id', uuid + '_total_price').attr('name', uuid + '_total_price');
+	        $('.column_copy_base_' + categoryId + ' .currency_total').attr('id', uuid + '_currency_total');
+	        $('.column_copy_base_' + categoryId + ' .delivery_cost').attr('id', uuid + '_delivery_cost').attr('name', uuid + '_delivery_cost');
+	        $('.column_copy_base_' + categoryId + ' .currency_delivery').attr('id', uuid + '_currency_delivery').attr('name', uuid + '_currency_devivery'); 
+			$('.column_copy_base_' + categoryId + ' .condition_memo').attr('id', uuid + '_condition_memo').attr('name', uuid + '_condition_memo');
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+	        Tipped.create('#help_lot_unit_' + uuid, "例） kg、pcs、袋、個、本など");
+	        	        
+	    } else if (categoryId == '5') {
+	        var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .material_kind').attr('id', uuid + '_material_kind').attr('name', uuid + '_material_kind');
+			$('.column_copy_base_' + categoryId + ' .target_date').attr('id', uuid + '_target_date').attr('name', uuid + '_target_date');
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', uuid + '_file_name_text').attr('name', uuid + '_file_name_text');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', uuid + '_file_name').attr('name', uuid + '_file_name');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', uuid + '_temp_file_name').attr('name', uuid + '_temp_file_name');
+	        $('.column_copy_base_' + categoryId + ' .summary').attr('id', uuid + '_summary').attr('name', uuid + '_summary');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', uuid + '_add_image_box').attr('ondrop', "drop('" + uuid + "',event)");
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .material_kind').attr('id','').attr('name', uuid + '');
+			$('.column_copy_base_' + categoryId + ' .target_date').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .summary').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', '');
+
+			$('#' + uuid + '_target_date').datepicker();
+	        $('#' + uuid + '_target_date').datepicker("option", "dateFormat", "yy-mm-dd");
+	        $('#' + uuid + '_target_date').datepicker("option", "yearSuffix", '年');
+	        $('#' + uuid + '_target_date').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+			$('#' + uuid + '_target_date').datepicker("option", "showMonthAfterYear", true);
+	        $('#' + uuid + '_target_date').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+	        $('#' + uuid + '_target_date').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+	        
+	        // ファイルのドロップ時エフェクト
+			var targetE = document.getElementById(uuid + '_add_image_box');
+			var innerFlag = false;
+			
+			targetE.addEventListener('dragenter', function () {
+			    innerFlag = true;
+			}, false);
+			
+			targetE.addEventListener('dragover', function () {
+			    innerFlag = false;
+			    targetE.className = 'add_image_box over';
+			}, false);
+			
+			targetE.addEventListener('dragleave', function () {
+			    if (innerFlag) {
+			        innerFlag = false;
+			    } else {
+			        targetE.className = 'add_image_box';
+			    }
+			}, false);
+		
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+        }
+    });
+    
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先選択
+function selectConnection(id, displayId, name) {
+	$('.connection_name').html(name);
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form  = $('#connection_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:130px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;width:320px;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.zip {width:130px;}
+.condition_label{float:left;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+a.btn_setting#btn_copy {padding:1px 8px 0px;float:left;margin-left:20px;margin-top:5px;margin-bottom:0}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.add_image_box {padding:13px 0;}
+table.list_default tr td.column_value input.target_date, table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+.multi_rows_padding {padding:5px 0 5px 6px}
+select.currency {float:left;width:100px;margin-left:5px;}
+p.currency_total {float:left;margin:left:5px; }
+select.currency_delivery {float:left;width:100px;margin-left:5px;}
+
+
+a.btn_setting {padding:5px 20px 3px 20px;line-height:1.4}
+table.list_default tr td.column_value p.file_size {color:#727ae8;font-weight:bold;padding-left:12px;}
+.material_kind_name {color:#f00;font-weight:bold;}
+h2 {margin-bottom:0.8em;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="page_title">
+        <span><strong>原料・製品 - </strong><strong class="main_name"><?php echo $this->escape($this->projectData['title']); ?> </strong></span>
+    </div>
+    <div class="clearfix">
+	    <div style="float:left;width:300px;margin-right:10px;">
+			<?php
+		        echo $this->partial('supply-product/menu.phtml', array(
+					'action'           => $this->action,
+					'data'             => $this->projectData,
+					'supplierList'     => $this->supplierList,
+					'supplierDetail'   => $this->data,
+				));
+		    ?>
+	    </div>
+	    <div style="float:left;width:950px;padding-top:0.8em;">
+		    <h2 style="margin-bottom:0.6em;"><?php echo $this->escape($this->connectionData['company_name']) . '　' . $this->escape($this->data['individual_name']); ?></h2>
+		    
+		    <?php
+	        /* 仕入先 */
+	        $categoryId = 2;
+	        ?>
+	        <form id="form_category_<?php echo $categoryId; ?>">
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right">
+	                    <p class="label_text strong">仕入先</p>
+	                </th>
+		            <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+		                <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+		                <span>×</span>
+		                </a>
+		            </th>
+		            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+		            </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:2em;">    
+	            <tr>
+	                <td class="column_label"><p class="label_text">取引先<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<?php
+	                		$connectionName = '---';
+	                		if (!empty($this->connectionData)) {
+	                			$connectionName = $this->escape($this->connectionData['company_name']);
+	                		}
+	            		?>
+	                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+	                		<?php echo $connectionName; ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+		                	<p class="connection_name"><?php echo $connectionName; ?></p>
+		                    <a class="option" id="select_connection">取引先選択</a>
+		                    <input type="hidden" id="target_connection_id" name="target_connection_id" value="<?php echo $this->escape($this->data['target_connection_id']); ?>" />
+	                    </div>
+	                </td>
+	                <td class="column_label"><p class="label_text">取引拠点名<span id="help_base_name">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+		                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $this->escape($this->data['base_name']); ?></div>
+		                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+		                    	<input type="text" name="base_name" value="<?php echo $this->escape($this->data['base_name']); ?>" maxlength="" />
+		                    </div>
+						</div>
+	                </td>
+	            </tr>
+	
+				<tr>
+	                <td class="column_label"><p class="label_text">ステータス<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+		                <p class="display_value_<?php echo $categoryId; ?>"><?php echo $supplierStatusList[$this->data['status']]; ?></p>
+		                <div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<select class="short" id="status" name="status">
+								<option value="">---</option>
+	                            <?php foreach ($supplierStatusList as $key => $val) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($this->data['status'] == (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+	                            <?php } ?>
+	                    	</select>
+		            	</div>
+		            </td>
+	                <td class="column_label"><p class="label_text">最終更新日時/更新者</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p><?php echo date('Y-m-d H:i:s', strtotime($this->data['updated'])); ?>　/　<?php echo $this->escape($this->lastUpdatedUser['user_name']); ?>（<?php echo $this->escape($this->lastUpdatedUser['display_id']); ?>）</p>
+	                </td>
+		        </tr>
+		        
+	            <tr>
+	                <td class="column_label"><p class="label_text">変更履歴等メモ</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value" colspan="4">
+	                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($this->data['history_memo'])); ?></div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                    	<textarea name="history_memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['history_memo']); ?></textarea>
+	                    </div>
+	                </td>
+	            </tr>
+	            
+			</table>
+			</form>
+	
+		    <?php
+	        /* 基本情報 */
+	        $categoryId = 3;
+	        ?>
+	        <form id="form_category_<?php echo $categoryId; ?>">
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom">
+	                    <p class="label_text strong">基本情報</p>
+	                </th>
+		            <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+		                <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+		                <span>×</span>
+		                </a>
+		            </th>
+		            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+		            </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:2em;">
+	            <tr>
+	                <td class="column_label"><p class="label_text">仕入先毎品名</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value" style="width:auto;">
+	                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+	                		<?php echo $this->escape($this->data['individual_name']); ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" name="individual_name" value="<?php echo $this->escape($this->data['individual_name']); ?>" maxlength="" />
+						</div>
+	                </td>
+	            </tr>
+	            <tr>
+	                <td class="column_label"><p class="label_text">調達方法</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value" style="width:auto;">
+	                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+	                		<?php
+		                		$displayString = '';
+		                		foreach ($this->supplyMethodList as $each) {
+		                			if (!empty($this->data['methods'])) {
+		                				foreach ($this->data['methods'] as $eachSelected) {
+					                		if ($eachSelected == $each['id']) {
+					                			$displayString .= $each['name'] . '<br>';
+					                		}
+				                		}
+			                		}
+			                	}
+			                	
+			                	if (!empty($this->data['methods'])) {
+				                	foreach($this->data['methods'] as $eachSelected) {
+				                		if ($eachSelected == Shared_Model_Code::PRODUCT_CATEGORY_OTHER) {
+							            	$displayString .= 'その他';
+							            }
+							        }
+						        }
+			                	echo $displayString;
+	                		?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                		<?php foreach ($this->supplyMethodList as $each) { ?>
+			                	<div class="checkbox_item relation_type_item">
+				                	<label>
+				                    	<input type="checkbox" name="methods[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (in_array($each['id'], $this->data['methods'])) { echo 'checked="checked"'; } ?>><?php echo $this->escape($each['name']); ?>
+				                    </label>
+			                    </div>
+		                    <?php } ?>
+							<div class="checkbox_item">
+			                	<label>
+			                    	<input type="checkbox" class="methods" name="methods[]" value="<?php echo Shared_Model_Code::PRODUCT_CATEGORY_OTHER; ?>" <?php if (in_array(Shared_Model_Code::PRODUCT_CATEGORY_OTHER, $this->data['methods'])) { echo 'checked="checked"'; } ?>>その他
+			                    </label>
+		                    </div>
+						</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">調達方法メモ</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value" style="width:auto;">
+	                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($this->data['method_memo'])); ?></div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                    	<textarea name="method_memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['method_memo']); ?></textarea>
+	                    </div>
+	                </td>
+	            </tr>
+	        </table>
+	        </form>
+
+
+
+		    <?php
+	        /* 購入条件 */
+	        $categoryId = 4;
+	        ?>
+	        <form id="form_category_<?php echo $categoryId; ?>">
+	        
+	        <div style="margin-bottom:2em;">
+				<table class="list_default" style="margin-bottom:0;">
+		            <tr>
+		                <th class="border-left border-top border-bottom border-right">
+		                    <p class="label_text strong">購入条件</p>
+		                </th>
+			            <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+			                <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+			                <span>×</span>
+			                </a>
+			            </th>
+			            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+			                <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+			            </th>
+		            </tr>
+				</table>
+				<table class="list_default" style="margin-bottom:0;">
+					<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			        <?php if (!empty($this->data['condition_list'])) { ?>
+				        <?php foreach ($this->data['condition_list'] as $each) { ?>
+					        <tr id="<?php echo $this->escape($each['id']); ?>">
+								<td class="column_value">
+					            	<?php
+					            		$currency = '';
+					            		$currencyDelivery = '';
+					            		foreach ($this->currencyList as $eachCurrency) {
+					            			if ($eachCurrency['id'] == $each['currency']) {
+					            				$currency = $this->escape($eachCurrency['name']);
+					            			}
+					            			
+					            			if ($eachCurrency['id'] == $each['currency_delivery']) {
+					            				$currencyDelivery = $this->escape($eachCurrency['name']);
+					            			}
+					            		}
+					            	?>
+									<div class="clearfix" style="margin-left:8px;">
+						            	<div style="float:left;width:160px;">
+							            	<p class="condition_label">購入ロット：</p>
+							            	<p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($each['lot_amount'])) { echo $this->escape($each['lot_amount']); } else { echo '---'; } ?></p>
+							            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:70px" name="<?php echo $each['id']; ?>_lot_amount" value="<?php echo $this->escape($each['lot_amount']); ?>" />
+						            	</div>
+						            	<div style="float:left;width:190px;">
+							            	<p class="condition_label">ロット単位<span id="<?php echo $each['id']; ?>_help_lot_unit">&nbsp;<i class="icon-help-circled"></i></span>：</p>
+							            	<p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($each['lot_unit'])) { echo $this->escape($each['lot_unit']); } else { echo '---'; } ?></p>
+							            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:90px" name="<?php echo $each['id']; ?>_lot_unit" value="<?php echo $this->escape($each['lot_unit']); ?>" placeholder="例：kg. pcs" />
+										</div>
+										<div style="float:left;width:330px;">
+							            	<p class="condition_label">仕入単価(税別)：</p>
+							            	<p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($each['unit_price'])) { echo number_format($this->escape($each['unit_price'])); } else { echo '---'; } ?><?php echo '&nbsp;' . $currency; ?></p>
+							            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:110px" name="<?php echo $each['id']; ?>_unit_price" value="<?php echo $this->escape($each['unit_price']); ?>" />
+					                        <select style="display:none" class="currency edit_value_<?php echo $categoryId; ?>" id="<?php echo $each['id']; ?>_currency" name="<?php echo $each['id']; ?>_currency" id="<?php echo $each['id']; ?>_currency" target-row="<?php echo $each['id']; ?>">
+					                            <option value="">(単位)</option>
+					                        	<?php foreach ($this->currencyList as $eachCurrency) { ?>
+					                                <option value="<?php echo $eachCurrency['id']; ?>" <?php if ($each['currency'] == $eachCurrency['id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachCurrency['name']); ?></option>
+					                            <?php } ?>
+					                        </select>
+										</div>
+										<div style="float:left;width:300px;">
+							            	<p class="condition_label">仕入価格総額(税別)：</p>
+							            	<p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($each['total_price'])) { echo number_format($this->escape($each['total_price'])); } else { echo '---'; }  ?><?php echo '&nbsp;' . $currency; ?></p>
+							            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:110px" name="<?php echo $each['id']; ?>_total_price" value="<?php echo $this->escape($each['total_price']); ?>" />
+											<p class="currency_total edit_value_<?php echo $categoryId; ?>" id="<?php echo $each['id']; ?>_currency_total" style="display:none"><?php echo $currency; ?></p>
+										</div>
+									</div>
+									<div class="clearfix" style="margin-left:8px;">
+										<div style="float:left;width:330px;">
+							            	<p class="condition_label">物流費　　：</p>
+							            	<p class="display_value_<?php echo $categoryId; ?>">
+							            		<?php 
+							            			if (!empty($each['delivery_cost'])) {
+							            				echo number_format($this->escape($each['delivery_cost']));
+							            			}
+							            			echo '&nbsp;' . $currencyDelivery;
+							            		?>
+							            	</p>
+							            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:110px" name="<?php echo $each['id']; ?>_delivery_cost" value="<?php echo $this->escape($each['delivery_cost']); ?>" />
+					                        <select style="display:none" class="currency_delivery edit_value_<?php echo $categoryId; ?>" id="<?php echo $each['id']; ?>_currency_delivery" name="<?php echo $each['id']; ?>_currency_delivery">
+					                            <option value="">(単位)</option>
+					                        	<?php foreach ($this->currencyList as $eachCurrency) { ?>
+					                                <option value="<?php echo $eachCurrency['id']; ?>" <?php if ($each['currency_delivery'] == $eachCurrency['id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachCurrency['name']); ?></option>
+					                            <?php } ?>
+					                        </select>
+					            		</div>
+					            	</div>	
+									<div class="clearfix" style="margin-left:8px;margin-bottom:8px">
+										<p class="condition_label" style="width:72px;">条件メモ　:</p>
+										<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding" style="float:left;">
+											<?php echo nl2br($this->escape($each['condition_memo'])); ?>&nbsp;
+										</div>
+										<div class="edit_value_<?php echo $categoryId; ?>" style="float:left;width:895px;display:none;">
+											<textarea class="condition_memo" id="<?php echo $this->escape($each['id']); ?>_condition_memo" name="<?php echo $this->escape($each['id']); ?>_condition_memo" style="height:50px"><?php echo $this->escape($each['condition_memo']); ?></textarea>
+										</div>
+									</div>
+								</td>
+					            <td class="td_action">
+					            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame" style="display:none;">
+					            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+					            	</div>
+					            </td>
+					        </tr>
+				        <?php } ?>
+			        <?php } ?>
+		        	</tbody>
+		        </table>
+		        <div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #ccc;height:34px;display:none;">
+		            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+		        </div>
+		        <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="condition_list" value="" />	
+	        </div>
+			</form>
+	
+		    <!-- copy base -->
+		    <table class="list_default" style="display:none;">
+		        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+					<td class="column_value">
+						<div class="clearfix" style="margin-left:8px;">
+			            	<div style="float:left;width:160px;">
+								<p class="condition_label">購入ロット：</p>
+		            			<input type="text" style="float:left;width:70px" class="lot_amount" name="##_lot_amount" value="" />
+			            	</div>
+			            	<div style="float:left;width:190px;">
+				            	<p class="condition_label">ロット単位<span class="help_lot_unit">&nbsp;<i class="icon-help-circled"></i></span>：</p>
+				            	<input type="text" style="float:left;width:90px" class="lot_unit" name="##_lot_unit" value="" placeholder="例：kg. pcs" />
+							</div>
+							<div style="float:left;width:330px;">
+				            	<p class="condition_label">仕入単価(税別)：</p>
+				            	<input type="text" style="float:left;width:110px" class="unit_price" name="##_unit_price" value="" />
+		                        <select class="currency">
+		                            <option value="">(単位)</option>
+		                        	<?php foreach ($this->currencyList as $each) { ?>
+		                                <option value="<?php echo $each['id']; ?>"><?php echo $each['name']; ?></option>
+		                            <?php } ?>
+		                        </select>
+							</div>
+							<div style="float:left;width:300px;">
+				            	<p class="condition_label">仕入価格総額(税別)：</p>
+				            	<input type="text" style="float:left;width:110px" class="total_price"  name="##_total_price" value="" />
+				            	<p class="currency_total"></p>
+							</div>
+						</div>
+		            	
+						<div class="clearfix" style="margin-left:8px;">
+							<div style="float:left;width:330px;">
+				            	<p class="condition_label">物流費　　：</p>
+				            	<input type="text" style="float:left;width:110px" class="delivery_cost" name="##_delivery_cost" value="" />
+		                        <select class="currency_delivery">
+		                            <option value="">(単位)</option>
+		                        	<?php foreach ($this->currencyList as $each) { ?>
+		                                <option value="<?php echo $each['id']; ?>"><?php echo $each['name']; ?></option>
+		                            <?php } ?>
+		                        </select>
+		            		</div>
+						</div>
+						<div class="clearfix" style="margin-left:8px;margin-bottom:8px">
+		            		<p class="condition_label" style="width:72px;">条件メモ　:</p>
+		            		<div style="float:left;width:895px;">
+								<textarea class="condition_memo" name="##_condition_memo" style="height:50px"></textarea>
+							</div>
+						</div>
+					</td>
+		            <td class="td_action">
+		            	<div class="delete_btn_frame">
+		            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+		            	</div>
+		            </td>
+		        </tr>
+		    </table>    
+			<!-- copy base -->
+	
+			
+<?php if (empty($this->projectData['is_copied'])) { ?>
+	
+		    <?php
+	        /* 入手見積書・補足資料 */
+	        $categoryId = 5;
+	        ?>
+	        <form id="form_category_<?php echo $categoryId; ?>">
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right">
+	                    <p class="label_text strong">入手見積書・補足資料</p>
+	                </th>
+		            <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+		                <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+		                <span>×</span>
+		                </a>
+		            </th>
+		            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px;padding-left:1px;font-size:20px;color:#FFF;line-height:1;display:block;"></i></span></a>
+		            </th>
+	            </tr>
+			</table>
+			<table class="list_default" style="margin-bottom:2em;">
+				<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			        <?php if (!empty($this->data['file_list'])) { ?>
+				        <?php foreach ($this->data['file_list'] as $each) { ?>
+					        <tr id="<?php echo $this->escape($each['id']); ?>">
+								<td class="column_value" style="width:auto;">
+									<div class="clearfix">
+										<div style="float:left;width:300px;">
+											<div class="clearfix" style="margin-bottom:5px">
+												<div style="float:left;width:24px;padding:5px 0 0 10px;">
+													<i class="budicon-equal" style="color:#aaa;font-size:26px;"></i>
+												</div>
+												<div style="float:left;width:250px;">
+													<div class="multi_rows_padding" style="padding-left:12px;"><span class="file_name_text" id="<?php echo $this->escape($each['id']); ?>_file_name_text"><?php echo $this->escape($each['file_name']); ?></span></div>
+													<p class="file_size">file size：<?php echo $this->byteFormat(Shared_Model_Resource_SupplyProduct::getFileSize($this->data['id'], $each['id'], $each['file_name']), 2); ?></p>
+													<input type="hidden" class="file_name" id="<?php echo $this->escape($each['id']); ?>_file_name" name="<?php echo $this->escape($each['id']); ?>_file_name" value="<?php echo $this->escape($each['file_name']); ?>" />
+													<input type="hidden" class="temp_file_name" id="<?php echo $this->escape($each['id']); ?>_temp_file_name" name="<?php echo $this->escape($each['id']); ?>_temp_file_name" value="" />  
+												</div>
+											</div>
+											
+											<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+												<div class="add_image_box" id="<?php echo $this->escape($each['id']); ?>_add_image_box" ondragover="dragover(event)" ondrop="drop('<?php echo $this->escape($each['id']); ?>',event)" style="margin-bottom:13px;">
+													<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&amp;ドロップしてください
+												</div>
+											</div>
+										</div>
+										<div style="float:left;margin-left:10px;width:200px;">
+											<p>入手見積書日付:</p>
+											<p class="display_value_<?php echo $categoryId; ?>">
+												<?php if (empty($each['target_date'])) { ?>
+													---
+												<?php } else { ?>
+													<?php echo date('Y-m-d', strtotime($each['target_date'])); ?>
+												<?php } ?>
+											</p>
+										</div>
+										<div style="float:left;margin-left:10px;width:300px;">
+											<input type="text" id="<?php echo $this->escape($each['id']); ?>_target_date" class="target_date datepicker edit_value_<?php echo $categoryId; ?>" name="<?php echo $this->escape($each['id']); ?>_target_date" value="" style="display:none;" />
+											<p>概要:</p>
+						                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($each['summary'])); ?></div>
+						                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						                    	<textarea class="summary" name="<?php echo $this->escape($each['id']); ?>_summary" style="margin-top:9px;height:142px;margin-bottom:6px;"><?php echo $this->escape($each['summary']); ?></textarea>
+						                    </div>	
+										</div>
+										
+										<div class="display_value_<?php echo $categoryId; ?>" style="float:left;margin-left:10px;width:60px;">
+											<a class="btn_setting" style="margin-left:12px;margin-top:5px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplyProduct::getResourceUrl($this->id, $each['id'], $each['file_name']); ?>"><i class="icon-download-1" style="font-size:1.3em;"></i></a>
+										</div>
+										
+									</div>
+								</td>
+					            <td class="td_action">
+					            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix" style="display:none;">
+					            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+					            	</div>
+					            </td>
+					        </tr>
+				        <?php } ?>
+			        <?php } ?>
+	        	</tbody>
+	    	</table>
+	    	<div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #ccc;height:34px;display:none;">
+	            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+	        </div>
+	    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="file_list" value="" />	
+			</form>
+
+		    <!-- copy base -->
+		    <table class="list_default" style="display:none;">
+		        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+					<td class="column_value" style="width:auto;">
+						<div class="clearfix">
+							<div style="float:left;width:330px;">
+									<div class="clearfix" style="margin-bottom:5px">
+										<div style="float:left;width:24px;padding:5px 0 0 10px;">
+										<i class="budicon-equal" style="color:#aaa;font-size:26px;"></i>
+									</div>
+									<div style="float:left;width:290px;">
+										<div class="clearfix" style="padding-left:12px;">
+											<select class="material_kind" name="##_material_kind" style="width:100%">
+												<?php foreach ($this->materialKindList as $eachKind) { ?>
+													<option value="<?php echo $this->escape($eachKind['id']); ?>"><?php echo $this->escape($eachKind['name']); ?></option>
+												<?php } ?>
+											</select>
+										</div>
+										
+										<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="##_file_name_text">(ファイル名)</span></div>
+										<input type="hidden" class="file_name" id="##_file_name" name="##_file_name" value="" />
+										<input type="hidden" class="temp_file_name" id="##_temp_file_name" name="##_temp_file_name" value="" />  
+									</div>
+								</div>
+								<div class="add_image_box" id="##_add_image_box" ondragover="dragover(event)" ondrop="drop(##,event)" style="margin-bottom:13px;">
+									<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&amp;ドロップしてください
+								</div>
+							</div>
+							<div style="float:left;margin-left:10px;width:500px;">
+								<p>入手見積書日付:</p>
+								<input type="text" class="target_date" name="##_target_date" value="" />
+								<p>見積メモ:</p>
+								<textarea class="summary" name="##_summary" style="margin-top:9px;height:142px;margin-bottom:6px;"><?php echo $this->escape($this->documentData['summary']); ?></textarea>
+							</div>
+						</div>
+					</td>
+		            <td class="td_action">
+		            	<div class="delete_btn_frame">
+		            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+		            	</div>
+		            </td>
+		        </tr>
+		    </table>    
+			<!-- copy base -->
+
+
+<?php } ?>
+
+			<p style="margin-bottom:1.0em;padding-left:0.6em;"><i class="icon-block-1" style="color:#f00;font-size:18px;padding:0.1em 0 0 0.2em;"></i>は他社への配布禁止</p>
+
+		    <?php
+	        /* 入手見積 */
+	        ?>
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right" style="background-color:#daaef5">
+	                    <p class="label_text strong">入手見積</p>
+	                </th>
+		            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                <a class="btn_add_category" href="/supply-material/add?item_type=<?php echo Shared_Model_Code::MATERIAL_ITEM_TYPE_SUPPLY_PRODUCT; ?>&id=<?php echo $this->escape($this->data['id']); ?>&material_type=<?php echo SHared_Model_Code::MATERIAL_TYPE_ESTIMATE; ?>"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="icon-plus" style="margin-top:-3px;padding-left:1px;font-size:20px;color:#FFF;line-height:1;display:block;"></i></span></a>
+		            </th>
+	            </tr>
+			</table>
+			<table class="list_default" style="margin-bottom:2em;">
+				<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			        <?php if (!empty($this->estimateItems)) { ?>
+				        <?php foreach ($this->estimateItems as $each) { ?>
+					        <tr>
+								<td class="column_value" style="width:auto;">
+									<div class="clearfix">
+										<div style="">
+											<div class="clearfix" style="margin-bottom:5px">
+												<div style="float:left;width:20px;padding:10px 0 0 5px;">
+													<i class="budicon-equal" style="color:#666;font-size:26px;"></i>
+													<?php if (!empty($each['not_for_shared'])) { ?>
+														<i class="icon-block-1" style="color:#f00;font-size:18px;padding:0.1em 0 0 0.3em;"></i>
+													<?php } ?>
+												</div>
+												<div style="float:left;width:300px;">
+													<div class="multi_rows_padding" style="padding-left:12px;line-height:1.3;margin-right:0.3em;"><strong><?php echo $this->escape($each['title']); ?></strong></div>
+													<div class="multi_rows_padding" style="padding-left:12px;font-size:0.94em;line-height:1.3"><?php echo $this->escape($each['default_file_name']); ?></div>
+													<p style="padding-left:12px;margin-top:0;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Material::getFileSize($this->adminProperty['management_group_id'], $each['id'], $each['file_name']), 1); ?></p>
+												</div>
+												<div style="float:left;width:330px;">
+													<div style="background-color:#eee;margin-top:0.4em;min-height:5.4em;padding:0 0.3em;line-height:1.4;">
+														<?php echo $this->escape($each['explanation']); ?>
+													</div>
+												</div>
+												<div style="float:left;width:200px;">
+													<p>入手日:<?php if (empty($each['target_date'])) { ?>
+													---
+												<?php } else { ?>
+													<?php echo date('Y-m-d', strtotime($each['target_date'])); ?>
+												<?php } ?></p>
+												</div>
+												<div style="float:left;width:40px;">
+													<a style="display:block;margin-top:10px;width:100%;text-align:center" class="btn_setting" href="/supply-material/detail?id=<?php echo $this->escape($this->data['id']); ?>&material_id=<?php echo $this->escape($each['id']); ?>">詳細</a>
+													<a style="display:block;margin-top:5px;margin-bottom:5px;width:100%;text-align:center;background-color:#000;" class="btn_setting" href="/rsrc/material/<?php echo $this->escape($each['id']); ?>/<?php echo $this->escape($each['default_file_name']); ?>" target="_blank"><i class="icon-download-1" style="font-size:1.3em;"></i></a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</td>
+					        </tr>
+				        <?php } ?>
+			        <?php } ?>
+	        	</tbody>
+	    	</table>
+	    	
+	    	
+	    	
+		    <?php
+	        /* 入手ドキュメント */
+	        ?>
+	        <form id="form_category_<?php echo $categoryId; ?>">
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right" style="background-color:#daaef5">
+	                    <p class="label_text strong">入手ドキュメント</p>
+	                </th>
+		            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                <a class="btn_add_category" href="/supply-material/add?item_type=<?php echo Shared_Model_Code::MATERIAL_ITEM_TYPE_SUPPLY_PRODUCT; ?>&id=<?php echo $this->escape($this->data['id']); ?>&material_type=<?php echo SHared_Model_Code::MATERIAL_TYPE_DOCUMENT; ?>"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="icon-plus" style="margin-top:-3px;padding-left:1px;font-size:20px;color:#FFF;line-height:1;display:block;"></i></span></a>
+		            </th>
+	            </tr>
+			</table>
+			
+			<div class="clearfix" style="border-bottom:1px solid #ccc;padding-bottom:0.6em;">    
+				<p style="float:left;margin-right:1.0em;margin-top:1.1em;padding-left:1.0em;">資料種別絞込：</p>
+				<select id="material_kind" name="material_kind" style="float:left;">
+					<option value="">---</option>
+					<?php foreach ($this->materialKindList as $eachKind) { ?>
+						<option value="<?php echo $this->escape($eachKind['id']); ?>" <?php if ((string)$this->materialKind === (string)$eachKind['id']) { echo 'selected="selected"'; } ?> ><?php echo $this->escape($eachKind['name']); ?></option>
+					<?php } ?>
+				</select>  
+			</div>
+	
+			<table class="list_default" style="margin-bottom:2em;">
+				<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			        <?php if (!empty($this->documentItems)) { ?>
+				        <?php foreach ($this->documentItems as $each) { ?>
+					        <tr>
+								<td class="column_value" style="width:auto;">
+									<div class="clearfix">
+										<div style="">
+											<div class="clearfix" style="margin-bottom:5px">
+												<div style="float:left;width:20px;padding:10px 0 0 5px;">
+													<i class="budicon-equal" style="color:#666;font-size:26px;"></i>
+													<?php if (!empty($each['not_for_shared'])) { ?>
+														<i class="icon-block-1" style="color:#f00;font-size:18px;padding:0.1em 0 0 0.3em;"></i>
+													<?php } ?>
+												</div>
+												<div style="float:left;width:300px;">
+													<div class="multi_rows_padding" style="padding-left:12px;line-height:1.3;margin-right:0.3em;"><strong><?php echo $this->escape($each['title']); ?></strong></div>
+													<div class="multi_rows_padding" style="padding-left:12px;font-size:0.94em;line-height:1.3"><?php echo $this->escape($each['default_file_name']); ?></div>
+													<p style="padding-left:12px;margin-top:0;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Material::getFileSize($this->adminProperty['management_group_id'], $each['id'], $each['file_name']), 1); ?></p>
+												</div>
+												<div style="float:left;width:330px;">
+													<div style="background-color:#eee;margin-top:0.4em;min-height:5.4em;padding:0 0.3em;line-height:1.4;">
+														<?php echo nl2br($this->escape($each['explanation'])); ?>
+													</div>
+												</div>
+												<div style="float:left;width:200px;">
+													<p class="material_kind_name"><?php if (!empty($each['kind'])) { echo $this->materialKindList[$each['kind']]['name']; } else { echo 'その他'; } ?></p>
+													<p>入手日:<?php if (empty($each['target_date'])) { ?>
+													---
+												<?php } else { ?>
+													<?php echo date('Y-m-d', strtotime($each['target_date'])); ?>
+												<?php } ?></p>
+												</div>
+												<div style="float:left;width:40px;">
+													<a style="display:block;margin-top:10px;width:100%;text-align:center" class="btn_setting" href="/supply-material/detail?id=<?php echo $this->escape($this->data['id']); ?>&material_id=<?php echo $this->escape($each['id']); ?>">詳細</a>
+													<a style="display:block;margin-top:5px;margin-bottom:5px;width:100%;text-align:center;background-color:#000;" class="btn_setting" href="/rsrc/material/<?php echo $this->escape($each['id']); ?>/<?php echo $this->escape($each['default_file_name']); ?>" target="_blank"><i class="icon-download-1" style="font-size:1.3em;"></i></a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</td>
+					        </tr>
+				        <?php } ?>
+			        <?php } ?>
+	        	</tbody>
+	    	</table>
+
+
+
+	    </div>
+	</div><!-- clearfix -->				
+    
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

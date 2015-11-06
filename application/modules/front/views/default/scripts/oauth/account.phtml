@@ -1,0 +1,77 @@
+<script type="text/javascript" src="/resource/js/jquery-match-height-0.7.2/dist/jquery.matchHeight-min.js"></script>
+<script type="text/javascript">
+var pos = 0;
+$(function () {
+	$(document).ready(function(){
+		<?php if (!empty($this->accountList['accounts'])) { ?>
+			<?php foreach ($this->accountList['accounts'] as $each) { ?>
+				$.ajax({
+			        type:'POST',
+			        dataType:'json',
+			        data:'account_id=<?php echo $this->escape($each['account_id']); ?>&account_no=<?php echo $this->escape($each['account_number']); ?>',
+			        success:function(res){
+					    var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                } else if (obj.result == 'OK') {
+		                    $('#row_result_<?php echo $this->escape($each['account_id']); ?>').html('<p>取り込み完了：' + obj.count + '件</p>');
+		                } else {
+		                    $('#row_result_<?php echo $this->escape($each['account_id']); ?>').html('<p class="red">' + obj.message + '</p>');
+		                }
+			        },
+			        error:function(){
+			            jAlert('予期せぬエラーが発生しました', 'エラー');
+			        },
+			        url:'/oauth/transaction-ajax',
+			    });
+			<?php } ?>
+		<?php } ?>
+	});
+
+});    
+</script>
+<style type="text/css">
+.row_loading {margin:0.4em 0.5em;width:2em;}
+</style>
+<div class="section anchor">
+	<div class="light-wrapper">
+		<div class="container inner" style="padding-top:0;padding-bottom:10px;min-height:800px;margin-bottom:60px;">
+
+			<div class="col-xs-12">
+			    <div class="page_title" style="position:relative;">
+			        <span style=""><strong>GMOあおぞら口座同期</strong></span>
+			    </div>
+			</div>
+			
+			<?php if (!empty($this->tokenError)) { ?>
+				<p style="font-size:1.2em;color:#f00;"><strong>有効なトークンがありません。再度ログインし直してください。</strong></p>
+			<?php } else { ?>
+				<table class="list_default">
+					<tr>
+						<th><p>口座種別</p></th>
+						<th><p>口座名</p></th>
+						<th><p></p></th>
+						<th><p>口座番号</p></th>
+						<th style="width:15%"><p>同期</p></th>
+					</tr>
+					<?php foreach ($this->accountList['accounts'] as $each) { ?>
+						<tr>
+							<td><p><?php echo $this->escape($each['account_type_name']); ?></p></td>
+							<td><p><?php echo $this->escape($each['account_name']); ?></p></td>
+							<td><p><?php echo $this->escape($each['primary_account_code_name']); ?></p></td>
+							<td><p><?php echo $this->escape($each['account_number']); ?></p></td>
+							<td id="row_result_<?php echo $this->escape($each['account_id']); ?>">
+								<img class="row_loading" src="/resource/management/img/rolling.svg">
+							</td>
+						</tr>
+					<?php } ?>
+				</table>
+			<?php } ?>
+				
+			<?php /*var_dump($this->accountList);*/ ?>
+				
+		</div>
+	</div>
+</div>
+

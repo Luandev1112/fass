@@ -1,0 +1,143 @@
+<?php
+$statusList   = Shared_Model_Code::codes('shipment_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+});    
+</script>
+<style type="text/css"><!--
+
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>卸未出荷リスト</strong></span>
+	    </div>
+	</div>
+
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">	
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+						<select id="status" name="status">
+                            <option value="0">---</option>
+                            <?php foreach ($statusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['status']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+	
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">発送日：</p>
+                        <select id="user_id_in_charge" name="user_id_in_charge">
+                            <option value="0">---</option>
+                        	<?php foreach ($this->adminList as $eachUser) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ($eachUser['id'] == $this->conditions['user_id_in_charge']) echo 'selected="selectd"';?>><?php echo $this->escape($eachUser['user_name']); ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+				
+				<input type="submit" value="検索" />
+			
+			</form>
+		</div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>注文ID</p>
+				</th>
+
+				<th style="width:8%;">
+					<p>ステータス</p>
+				</th>
+
+				<th style="width:10%;">
+					<p>発送日</p>
+				</th>
+				
+				<th>
+					<p>配送方法/伝票番号</p>
+				</th>
+				
+				<th>
+					<p>配送先</p>
+				</th>
+
+				<th>
+					<p>配送状況</p>
+				</th>
+
+				<th>
+					<p>詳細</p>
+				</th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['id']; ?></p>
+						</td>
+		
+						<td>
+							<p><?php echo $each['status']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['ship_date']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['delivery']; ?>　<?php echo $each['delivery_no']; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['name']; ?></p>
+						</td>
+
+						<td>
+							<p><a href=""><?php echo $each['delivery_status']; ?></a></p>
+						</td>
+
+						<td>
+							<p><a href="/shipment/detail?id=<?php echo $each['id']; ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

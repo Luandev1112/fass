@@ -1,0 +1,915 @@
+<?php
+$exportTypeList = Shared_Model_Code::codes('export_type');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var connectionTarget = '';
+var targetItemRow = 0;
+var targetSupplyRow = 0;
+var editing = 0;
+var pos = 0;
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+		Tipped.create('#help_supply_list', "必ず関連する費用の見積書をすべて先に「業務委託」マスタへ登録しておくこと。");
+		
+		Tipped.create('#help_products_quantity', "輸出する商品数");
+		Tipped.create('#help_quantity_per_box', "1箱あたりの入り数");
+		Tipped.create('#help_box_quantity', "出荷する箱の総数");
+		Tipped.create('#help_volume_per_box', "1箱あたりの体積");
+		Tipped.create('#help_total_volume', "体積総計");
+		
+		Tipped.create('#help_weight_per_box', "1箱あたりの重さ");
+		Tipped.create('#help_total_weight', "重量総計");
+		Tipped.create('#help_ex_works_unit_price', "EX-Works単価");
+		Tipped.create('#help_ex_works_amount', "EX-Works総額");
+		Tipped.create('#help_fob_amount', "FOB総額（FOBは船のみ）");
+		Tipped.create('#help_fob_unit_price', "FOB単価");
+		Tipped.create('#help_fob_index', "FOB単価 / EX-Works単価");
+		Tipped.create('#help_transport_cost', "海上運賃");
+		Tipped.create('#help_rate_insurance_coverage', "保険金額に余裕を持たせて、少し多めにとる。事故時は金利損や追加費用も請求される可能性があるため。");
+		Tipped.create('#help_rate_exchange_diffrence', "入金日と支払日の差額の金利");
+		Tipped.create('#help_export_cif_cip_amount', "CIF/CIP総額（CIFは船。CIPは航空時）");
+		Tipped.create('#help_export_cif_cip_unt_price', "CIF/CIP単価");
+		Tipped.create('#help_export_cif_cip_index', "CIF・CIP単価 / EX-Works単価");
+		Tipped.create('#help_rate', "輸出国通貨額　×　為替レート　＝　輸入国通貨額　とする　（例）日本からアメリカに輸出するとき、1ドル100円であれば、0.01が入力すべき為替レート");
+		Tipped.create('#help_insurance_coverage_amount', "為替レートで割り戻す");
+		Tipped.create('#help_ddp_index', "DDP単価 / EX-Works単価");
+
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+    	if (editing == true) {
+    		jAlert('複数のカテゴリを同時に編集することはできません', 'エラー');
+    		return false;
+    	}
+    
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+       
+        if (categoryId =='2' || categoryId =='4') {
+        	var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	    }
+	    
+	    editing = true;
+    });
+    
+	// 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/price-expense/export-update-basic?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/price-expense/export-update-product-list?id=<?php echo $this->id ?>';
+		} else if (categoryId == '3') {
+			apiUrl = '/price-expense/export-update-route-info?id=<?php echo $this->id ?>';
+		} else if (categoryId == '4') {
+			apiUrl = '/price-expense/export-update-supply-list?id=<?php echo $this->id ?>';
+		} else if (categoryId == '5') {
+			apiUrl = '/price-expense/export-update-table?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+		showSpinner();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/price-expense/export-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/price-expense/export-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+
+    // 自動計算
+  	$('table.detail input[type="text"]').on('input', function(e) {
+		updateTable();
+  	});
+  		
+	// 区分
+    $('.type').change(function() {
+		if ($(this).val() == '<?php echo Shared_Model_Code::EXPORT_TYPE_OTHER; ?>') {
+			$('#type_other_text').prop("disabled", false);
+		} else {
+			$('#type_other_text').prop("disabled", true);
+		}
+    });
+
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+    
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+		console.log(categoryId);
+    	if (categoryId == '2') {
+        	// 対象商品
+        	var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', uuid + '_item_name');
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', uuid + '_item_id').attr('name', uuid + '_item_id');
+			$('.column_copy_base_' + categoryId + ' .select_product').attr('target-row', uuid);
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+			//Tipped.create('#help_lot_unit_' + uuid, "例） kg、pcs、袋など");
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', '');
+		
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+
+	    } else if (categoryId == '4') {
+	        var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .supply_name').attr('id', uuid + '_supply_name');
+	        $('.column_copy_base_' + categoryId + ' .supply_id').attr('id', uuid + '_supply_id').attr('name', uuid + '_supply_id');
+			$('.column_copy_base_' + categoryId + ' .select_supply').attr('target-row', uuid);
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+
+	        $('.column_copy_base_' + categoryId + ' .supply_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .supply_id').attr('id', '');
+
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+        }
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+        
+        if (categoryId == '4') {
+	        var countUp = 0;
+	    	$('#sortable_column_' + categoryId + ' tr').each(function(){
+	    		countUp++;
+	    		$('#sortable_column_' + categoryId + ' tr#' + $(this).attr('id') + ' .td_count p').html(countUp);
+	    	});
+		    	
+	        competitionListCount = countUp;
+        }
+    });
+    
+    // 顧客 取引先選択ポップアップ表示
+    $(document).on('click', '#select_client', function () {
+    	connectionTarget = 'client';
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select');
+    });
+
+    // 輸送業者 取引先選択ポップアップ表示
+    $(document).on('click', '#select_delivery', function () {
+    	connectionTarget = 'delivery';
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select');
+    });
+    
+	// 取引先条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 商品選択 ポップアップ表示
+    $(document).on('click', '.select_product', function () {
+    	pos = $(window).scrollTop();
+    	targetItemRow = 0;
+    	targetItemRow = $(this).attr('target-row');
+    	var targetItemId = $('#' + targetItemRow + '_item_id').val();
+
+    	$('#data_area').html('');
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		showSpinner();
+		$('#data_area').load('/product/list-select', null, function () {stopSpinner();});
+    });
+
+    // 商品選択 条件検索
+    $(document).on('click', '#search_product', function () {
+		updateProductList(1);
+    });
+
+    // 業務委託選択 ポップアップ表示
+    $(document).on('click', '.select_supply', function () {
+    	pos = $(window).scrollTop();
+    	targetSupplyRow = 0;
+    	targetSupplyRow = $(this).attr('target-row');
+    	var targetSupplyId = $('#' + targetItemRow + '_supply_id').val();
+
+    	$('#data_area').html('');
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		
+    	showSpinner();
+		$('#data_area').load('/supply-subcontracting/list-select', null, function () {stopSpinner();});
+    });
+
+    // 業務委託選択 条件検索
+    $(document).on('click', '#search_subcontracting', function () {
+		updateSubstractingList(1);
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先選択完了
+function selectConnection(id, displayId, name) {
+	if (connectionTarget == 'client') {
+		$('#client_connection_name').html(name);
+		$('#client_connection_id').val(id);
+	} else if (connectionTarget == 'delivery') {
+		$('#delivery_connection_name').html(name);
+		$('#delivery_connection_id').val(id);
+	}
+	connectionTarget = '';
+	$('.btn_close').click();
+}
+
+// 商品一覧ページ切り替え
+function pageProduct(pageNo) {
+	updateProductList(pageNo)
+}
+
+// 商品一覧更新
+function updateProductList (pageNo) {
+    var $form = $('#product_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/product/list-select?page=' + pageNo,
+    });
+}
+
+// 商品選択完了
+function selectProduct(id, itemId, name, buyingName) {
+	var itemName = '';
+	if (name != '') {
+		itemName += "<span class='product_name'>商品名</span>&nbsp;" + name + '&nbsp;&nbsp;';
+	}
+
+	if (buyingName != '') {
+		itemName += "<span class='import_name'>仕入名</span>&nbsp;" + buyingName + '&nbsp;&nbsp;';
+	}
+
+	$('#' + targetItemRow + '_item_name').html('<strong>' + itemId + '</strong>&nbsp;'+ itemName);
+	$('#' + targetItemRow + '_item_id').val(id);
+
+	$('.btn_close').click();
+}
+
+// 業務委託一覧ページ切り替え
+function pageSubstracting(pageNo) {
+	updateSubstractingList(pageNo)
+}
+
+// 業務委託一覧更新
+function updateSubstractingList (pageNo) {
+    var $form = $('#supply_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/supply-substracting/list-select?page=' + pageNo,
+    });
+}
+
+// 業務委託選択完了
+function selectSupplySubcontracting(id, itemId, name) {
+	$('#' + targetSupplyRow + '_supply_name').html('<strong>' + itemId + '</strong>　' + name);
+	$('#' + targetSupplyRow + '_supply_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;font-weight:bold;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>原単位・輸出物流 - 詳細</strong></span>
+        </div>
+    </div>
+    
+    <div class="clearfix">
+	    <?php
+        /* 1. 基本情報 */
+        $categoryId = 1;
+        ?>
+        <form id="form_category_<?php echo $categoryId; ?>">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">基本情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">区分<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<?php
+                		$displayString = '';
+                		foreach ($exportTypeList as $key => $val) {
+                			if ($this->data['type'] == $key) {
+		                		if ($key == Shared_Model_Code::EXPORT_TYPE_OTHER) {
+			                		$displayString .= $val . '　（' . $this->data['type_other_text'] . '） <br>';
+			                	} else {
+			                		$displayString .= $val . '<br>';
+		                		}
+	                		}
+	                	}
+                	?>
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+                	
+                    <div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                	<div class="clearfix">
+		                	<?php foreach ($exportTypeList as $key => $val) { ?>
+			                	<div class="checkbox_item relation_type_item">
+				                	<label>
+				                    	<input type="radio" class="type" name="type" value="<?php echo $this->escape($key); ?>"><?php echo $val; ?>
+				                    </label>
+			                    </div>
+		                    <?php } ?>
+	                    </div>
+						<div class="clearfix" style="padding-bottom:8px;">
+		                    <input type="text" id="ype_other_text" name="type_other_text" placeholder="その他区分" <?php if ((string)Shared_Model_Code::EXPORT_TYPE_OTHER === $this->data['type']) { echo 'disabled="disabled"'; } ?> value="<?php echo $this->escape($this->data['type_other_text']); ?>" maxlength="" style="width:300px;float:left;" />
+						</div>
+	                </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">顧客<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->clientData['company_name']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                	<p id="client_connection_name">---</p>
+	                    <a class="option" id="select_client">取引先選択</a>
+	                    <input type="hidden" id="client_connection_id" name="client_connection_id" value="<?php echo $this->escape($this->data['client_connection_id']); ?>" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">輸送業者<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->deliveryData['company_name']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                	<p id="delivery_connection_name">---</p>
+	                    <a class="option" id="select_delivery">取引先選択</a>
+	                    <input type="hidden" id="delivery_connection_id" name="delivery_connection_id" value="<?php echo $this->escape($this->data['delivery_connection_id']); ?>" />
+	                </div>
+                </td>
+            </tr>
+                    
+            <tr>
+                <td class="column_label"><p class="label_text">案件名<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->data['title']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="company_name" value="<?php echo $this->escape($this->data['title']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+        </table>
+        </form>
+        
+        
+        
+ 	    <?php
+        /* 2. 対象商品 */
+        $categoryId = 2;
+        ?>
+        <div style="margin-bottom:13px;">
+        <form id="form_category_<?php echo $categoryId; ?>">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">対象商品</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+		</table>
+		<?php $itemTable = new Shared_Model_Data_Item(); ?>
+        <table class="list_default" style="margin-bottom:0;">            
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['target_item_ids'])) { ?>
+			        <?php foreach ($this->data['target_item_ids'] as $eachId) { ?>
+				        <tr id="<?php echo $this->escape($eachId); ?>">
+				        	<?php
+				        		$itemName = '---';
+				        		if (!empty($eachId)) {
+					        		$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $eachId);
+					        		
+			            			$itemName = '<strong>' . $this->escape($itemData['display_id']) . '</strong>&nbsp;';
+			            			
+			            			if (!empty($itemData['item_name'])) {
+			            				$itemName .= "<span class='product_name'>商品名</span>&nbsp;" . $this->escape($itemData['item_name']) . '&nbsp;&nbsp;';
+			            			}
+			            			
+			            			if (!empty($itemData['buying_item_name'])) {
+			            				$itemName .= "<span class='import_name'>仕入名</span>&nbsp;" . $this->escape($itemData['buying_item_name'])  . '&nbsp;&nbsp;';
+			            			}
+		            			}
+				        	?>
+							<td class="column_value">
+								<div class="item_name multi_rows_padding" id="<?php echo $this->escape($eachId); ?>_item_name"><?php echo $itemName; ?></div>
+			                    <input type="hidden" id="<?php echo $this->escape($eachId); ?>_item_id" name="<?php echo $this->escape($eachId); ?>_item_id" value="<?php echo $this->escape($eachId); ?>" />
+							</td>
+							<td class="column_value" style="width:140px">
+								<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+									<a class="option select_product" target-row="<?php echo $this->escape($eachId); ?>">商品選択</a>
+								</div>
+							</td>
+				            <td class="td_action">
+				            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix" style="display:none;">
+				            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($eachId); ?>"><i class="icon-cancel"></i></a>
+				            	</div>
+				            </td>
+				        </tr>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+		</table>
+		<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="border-bottom:1px solid #ccc;height:34px;display:none;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="product_list" value="" />
+      	</form>
+        </div>
+	    <!-- copy base -->
+	    <table class="list_default" style="display:none;">
+	        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+				<td class="column_value">
+	            	<div class="item_name multi_rows_padding" id="##_item_name">---</div>
+	                <input type="hidden" class="item_id" id="##_item_id" name="m#_item_id" value="" />
+				</td>
+				<td class="column_value" style="width:140px">
+					<a class="option select_product" target-category="<?php echo $categoryId; ?>" target-row="##">商品選択</a>
+				</td>
+	            <td class="td_action">
+	            	<div class="delete_btn_frame">
+	            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="##"><i class="icon-cancel"></i></a>
+	            	</div>
+	            </td>
+	        </tr>
+	    </table>    
+		<!-- copy base -->
+
+   
+	    <?php
+        /* 3. 輸出・輸入拠点情報 */
+        $categoryId = 3;
+        ?>
+        <form id="form_category_<?php echo $categoryId; ?>">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">輸出・輸入拠点情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;"> 
+        	<tr>
+                <td class="column_label"><p class="label_text">輸出国<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                 	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($this->countryList as $each) {
+	                			if (!empty($this->data['export_country_id'])) {
+			                		if ($this->data['export_country_id'] == $each['id']) {
+			                			$displayString .= $each['name'] . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="country" name="country">
+                            <option value="">---</option>
+                            <?php foreach ($this->countryList as $each) { ?>
+                                <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] == $this->data['export_country_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">出荷地<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                  	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->data['export_place']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="export_place" value="<?php echo $this->escape($this->data['export_place']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">輸出港・空港</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                  	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->data['export_airport']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="export_airport" value="<?php echo $this->escape($this->data['export_airport']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">輸入国<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($this->countryList as $each) {
+	                			if (!empty($this->data['import_country_id'])) {
+			                		if ($this->data['import_country_id'] == $each['id']) {
+			                			$displayString .= $each['name'] . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="country" name="country">
+                            <option value="">---</option>
+                            <?php foreach ($this->countryList as $each) { ?>
+                                <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] == $this->data['import_country_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">最終到着地<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                  	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->data['import_place']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="import_place" value="<?php echo $this->escape($this->data['import_place']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">輸入港・空港</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                  	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php echo $this->escape($this->data['import_airport']); ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="import_airport" value="<?php echo $this->escape($this->data['import_airport']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+        </table>
+        </form>
+        
+        
+        
+	    <?php
+        /* 4. 関連業務委託(輸出入・海外物流)情報 */
+        $categoryId = 4;
+        ?>
+        <div style="margin-bottom:13px;">
+        <form id="form_category_<?php echo $categoryId; ?>">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">関連業務委託(輸出入・海外物流)情報<span class="popup_help" id="help_supply_list">&nbsp;<i class="icon-help-circled"></i></span></p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+		</table>
+		<?php $supplySubcontractingTable = new Shared_Model_Data_SupplySubcontracting(); ?>
+        <table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['relational_supply_ids'])) { ?>
+			        <?php foreach ($this->data['relational_supply_ids'] as $eachId) { ?>
+				        <tr id="<?php echo $this->escape($eachId); ?>">
+				        	<?php
+				        		$itemName = '---';
+				        		if (!empty($eachId)) {
+					        		$contractingData = $supplySubcontractingTable->getById($this->adminProperty['management_group_id'], $eachId);
+					        		
+			            			$itemName = '<strong>' . $this->escape($contractingData['display_id']) . '</strong>&nbsp;' . $this->escape($contractingData['title']) . '&nbsp;&nbsp;';
+
+		            			}
+				        	?>
+							<td class="column_value">
+								<div class="supply_name multi_rows_padding" id="<?php echo $this->escape($eachId); ?>_item_name"><?php echo $itemName; ?></div>
+			                    <input type="hidden" id="<?php echo $this->escape($eachId); ?>_supply_id" name="<?php echo $this->escape($eachId); ?>_supply_id" value="<?php echo $this->escape($eachId); ?>" />
+							</td>
+							<td class="column_value" style="width:170px">
+								<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+									<a class="option select_supply" target-row="<?php echo $this->escape($eachId); ?>">業務委託選択</a>
+								</div>
+							</td>
+				            <td class="td_action">
+				            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix" style="display:none;">
+				            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($eachId); ?>"><i class="icon-cancel"></i></a>
+				            	</div>
+				            </td>
+				        </tr>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+        </table>
+		<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="border-bottom:1px solid #ccc;height:34px;display:none;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="supply_list" value="" />
+    	</form>
+    	</div>
+	    <!-- copy base -->
+	    <table class="list_default" style="display:none;">
+	        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+				<td class="column_value">
+	            	<div class="supply_name multi_rows_padding" id="##_item_name">---</div>
+	                <input type="hidden" class="supply_id" id="##_supply_id" name="##_supply_id" value="" />
+				</td>
+				<td class="column_value" style="width:170px">
+					<a class="option select_supply" target-category="<?php echo $categoryId; ?>" target-row="##">業務委託選択</a>
+				</td>
+	            <td class="td_action">
+	            	<div class="delete_btn_frame">
+	            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="##"><i class="icon-cancel"></i></a>
+	            	</div>
+	            </td>
+	        </tr>
+	    </table>    
+		<!-- copy base -->
+    	
+    	
+    	
+    	
+	    <?php
+        /* 5. バージョン */
+        $categoryId = 5;
+        ?>
+        <form id="form_category_<?php echo $categoryId; ?>">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">バージョン</p></th>
+            </tr>
+		</table>
+	    <table class="list_default">
+			<?php foreach ($this->versionItems as $eachVersion) { ?>
+	        <tr>
+				<td class="column_value">
+	            	<div class="supply_name multi_rows_padding" id="##_item_name">バージョン：<?php echo $this->escape($eachVersion['version_id']); ?>　　最終更新日：<?php echo date('Y-m-d', strtotime($eachVersion['updated'])); ?></div>
+				</td>
+	            <td class="column_value" style="width:300px">
+	            	<a class="option" style="float:right;;" target-category="<?php echo $categoryId; ?>" target-row="##">コピー</a>
+	            	<a class="option"  style="float:right;margin-right:10px" href="/price-expense/export-detail-version?id=<?php echo $this->escape($this->id); ?>&version_id=<?php echo $this->escape($eachVersion['id']); ?>">表示</a>
+
+					
+				</td>
+	        </tr>
+	        <?php } ?>
+	    </table>  
+        
+	</div><!-- clearfix -->	
+    </form>
+
+    
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;"><div class="menu_frame"><div id="data_area"></div></div></div>
+</div>
+</div>
+</div>
+

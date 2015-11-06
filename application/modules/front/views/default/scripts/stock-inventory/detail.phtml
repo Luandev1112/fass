@@ -1,0 +1,286 @@
+<?php
+$payementConditionList       = Shared_Model_Code::codes('order_payment_condition');
+$payementConditionMonthList  = Shared_Model_Code::codes('connection_payment_condition_month');
+$payementMonthlyList         = Shared_Model_Code::getPayementMonthlyList();
+$timingList                  = Shared_Model_Code::codes('shipment_timing');
+$deliveryCostList            = Shared_Model_Code::codes('delivery_cost');
+$stockTypeList               = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+var pos = 0;
+var reloadFlag = false;
+var rowCount = 0;
+var targetItemRow = '';
+
+function updateEdited(edited) {
+	isEdited = edited;
+	if (isEdited) {
+		$('.btn_estimate_save').removeClass('inactive');
+		$('.btn_estimate_preview').addClass('inactive');
+		$('.btn_save').addClass('inactive');
+	} else {
+		$('.btn_estimate_save').addClass('inactive');
+		$('.btn_estimate_preview').removeClass('inactive');
+		$('.btn_save').removeClass('inactive');
+	}
+}
+
+$(function() {
+    $(document).ready(function(){
+		calculate();
+    });
+    
+	<?php if (!empty($this->approvalId)) { ?>
+	    // 修正依頼
+	    $('.btn_mod_request').click( function(){
+	        jConfirm('修正依頼しますか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	 
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('修正依頼しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/stock-inventory/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });
+	    });
+	    
+	    //
+	    // 承認
+	    //
+	    $('.btn_save').click( function(){
+	        jConfirm('この内容で承認しますか', '　', function(r) {
+	            if(r) {
+					showSpinner();
+					
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	                
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('承認しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/stock-inventory/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+		
+	    $(document).on('click', '#popup_ok', function () {
+	    	if (reloadFlag) {
+	    		location.href = '/approval/list';
+	    	}
+	    });
+	<?php } ?>
+});
+</script>
+<style type="text/css">
+table.list_default tr td {padding:5px;}
+table.list_default tr td p {height:auto;line-height:1.3;padding-top:4px;}
+table.list_default tr td textarea{height:100%;margin: 0}
+table.list_default tr td input {display:block;float:right;width:8em;text-align:right;}
+table.list_default tr td input[type="text"] {margin-top:0;}
+table.list_default tr p.align_center {text-align:center;padding-left:0;}
+.photo_image {height:60px;display:block;margin:0 auto;}
+.align_right {text-align:right;}
+.multi_rows_padding {padding:0 6px}
+table.list_default tr:hover td {background:#dbfffe;}
+p.diff {color:#f00;}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+
+p.minus {color:#f00;}
+p.plus {color:#000;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>棚卸在庫数　　実施日：<?php echo $this->data['target_date']; ?>　　在庫資材種別：<?php echo $stockTypeList[$this->data['stock_type']]; ?>　　合計資産額：<span id="all_total" style="display:inline"><?php echo $this->numberFormat($this->total); ?></span>&nbsp;円</strong></span>
+        </div>
+    </div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<form id="register_form">
+			<table class="list_default">
+				<tr>
+					<th style="width:6.5%;">
+						<p>画像</p>
+					</th>
+					
+					<th>
+						<p>在庫資材名</p>
+					</th>				
+
+					<th style="width:11%;">
+						<p class="align_center">棚卸単価(円)</p>
+					</th>
+					
+					<th style="width:7%;">
+						<p class="align_center">理論在庫数</p>
+					</th>
+					
+					<th style="width:11%;">
+						<p class="align_center">棚卸在庫数</p>
+					</th>
+
+					<th style="width:8%;">
+						<p class="align_center">数量単位</p>
+					</th>
+					
+					<th style="width:17%;">
+						<p class="align_center">資産額(円・小数以下切り捨て)</p>
+					</th>
+					
+					<th style="width:20%;">
+						<p class="align_center">備考</p>
+					</th>
+				</tr>   
+				<?php if (!empty($this->items)) { ?>
+					<?php $count = 1; ?>
+					<?php foreach ($this->items as $each) { ?>
+						
+						<tr id="<?php echo $count; ?>" target-id="<?php echo $each['id']; ?>">
+							<td>
+								<img class="photo_image" src="<?php echo Shared_Model_Resource_WarehouseItem::getResourceUrl($each['warehouse_item_id'], $each['image_key']); ?>" />
+							</td>
+			
+							<td>
+								<?php if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['item_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_product_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_fixture_name']); ?></div>
+								<?php } else { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['stock_name']); ?></div>
+								<?php } ?>
+							</td>
+	
+							<td>
+								<div class="align_right">
+									<p id="<?php echo $each['id'] ?>_unit_price"><?php if ((float)$each['unit_price'] !== 0.0) { echo $this->numberFormat($each['unit_price']); } else { echo '---'; } ?></p>
+								</div>
+							</td>
+							
+							<td>
+								<p class="align_right">
+									<?php echo $this->numberFormat($each['theory_stock']) ?>
+								</p>
+							</td>
+							
+							<td>
+								<p class="align_right" id="<?php echo $each['id'] ?>_input_amount"><?php if ((float)$each['unit_price'] !== 0.0) { echo $this->numberFormat($each['input_amount']); } else { echo '---'; } ?></p>
+								
+								<?php
+									$diff = (float)$each['input_amount'] - (float)$each['theory_stock'];
+									
+									$flag = 'minus';
+									if ($diff >= 0) {
+										$flag = 'plus';
+									}
+									
+								?>
+								<p id="<?php echo $each['id'] ?>_diff" class="<?php echo $flag; ?>">差：<span id="<?php echo $each['id'] ?>_diff_count"><?php echo $this->numberFormat($diff); ?></span></p>
+							</td>
+							
+							<td>
+								<p class="align_center"><?php echo $this->unitTypeList[$each['unit_type']]['symbol']; ?></p>
+							</td>
+
+							<td style="padding:5px">
+								<p class="align_right" id="<?php echo $each['id'] ?>_total">
+									<?php
+										
+										if ((float)$each['unit_price'] !== 0.0 && (float)$each['input_amount'] !== 0.0) {
+											echo $this->numberFormat(floor((float)$each['unit_price'] * (float)$each['input_amount']));
+										} else {
+											echo '---';
+										}
+									?>
+								</p>
+							</td>
+
+							<td style="padding:5px">
+								<?php echo nl2br($this->escape($each['memo'])); ?>
+							</td>
+						</tr>
+						<?php $count++; ?>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="7">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>
+			
+			<?php if (!empty($this->approvalId)) { ?>
+			    <div class="private_memo">
+			    	<p>修正依頼コメント</p>
+				    <textarea class="flex_other" name="approval_comment" style="height:150px;width:1000px;"><?php echo $this->escape($this->costData['approval_comment']); ?></textarea>
+			    </div>
+	    	<?php } else if (!empty($this->data['approval_comment'])){ ?>
+		    	<div class="private_memo">
+		    		<p>修正依頼コメント</p>
+		    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->costData['approval_comment'])); ?></div>
+		    	</div>
+	    	<?php } ?>
+
+		</form>
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,213 @@
+<?php
+?>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+	
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('ファイルは一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData();
+    formData.append('file', fd);
+	
+	showSpinner();
+	
+    $.ajax({
+      async: true,
+      type:'POST',
+      contentType:false,
+      processData:false,
+      url:'/product/upload-file?id=<?php echo $this->data['id']; ?>',
+      data:formData,
+      dataType :'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;            
+        } else if(obj.result == true) {
+        	$('#file_name_text').html(obj.file_name);
+        	$('#file_name').val(obj.file_name);
+        } else {
+        	jAlert('予期せぬエラーが発生しました', 'エラー');
+        }
+    });
+}
+
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		targetE.addEventListener('dragenter', function () {
+		    innerFlag = true;
+		}, false);
+		
+		targetE.addEventListener('dragover', function () {
+		    innerFlag = false;
+		    targetE.className = 'over';
+		}, false);
+		
+		targetE.addEventListener('dragleave', function () {
+		    if (innerFlag) {
+		        innerFlag = false;
+		    } else {
+		        targetE.className = '';
+		    }
+		}, false);
+    });
+
+	<?php 
+		$confirmMessage = '登録しますか';
+		$succeedMessage = '登録しました';
+		$backmessage    = '登録せずに中止しますか';
+		if (!empty($this->id)) {
+			$confirmMessage = '保存しますか';
+			$succeedMessage = '保存しました';
+			$backmessage    = '保存せずに中止しますか';
+        }
+	?>
+			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+       jConfirm('<?php echo $backmessage; ?>', '　', function(r) {
+            if(r) {
+               location.href = '/product/image?id=<?php echo $this->escape($this->id); ?>';
+            } else {
+                return false;
+            }
+        });
+	});
+		
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('<?php echo $confirmMessage; ?>', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:param,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('<?php echo $succeedMessage; ?>', '　'); 
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/product/image-update?id=<?php $this->escape($this->id); ?><?php if (!empty($this->imageId)) echo '&image_id=' . $this->imageId; ?>'
+                });
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/product/image?id=<?php echo $this->escape($this->id); ?>';
+        }
+    });
+ 
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.multi_rows_padding {padding:5px 0 5px 10px}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+
+	    <?php
+        /* 公開資料 */
+        $categoryId = 1;
+        ?>
+		<form id="register_form">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">商品紹介画像</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">
+        	<tr>
+                <td class="column_label"><p class="label_text">商品紹介画像ファイル</p><p class="label_text">※各種ファイル形式可</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p style="margin-bottom:18px;">（ファイル名）　<span id="file_name_text"><?php echo $this->escape($this->documentData['file_name']); ?></span></p>
+                	<input type="hidden" id="file_name" name="file_name" value="" />   
+					<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)" style="margin-bottom:13px;">
+						<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&ドロップしてください
+					</div>
+                </td>
+			</tr>
+        </table>
+		</form>       			
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>
+

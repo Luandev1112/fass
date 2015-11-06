@@ -1,0 +1,48 @@
+<script type="text/javascript">
+$(function(){
+    $(document).ready( function(){
+        if ($('#mail').val() == '') {
+            $('#mail').focus();
+        } else {
+            $('#password').focus();
+        }
+    });
+
+	$('#btn_login').click( function(){
+		$('#login_form').submit();
+	});
+});
+</script>
+
+<div class="section anchor">
+	<div class="light-wrapper">
+		<div class="container inner" style="padding-top:0;margin-bottom:60px;">
+			<div class="padding_space_box">
+				<div class="padding_space_box_inner">
+						
+					<form id="login_form" method="post" action="#">
+						<div class="large_only_padding">						
+							<div class="login_form_padding">
+								<p class="form_label">Eメールアドレス：</p>
+								<div class="form_value">
+									<input type="text" name="mail" value="<?php if (!empty($this->data['mail'])) { echo $this->escape($this->mail); } ?>" />
+								</div>
+								
+								<p class="form_label">パスワード：</p>
+								<div class="form_value">
+									<input type="password" name="password" value="" />
+								</div>
+							</div>
+							
+							<div style="margin-top:2.4em;">
+								<input type="submit" class="login_submit" value="ログイン" />
+							</div>
+						</div>
+						
+						<input type="hidden" name="csrf_block" value="<?php echo $this->csrf; ?>" />
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

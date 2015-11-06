@@ -1,0 +1,43 @@
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong>業種選択</strong></span>
+    </div>
+</div>
+
+<style type="text/css">
+div.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+a.btn_select_industy {
+background:none repeat scroll 0 0 #fff;border:medium none;border-radius:0;display:inline-block;font-size:12px;border:1px solid #00469b;color:#00469b;
+margin-bottom:10px;margin-right:1.8em;margin-left:0.6em;padding:3px 0.6em 1px 0.6em;text-decoration:none;cursor:pointer;
+}
+.btn_select_industy:hover,
+.btn_select_industy:focus,
+.btn_select_industy:active,
+.btn_select_industy.active {
+background-color:#c9dcf2;box-shadow:none;text-decoration:none;
+}
+.checkbox_item  {margin-bottom:0.5em}
+
+div.industory_category a.btn_select_industy {margin-bottom:3px;}
+</style>
+
+
+<?php foreach ($this->industryCategoryList as $eachCatgory) { ?>
+	<div class="clearfix" style="margin-bottom:1.0em;">
+		<div class="industory_category">
+			<?php echo $this->escape($eachCatgory['name']) . 'C'; ?><a class="btn_select_industy" href="javascript:selectIndustry('C<?php echo $this->escape($eachCatgory['id']); ?>', '<?php echo $this->escape($eachCatgory['name'] . 'C'); ?>');">選択</a>
+		</div>
+		<?php foreach ($eachCatgory['items'] as $each) { ?>
+        	<div class="checkbox_item clearfix">
+
+            	<?php /*<input type="checkbox" name="industry_types[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (in_array($each['id'], $this->data['industry_types'])) { echo 'checked="checked"'; } ?> > */ ?>
+
+            	<?php echo $this->escape($each['name']); ?><a class="btn_select_industy" href="javascript:selectIndustry('<?php echo $this->escape($each['id']); ?>', '<?php echo $this->escape($each['name']); ?>');">選択</a>
+
+            </div>
+        <?php } ?>
+    </div>
+<?php } ?>

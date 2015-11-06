@@ -1,0 +1,97 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+    
+	$('#inspection_user_id').change(function() {
+	  $('#search_form').submit();
+	});
+});    
+</script>
+<style type="text/css"><!--
+table.list_default tr:hover td {background: #deeeff;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>検品履歴</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="search_form" action="#" method="get">
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">検品者：</p>
+                        <select id="inspection_user_id" name="inspection_user_id">
+                            <option value="0">全ての検品者</option>
+                        	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ($eachUser['id'] == $this->inspectionUserId) echo 'selected="selected"';?>><?php echo $this->escape($eachUser['user_name']); ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:30%;">
+					<p>検品日</p>
+				</th>
+
+				<th>
+					<p>検品済件数</p>
+				</th>
+				
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+				
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo date('Y/m/d', strtotime($each['inspection_date'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['order_count']; ?></p>
+						</td>
+						
+						<td>
+							<p><a href="/shipment/inspection-date-items?inspection_user_id=<?php echo $this->inspectionUserId; ?>&inspection_date=<?php echo date('Y-m-d', strtotime($each['inspection_date'])); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="8">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

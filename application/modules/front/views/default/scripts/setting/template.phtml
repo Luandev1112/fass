@@ -1,0 +1,183 @@
+<?php
+$templateKeyList   = Shared_Model_Code::codes('template_type_key');
+$templateNameList  = Shared_Model_Code::codes('template_type_name');
+?>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+    //
+    // テンプレート選択
+    //
+    $('.btn_select_template').click( function(){
+    	
+    	var targetId = $(this).attr('target-id');
+    	
+        jConfirm('このテンプレートを使用しますか', '　', function(r) {
+            if(r) {        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:'type=<?php echo $this->templateType; ?>&id=' + targetId,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('設定しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/setting/template-select'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/setting/template?type=<?php echo $this->templateType; ?>&pos=' + $(window).scrollTop();
+        }
+    });
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:340px;}
+table.list_default tr td table.select_template {margin:5px 0;}
+table.list_default tr td table.select_template tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.select_template tr td.column_label {width:134px;}
+table.list_default tr td p.indicator_using {
+background:none repeat scroll 0 0 #ccc;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;display:inline-block;font-size:0.94em;
+padding:5px 0;width:160px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;text-align:center;margin:10px 0 0;line-height: 24px;height:auto;
+}
+a.btn_select_template,
+a.btn_show_sample {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;display:inline-block;font-size:0.94em;
+padding:5px 0;width:160px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;text-align:center;margin:10px 0 0;
+}
+a.btn_edit_template {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;display:inline-block;font-size:0.94em;
+padding:5px 0;width:160px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;text-align:center;margin:10px 0 10px;
+}
+table.list_default tr.title_area td {background-color:#b4eaed;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+        <div style="float:left;width:15%;">
+        	<?php
+	            echo $this->partial('setting/menu.phtml', array(
+        			'action'        => $this->action,
+        			'id'            => $this->data['id'],
+        			'templateType'  => $this->templateType,
+        		));
+	        ?>   		
+        </div>
+        <div class="col-xs-9" style="float:right;width:83%;">
+		    <div class="col-xs-12">
+		        <div class="page_title">
+		            <span><strong><?php echo $templateNameList[$this->templateType]; ?></strong></span>
+		        </div>
+		    </div>
+		    
+		    <?php
+	        /* 基本情報 */
+	        $categoryId = 1;
+	        ?>
+			<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom"><p class="label_text strong">テンプレート選択</p></th>
+	                <th class="cancel_category" id="cancel_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                    <span>×</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="/setting/template-add?type=<?php echo $this->templateType; ?>"><span id="btn_edit_label_<?php echo $categoryId; ?>">追加</span></a>
+	                </th>
+	            </tr>
+	        </table>
+            <table class="list_default" style="margin-bottom:13px;">
+            	<?php if (!empty($this->templateList)) { ?> 
+	            	<?php foreach ($this->templateList as $each) { ?> 
+		            	<tr>
+		                    <td class="column_value">
+		                    	<?php
+		                    		$templateKey = $templateKeyList[$this->templateType];
+		                    		$templateId  = $this->data[$templateKey];
+		                    	?>
+		                    	<div style="float:left;width:745px;">
+			                    	<table class="select_template">
+			                    		<tr class="title_area">
+			                    			<td class="column_label"><strong>テンプレート名</strong></td>
+			                    			<td class="colon"><strong>：</strong></td>
+			                    			<td style="padding-left:0;"><strong><?php echo $this->escape($each['title']); ?><?php if ($templateId == $each['id']) { ?><span class="red">&nbsp;&nbsp;&nbsp;使用中</span></strong><?php } ?></td>
+			                    		</tr>
+			                    		<tr>
+			                    			<td class="column_label">内容</td>
+			                    			<td class="colon">：</td>
+			                    			<td style="padding-left:0;"><?php echo nl2br($this->escape($each['message'])); ?></td>
+			                    		</tr>
+			                    	</table>
+		                    	</div>
+		                    	
+		                    	<div style="float:right;width:160px;">
+		                    		<?php if ($templateId == $each['id']) { ?>
+		                    			<p class="indicator_using">このテンプレートを使用</p>
+		                    		<?php } else { ?>
+		                    			<a class="btn_select_template" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>">このテンプレートを使用</a>
+		                    		<?php } ?>
+		                    		
+		                    		<a class="btn_show_sample" href="/setting/template/<?php echo $this->escape($each['id']); ?>/sample.pdf" target="_blank">サンプル表示</a>
+		                    		
+		                    		<a class="btn_edit_template" href="/setting/template-edit?id=<?php echo $this->escape($each['id']); ?>">編集する</a>
+		                    	</div>
+		                    </td>
+		                </tr>
+	                <?php } ?>
+                <?php } ?>
+			</table>
+			</form>
+			
+		</div><!-- right -->
+					
+	</div><!-- clearfix -->
+	             
+</div>
+</div>
+</div>
+</div>
+

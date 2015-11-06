@@ -1,0 +1,56 @@
+<?php
+$statusList   = Shared_Model_Code::codes('estimate_status');
+?>
+<style type="text/css">
+.estimate_view #from_logo {width:200px;}
+.estimate_view .from p {margin-bottom:0.4em;}
+.estimate_view .from p.company_name {font-size:1.3em}
+.estimate_view table.stamp {width:auto;float:right;}
+.estimate_view table.stamp tr td {border:1px solid #000;text-align:center;width:60px;padding:0;}
+.estimate_view table.estimate_form tr td {padding:0;border-top:1px solid #000;border-bottom:1px solid #000;border-right:1px dotted #000;border-left:1px dotted #000;vertical-align:top}
+.estimate_view table.estimate_form tr td input[type="text"]{border:none;width:100%;}
+.estimate_view table.estimate_form tr td textarea{border:none;width:100%;}
+.estimate_view table.estimate_form tr td.td_item_action {width:50px;border-left:none;border-bottom:none;border-top:none;}
+.estimate_view table.estimate_form tr td.td_item_action .item_btn_frame {float:left;margin:8px 0 0 18px;}
+.estimate_view table.estimate_form tr td.td_item_action .item_btn_frame a {text-decoration:none;color:#000;font-size:1.6em;}
+.estimate_view table.estimate_form tr td.td_item_action .item_btn_frame a.select_product.active {color:#219c11}
+.estimate_view table.estimate_form tr td.td_action {width:50px;border-right:none;border-bottom:none;border-top:none;}
+.estimate_view table.estimate_form tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+.estimate_view table.estimate_form tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+.estimate_view textarea.flex {resize: none;padding: 8px;line-height: 20px;}
+.estimate_view .align_right {text-align:right;}
+.estimate_view .align_center {text-align:center;}
+.estimate_view a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;font-size:12px;margin:5px auto 10px;padding:7px 5px 5px 5px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;margin-left:8px
+}
+.estimate_view a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+.estimate_view .private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.estimate_view .private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+.estimate_view .multi_rows_padding {padding:5px 4px 5px 4px}
+.estimate_view .add_row_button_frame {height:34px;margin-left:50px;margin-right:50px;}
+</style>
+
+<div class="estimate_view" style="padding-bottom:2.0em;">
+<div class="clearfix" style="padding-top:2.0em">
+<a href="javascript:void(0);" class="btn_back_list">
+	<i class="budicon-arrow-left-1" style="margin-top:2px;margin-bottom:2px;padding-left:1px;font-size:20px;color:#FFF;line-height:1;display:block;"></i>
+</a>
+</div>
+
+<?php
+    echo $this->partial('price-estimate/template_' . $this->formatData['id'] . '_confirm.phtml', array(
+		'action'      => $this->action,
+		'data'        => $this->data,
+		'versionData' => $this->versionData,
+		'createdUser' => $this->createdUser,
+		'isPopup'     => true,
+	));
+?>
+
+<div class="private_memo">
+	<p>社内共有メモ</p>
+	<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->versionData['memo_private'])); ?></div>
+</div>
+</div><!- estimate view -->
+

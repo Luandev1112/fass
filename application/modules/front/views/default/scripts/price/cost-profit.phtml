@@ -1,0 +1,669 @@
+<?php
+$statusList   = Shared_Model_Code::codes('cost_calc_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        calculate();
+    });
+
+	<?php if (empty($this->approvalId)) { ?>
+	    //
+	    // 承認申請
+	    //
+	    $('.btn_save').click( function(){
+			jQuery.alerts.yesButton = 'はい';
+			jQuery.alerts.cancelButton = 'もう一度確認';
+	        jConfirm('計算や誤字、漏れなどの軽度なミスが無いことを最終チェック済みですか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;jAlert('承認申請しました', '　');return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/apply-apploval?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+		
+	    $(document).on('click', '#popup_ok', function () {
+	    	if (reloadFlag) {
+	    		location.href = '/price/cost-profit?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>&pos=' + $(window).scrollTop();
+	    	}
+	    });
+	<?php } else { ?>
+	    // 修正依頼
+	    $('.btn_mod_request').click( function(){
+	        jConfirm('修正依頼しますか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	 
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('修正依頼しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });
+	    });
+	    
+	    //
+	    // 承認
+	    //
+	    $('.btn_save').click( function(){
+	        jConfirm('この内容で承認しますか', '　', function(r) {
+	            if(r) {
+					showSpinner();
+					
+			        var $form = $('#form_category_1');
+			        var params = $form.serializeArray();
+	                
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: params,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('承認しました', '　');
+			                    return;
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/price/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+		
+	    $(document).on('click', '#popup_ok', function () {
+	    	if (reloadFlag) {
+	    		location.href = '/approval/list';
+	    	}
+	    });
+	<?php } ?>
+	
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/price/update-cost-profit?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/price/cost-profit?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costData['id']); ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 自動計算
+  	$('input').on('input', function(e) {
+		calculate();
+  	});
+  	
+});
+
+function separate(num){
+    return String(num).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+}
+function isNumber(n) { return /^-?[\d.]+(?:e-?\d+)?$/.test(n); } 
+function initValue(value) {
+	if (isNumber(value)) {
+		return parseInt(value);
+	}
+	return 0;
+}
+
+function calculate() {
+	for (var i = 1; i <= 7; i++) {	
+		var sales_price_base = parseFloat($('input[name="sales_price"]').val());
+		
+		var discount = parseFloat($('#discount_percentage_' + i).val());
+		var overseas = parseFloat($('#overseas_percentage_' + i).val());
+		console.log('discount' + i + ':' + discount);
+		console.log('overseas' + i + ':' + overseas);
+		
+		var sales_price = sales_price_base * (1 - discount * 0.01) * (1 + overseas * 0.01);
+		
+		if (i >= 2) {
+			$('#sales_price_text_' + i).html(separate(sales_price.toFixed(0)));
+			$('#sales_price_' + i).html(sales_price.toFixed(0));
+		}
+		console.log('sales_price' + i + ':' + sales_price);
+		
+
+		// 商品数／件
+		var item_amount         = parseFloat($('input[name="amount_per_package_' + i + '"]').val());
+		console.log('item_amount' + i + ':' + item_amount);
+		
+		
+		var customer_postage         = parseFloat($('input[name="customer_delivery_cost_' + i + '"]').val());
+		var manufacture_and_shipping = parseFloat($('input[name="manufacture_and_shipping_' + i + '"]').val());
+		console.log('manufacture_and_shipping' + i + ':' + manufacture_and_shipping);
+		
+		var profit = (sales_price + customer_postage / item_amount) - manufacture_and_shipping;
+		console.log('profit: ' + profit);
+		
+		var tax_rate = parseFloat($('#tax_percentage_' + i).val());
+		console.log('tax_rate: ' + tax_rate);
+		
+		// 売総利益（通販） 
+		$('#profit_text_' + i).html(separate(profit.toFixed(0)));
+		$('#profit_' + i).html(profit.toFixed(0));
+		
+		// 利益率（通販）
+		var profit_rate =  profit / sales_price * 100;
+		$('#profit_rate_text_' + i).html(separate(profit_rate.toFixed(0)) + ' %');
+		
+		var sales_price_with_tax = sales_price * (1 + tax_rate * 0.01);
+		
+		// 販売価格 税込
+		$('#price_with_tax_text_' + i).html(separate(sales_price_with_tax.toFixed(0)));
+		$('#price_with_tax_' + i).html(sales_price_with_tax.toFixed(0));
+
+		
+		var total_customer_pay = sales_price_with_tax * item_amount + customer_postage;
+
+		// 顧客総負担額
+		$('#total_customer_pay_' + i).html(separate(total_customer_pay.toFixed(0)));
+		
+	}
+}
+   
+</script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+.left_table th, .left_table td {border-right:none !important;}
+.scroll{overflow:auto;white-space:nowrap;width:100%;height:580px;}
+.scroll table{table-layout:fixed;}
+.scroll table tr th, .scroll table tr td{border-left:none;}
+table.detail tr th, table.detail tr td {border:1px solid #000;height:24px;}
+table.detail tr th {border:1px solid #333;color:#fff;font-weight:normal;background-color:#4f6d96;}
+table.detail tr td {border:1px solid #333;}
+table.detail tr input {width:99%;text-align:right;padding-right:5px;height:18px;}
+table.detail tr p {margin-bottom:0;line-height:1.3;font-size:1.1em}
+table.detail tr#row_total td {background-color:#bfd5f5}
+table.detail tr.category_total td {background-color:#e1e9f5}
+.align_center{text-align:center}
+.align_right{text-align:right}
+.bold{font-weight:bold;}
+.strong{font-weight:bold;}
+
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+table.detail tr th.gray_out,table.detail tr td.gray_out {background-color:#555;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;margin-bottom:9px;">
+	        <span style=""><strong>原価計算 - 詳細（<?php echo $statusList[$this->costData['version_status']]; ?>）</strong></span>
+	    </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        </div>
+    	<?php
+            echo $this->partial('price/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    			'costId'    => $this->costId,
+    			'approvalId' => $this->approvalId,
+    		));
+        ?> 
+	</div>
+
+
+    <div class="clearfix">  
+	    <?php
+	    /* 基本情報 */
+	    $categoryId = 1;
+	    ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+	    <table class="list_default" style="margin-bottom:0px;">
+	        <tr>
+	        	<?php
+	        	$borderRight = 'border-right';
+	        	if ($this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_NOT_CREATED
+	        	 || $this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_EDITING) {
+	        	 	$borderRight = '';
+	        	}
+	        	?>
+	            <th class="border-left border-top border-bottom <?php echo $borderRight; ?>"><p class="label_text strong">販売価格／想定利益率  ※入力値は赤字</p></th>
+	            
+	            <?php if ($this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_NOT_CREATED || $this->costData['version_status'] == Shared_Model_Code::COST_CALC_STATUS_EDITING) { ?>
+	            <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+	                <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                <span>×</span>
+	                </a>
+	            </th>
+	            <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+	            </th>
+	            <?php } ?>
+	        </tr>
+	    </table>
+
+		<?php
+			$postageDataList = array();
+			$packageDataList = array();
+			
+			$costPostageTable = new Shared_Model_Data_CostPostage();
+			$costPackageTable = new Shared_Model_Data_CostPackage();
+			
+			$shippingCost = array();
+			$postagePrice = array();
+			$packageTotal = array();
+			$grayOut = array();
+			// 発送費用
+			for($count = 1; $count <= 15; $count++) {
+				$postageId = $this->costData['cost_postage_id_' . $count];
+		
+				if (!empty($postageId)) {
+					$postageDataList[(string)$count] = $costPostageTable->getById($this->adminProperty['management_group_id'], $postageId);
+				}
+				
+				$packageId = $this->costData['cost_package_id_' . $count];
+				if (!empty($packageId)) {
+					$packageDataList[(string)$count] = $costPackageTable->getById($this->adminProperty['management_group_id'], $packageId);
+				}
+				
+				$postagePrice[(string)$count] = 0;
+            	$amount = $this->costData['amount_per_package_' . $count];
+            	if (!empty($amount) && !empty($postageDataList[(string)$count]['standard_price'])) {
+            		$postagePrice[(string)$count] = $postageDataList[(string)$count]['standard_price'] / $amount;
+            	}
+            	
+            	$packageTotal[(string)$count] = 0;
+            	if (!empty($packageDataList[(string)$count]['total'])) {
+            		$packageTotal[(string)$count] = $packageDataList[(string)$count]['total'] / $amount;
+            	}
+            	
+            	$shippingCost[(string)$count] = $postagePrice[(string)$count] + $packageTotal[(string)$count];
+			}
+		?>
+		
+		<div class="clearfix">
+		<div style="width:270px;float:left;">
+		<table class="detail left_table" style="margin-top:13px;">
+			<tr>
+                <th><p>販売価格／想定利益率（通販前提）</p></th>
+            </tr>
+			<tr>
+                <th></th>
+            </tr>
+
+            <tr>
+                <td><p class="red strong">顧客総負担額</p></td>
+            </tr>
+            
+            <tr>
+                <td><p>商品数／件</p></td>
+            </tr>
+            
+            <tr>
+                <td><p>顧客送料総負担額</p></td>
+            </tr>
+
+            <tr>
+                <td><p>当社販売単価　税込</p></td>
+            </tr>
+            <tr>
+                <td><p class="red strong">日本消費税・関税・現地課税（%）</p></td>
+            </tr>
+            <tr>
+                <td><p class="strong">当社販売単価　税別</p></td>
+            </tr>
+
+            <tr>
+                <td><p class="red strong">製品原価＋発送費用／個</p></td>
+            </tr>
+            <tr>
+                <td><p class="red strong">発送費用／個</p></td>
+            </tr>
+            <tr>
+                <td><p class="red strong">製品原価／個</p></td>  
+            </tr>
+            <tr>
+                <td><p class="strong">売総利益（通販）／個</p></td>
+            </tr>
+            <tr>
+                <td><p><span class="red strong">利益率（通販）／個</span></p></td>
+            </tr>
+            <tr>
+                <td><p>値引率</p></td> 
+            </tr>
+            <tr>  
+                <td><p>海外上代割増率</p></td>
+            </tr>
+		</table>
+		</div>
+		<div class="scroll" style="width:830px;float:left;">
+        <table class="detail" style="margin-top:13px;"
+			<tr>
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+					<?php
+                		$grayOut[$count] = '';
+                		$columnName = $this->escape($this->costData['column_name_' . $count]);
+                		if ($columnName === '---') {
+                			$grayOut[$count] = 'gray_out';
+                		}
+                	?>
+	                <th class="<?php echo $grayOut[$count]; ?>" style="width:150px">
+	                	<p class="display_value_<?php echo $categoryId; ?> align_center"><?php echo $columnName; ?></p>
+	                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+	                		<input type="text" style="text-align:center" name="column_name_<?php echo $count; ?>" value="<?php echo $columnName?>">
+	                	</div>
+	                </th>
+                <?php } ?>
+			</tr>
+            
+            <tr>
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <th class="<?php echo $grayOut[$count]; ?>">
+                	<p class="align_center">(円/袋)</p>
+                </th>
+                <?php } ?>
+            </tr>
+            
+            <tr><!-- 顧客総負担額 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="align_right red strong"><span id="total_customer_pay_<?php echo $count; ?>"></span></p>
+                </td>
+                <?php } ?>
+            </tr>
+
+
+            <tr><!-- 商品数／件 (1件当たりの輸送個数) -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $amount = $this->escape($this->costData['amount_per_package_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right"><?php if (!empty($amount)) { echo number_format($amount); } else { echo '---'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" name="amount_per_package_<?php echo $count; ?>" value="<?php if (!empty($amount)) { echo $amount; } ?>">
+                		</div>
+                	</div>
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr><!-- 顧客送料総負担額 -->
+            	<?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $customerDeliveryCost = $this->escape($this->costData['customer_delivery_cost_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right"><?php if (!empty($customerDeliveryCost)) { echo number_format($customerDeliveryCost); } else { echo '0'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" id="customer_delivery_cost_<?php echo $count; ?>" name="customer_delivery_cost_<?php echo $count; ?>" value="<?php if (!empty($customerDeliveryCost)) { echo $customerDeliveryCost; } else { echo '0'; }?>">
+                		</div>
+                	</div>
+                </td>
+            	<?php } ?>
+            </tr>
+            
+            <tr><!-- 当社販売単価　税込 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="align_right"><span id="price_with_tax_text_<?php echo $count; ?>"></span></p>
+                	<input type="hidden" name="price_with_tax_<?php echo $count; ?>" value="0" />
+                </td>
+                <?php } ?>
+            </tr>
+            
+            <tr><!-- 日本消費税・関税・現地課税（%） -->
+            	<?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $taxPercentage = $this->escape($this->costData['tax_percentage_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right red strong"><?php if (!empty($taxPercentage)) { echo number_format($taxPercentage) . '&nbsp;%'; } else { echo '0&nbsp;%'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" style="width:130px" id="tax_percentage_<?php echo $count; ?>" name="tax_percentage_<?php echo $count; ?>" value="<?php if (!empty($taxPercentage)) { echo $taxPercentage; } else { echo '0'; }?>">&nbsp;%
+                		</div>
+                	</div>
+                </td>
+            	<?php } ?>
+            </tr>
+            
+            
+            <tr><!-- 当社販売単価　税別 -->
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $salesPrice = $this->escape($this->costData['sales_price']); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right strong"><?php if (!empty($salesPrice)) { echo number_format($salesPrice); } else { echo '---'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" name="sales_price" value="<?php if (!empty($salesPrice)) { echo $salesPrice; } ?>">
+                		</div>
+                	</div>
+                </td>
+                
+                <?php for($count = 2; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="align_right strong"><span id="sales_price_text_<?php echo $count ?>">---</span></p>
+                	<input type="hidden" name="sales_price_<?php echo $count ?>" value="0" />
+                </td>
+				<?php } ?>
+            </tr>
+            
+            <tr><!-- 製品原価＋発送費用/個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php if (!empty($this->costData['summary_manufacture_total_cost'])) { ?>
+                		<p class="align_right red strong"><?php echo number_format($this->costData['summary_manufacture_total_cost'] + $shippingCost[(string)$count]); ?></p>
+                		<input type="hidden" name="manufacture_and_shipping_<?php echo $count; ?>" value="<?php echo $this->costData['summary_manufacture_total_cost'] + $shippingCost[(string)$count]; ?>" />
+                	<?php } else { ?>
+                		<p class="align_right red strong">---</p>
+                		<input type="hidden" name="manufacture_and_shipping_<?php echo $count; ?>" value="0" />
+                	<?php } ?>
+                </td>
+                <?php } ?>
+            </tr>
+                  
+            <tr><!-- 発送費用/個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="align_right red strong"><?php echo number_format($shippingCost[(string)$count]); ?></p>
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr><!-- 製品原価/個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php if (is_numeric($this->costData['summary_manufacture_total_cost'])) { ?>
+                		<p class="align_right red strong"><?php echo number_format($this->costData['summary_manufacture_total_cost']); ?></p>
+                	<?php } else { ?>
+                		<p class="align_right red strong">0</p>
+                	<?php } ?>
+                </td>
+                <?php } ?>
+            </tr>
+            
+            <tr><!-- 売総利益（通販） /個 -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="strong align_right"><span id="profit_text_<?php echo $count; ?>"></span></p>
+                	<input type="hidden" name="profit_<?php echo $count; ?>" value="0" />
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr><!-- 利益率（通販） -->
+                <?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<p class="red strong align_right"><span id="profit_rate_text_<?php echo $count; ?>"></span></p>
+                	<input type="hidden" name="profit_rate_<?php echo $count; ?>" value="0" />
+                </td>
+                <?php } ?>
+            </tr>
+
+            <tr><!-- 値引率 -->
+            	<?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $discountPercentage = $this->escape($this->costData['discount_percentage_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right red strong"><?php if (!empty($discountPercentage)) { echo number_format($discountPercentage) . '&nbsp;%'; } else { echo '0&nbsp;%'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" style="width:130px" id="discount_percentage_<?php echo $count; ?>" name="discount_percentage_<?php echo $count; ?>" value="<?php if (!empty($discountPercentage)) { echo $discountPercentage; } else { echo '0'; }?>">&nbsp;%
+                		</div>
+                	</div>
+                </td>
+            	<?php } ?>
+            </tr>
+
+            <tr><!-- 海外上代割増率 -->
+            	<?php for($count = 1; $count <= 15; $count++) { ?>
+                <td class="<?php echo $grayOut[$count]; ?>">
+                	<?php $overseasPercentage = $this->escape($this->costData['overseas_percentage_' . $count]); ?>
+                	<p class="display_value_<?php echo $categoryId; ?> align_right red strong"><?php if (!empty($overseasPercentage)) { echo number_format($overseasPercentage) . '&nbsp;%'; } else { echo '0&nbsp;%'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+                		<input type="text" style="width:130px" id="overseas_percentage_<?php echo $count; ?>" name="overseas_percentage_<?php echo $count; ?>" value="<?php if (!empty($overseasPercentage)) { echo $overseasPercentage; } else { echo '0'; }?>">&nbsp;%
+                		</div>
+                	</div>
+                </td>
+            	<?php } ?>
+            </tr>
+            
+		</table>
+		</div>
+		</div>
+
+
+	    <div class="private_memo">
+	    	<p>販売価格／想定利益率メモ</p>
+	    	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($this->costData['memo_profit'])); ?></div>
+	    	<div class="edit_value_<?php echo $categoryId; ?>" style="display:none;">
+	    		<textarea id="memo_profit" name="memo_profit" style="height:150px;width:1000px;"><?php echo $this->escape($this->costData['memo_profit']); ?></textarea>
+	    	</div>
+	    </div>
+	    
+	    
+		<?php if (!empty($this->approvalId)) { ?>
+		    <div class="private_memo">
+		    	<p>修正依頼コメント</p>
+			    <textarea class="flex_other" name="approval_comment" style="height:150px;width:1000px;"><?php echo $this->escape($this->costData['approval_comment']); ?></textarea>
+		    </div>
+    	<?php } else if (!empty($this->costData['approval_comment'])){ ?>
+	    	<div class="private_memo">
+	    		<p>修正依頼コメント</p>
+	    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->costData['approval_comment'])); ?></div>
+	    	</div>
+    	<?php } ?>
+    	
+		</form>
+
+
+</div>
+</div>
+</div>
+</div>
+

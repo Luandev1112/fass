@@ -1,0 +1,96 @@
+<?php
+
+?>
+<script type="text/javascript"><!--
+			
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {height:auto;}
+table.list_default tr td.column_value p {}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:340px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+
+	    <div class="col-xs-12">
+	        <div class="page_title">
+	            <span><strong>注文データ</strong></span>
+	        </div>
+	    </div>
+		
+		<div class="clearfix">
+			<div style="float:left;width:450px">
+		        <table class="list_default" style="margin-bottom:0px;">
+		            <tr>
+		                <th style="border:1px solid #ddd;"><p class="label_text strong">frs_order</p></th>
+		            </tr>
+		        </table>
+				<table class="list_default">
+					<?php foreach ($this->orderData as $key => $value) { ?>
+					<tr>
+						<td class="column_label"><p><?php echo $key; ?></p></td>
+						<td class="column_value"><p><?php echo $value; ?></p></td>
+					</tr>
+					<?php } ?>
+				</table>
+			</div>
+			<div style="float:right;width:630px">
+		        <table class="list_default" style="margin-bottom:0px;">
+		            <tr>
+		                <th style="border:1px solid #ddd;"><p class="label_text strong">frs_order_item</p></th>
+		            </tr>
+		        </table>
+		        
+				<?php foreach ($this->orderItems as $eachItem) { ?>
+					<table class="list_default">
+						<?php foreach ($eachItem as $key => $value) { ?>
+							<tr>
+								<td class="column_label"><p><?php echo $key; ?></p></td>
+								<td><p><?php echo $value; ?></p></td>
+							</tr>
+						<?php } ?>
+					</table>
+				<?php } ?>
+				
+				
+				
+		        <table class="list_default" style="margin-bottom:0px;">
+		            <tr>
+		                <th style="border:1px solid #ddd;"><p class="label_text strong">frs_item_stock_consumption</p></th>
+		            </tr>
+		        </table>
+				<?php foreach ($this->packageItems as $eachItem) { ?>
+					<table class="list_default">
+						<?php foreach ($eachItem as $key => $value) { ?>
+							<tr>
+								<td class="column_label"><p><?php echo $key; ?></p></td>
+								<td><p><?php echo $value; ?></p></td>
+							</tr>
+						<?php } ?>
+					</table>
+				<?php } ?>
+		        
+			</div>
+		</div>
+
+
+					
+	</div><!-- clearfix -->
+	             
+</div>
+</div>
+</div>
+</div>
+

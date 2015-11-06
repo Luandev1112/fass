@@ -1,0 +1,352 @@
+<?php
+	$isActiveList = Shared_Model_Code::codes('is_active');
+?>
+<link rel="stylesheet" href="/resource/js/switchery-0.8.0/dist/switchery.css" />
+<script src="/resource/js/switchery-0.8.0/dist/switchery.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+		var elems = Array.prototype.slice.call(document.querySelectorAll('.switch'));
+		                
+		elems.forEach(function(html) {
+		  var switchery = new Switchery(html, { size: 'small' });
+		});
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/user/department-update?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/user/department-mail-update?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/user/department-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+        }
+    });
+    
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/user/department-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+table.list_default tr td.column_value input.zip {width:130px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong><?php echo $this->escape($this->groupData['organization_name']); ?> / 部署・事業部門 - <?php if (!empty($this->id)) { echo '編集'; } else { echo '登録'; } ?></strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 部門情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-top border-bottom border-left"><p class="label_text strong">部門情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">ステータス</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $isActiveList[$this->data['status']]; ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="status" name="status">
+                            <?php foreach ($isActiveList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->data['status']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新日時</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo date('Y-m-d H:i:s', strtotime($this->data['updated'])); ?></p>
+                </td>
+            </tr>
+            
+            <?php /*
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新者</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->lastUpdatedUser['user_name']); ?></p>
+                </td>
+            </tr>
+			*/ ?>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">部署・事業部門名<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['department_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="department_name" value="<?php echo $this->escape($this->data['department_name']); ?>" autocomplete="off" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">部署・事業部門名(英語)<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['department_name_en']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="department_name_en" value="<?php echo $this->escape($this->data['department_name_en']); ?>" autocomplete="off" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">会計事務所</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($this->data['is_accountants_office'])) { echo 'はい'; } else { echo 'いいえ'; } ?></p>
+            		<div class="edit_value_<?php echo $categoryId; ?>" style="float:left;width:50px;display:none;">
+						<input type="checkbox" id="is_accountants_office" class="switch" name="is_accountants_office" style="display:none;" <?php if (!empty($this->data['is_accountants_office'])) echo 'checked="checked"'; ?> />
+					</div>    
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">通知用メールアドレス</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['mailing_list_address']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="mailing_list_address" value="<?php echo $this->escape($this->data['mailing_list_address']); ?>" autocomplete="off" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+		</table>
+		</form>
+		
+		
+	    <?php
+        /* メール受信対象 */
+        $categoryId = 1;
+        ?>
+        <?php /*
+	    <form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-top border-bottom border-left"><p class="label_text strong">メール受信対象</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">原価計算</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_cost" class="switch" name="mail_cost" style="display:none;" <?php if (!empty($this->data['mail_cost'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+	        
+            <tr>
+                <td class="column_label"><p class="label_text">提出見積</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_estimate" class="switch" name="mail_estimate" style="display:none;" <?php if (!empty($this->data['mail_estimate'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">調達管理</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_supply" class="switch" name="mail_supply" style="display:none;" <?php if (!empty($this->data['mail_supply'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+			
+			<tr>
+                <td class="column_label"><p class="label_text">受注管理</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_order" class="switch" name="mail_order" style="display:none;" <?php if (!empty($this->data['mail_order'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+
+			<tr>
+                <td class="column_label"><p class="label_text">発注管理</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_order_form" class="switch" name="mail_order_form" style="display:none;" <?php if (!empty($this->data['mail_order_form'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+
+			<tr>
+                <td class="column_label"><p class="label_text">支払申請</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_payable" class="switch" name="mail_payable" style="display:none;" <?php if (!empty($this->data['mail_payable'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+
+			<tr>
+                <td class="column_label"><p class="label_text">毎月支払申請</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_payable_monthly" class="switch" name="mail_payable_monthly" style="display:none;" <?php if (!empty($this->data['mail_payable_monthly'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+
+			<tr>
+                <td class="column_label"><p class="label_text">請求書発行</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_invoice" class="switch" name="mail_invoice" style="display:none;" <?php if (!empty($this->data['mail_invoice'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+            
+			<tr>
+                <td class="column_label"><p class="label_text">請求書発行</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<div style="float:left;width:50px;">
+							<input type="checkbox" id="mail_receivable_monthly" class="switch" name="mail_receivable_monthly" style="display:none;" <?php if (!empty($this->data['mail_receivable_monthly'])) echo 'checked="checked"'; ?> />
+						</div>
+					</div>
+                </td>
+            </tr>
+		</table>
+		</form>
+		*/ ?>
+	
+	</div><!-- clearfix -->	                
+
+</div>
+</div>
+</div>
+</div>
+

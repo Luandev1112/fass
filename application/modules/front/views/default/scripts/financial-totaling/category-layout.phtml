@@ -1,0 +1,432 @@
+<?php
+	$rowTypeList = Shared_Model_Code::codes('account_totaling_row_type');
+?>
+<script type="text/javascript">
+var isEdited = false;
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+var referenceTargetRow = '';
+
+function updateEdited(edited) {
+	isEdited = edited;
+	if (isEdited) {
+		$('.btn_save').removeClass('inactive');	
+	} else {
+		$('.btn_save').addClass('inactive');
+	}
+	console.log('updateEdited:' + edited);
+}
+
+$(function () {
+	$(document).ready(function(){
+		
+	    $('#sortable_column td').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });
+        
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+        
+        updateEdited(false);
+	});
+
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+	    if (isEdited) {
+	       	jConfirm('保存せずに中止しますか', '　', function(r) {
+	            if(r) {
+	               location.href = '/financial-totaling/category-list';
+	            } else {
+	                return false;
+	            }
+	        });
+    	} else {
+	    	location.href = '/financial-totaling/category-list';
+    	}
+	});
+
+  	$('input[type="text"]').on('input', function(e) {
+		updateEdited(true);
+  	});
+  		
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+            var result = $("#sortable_column").sortable("toArray");
+            $('input#hidden_contents_order').val(result);
+            
+            updateEdited(true);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+
+    // 行追加
+    $(document).on('click', '.btn_add_column', function () {
+	    showSpinner();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: null,
+            success: function(res){
+	            stopSpinner();
+	            
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+			        var uuid = guid();
+					
+					
+					$('.column_copy_base .unique_id_text').attr('id', uuid + '_unique_id_text').html(res.unique_id);
+					$('.column_copy_base .unique_id').attr('id', uuid + '_unique_id').attr('name', uuid + '_unique_id').val(res.unique_id);
+			        $('.column_copy_base .row_type').attr('id', uuid + '_row_type').attr('name', uuid + '_row_type').attr('target-row', uuid);
+			        
+			        $('.column_copy_base .text_input').attr('id', uuid + '_text_input');
+			        $('.column_copy_base .content_text').attr('id', uuid + '_content_text').attr('name', uuid + '_content_text');
+			        $('.column_copy_base .calc_text').attr('id', uuid + '_calc_text').attr('name', uuid + '_calc_text');
+			        
+			        $('.column_copy_base .reference').attr('id', uuid + '_reference');
+					$('.column_copy_base .reference_name').attr('id', uuid + '_reference_name');
+					$('.column_copy_base .reference_id').attr('id', uuid + '_reference_id').attr('name', uuid + '_reference_id');
+					$('.column_copy_base .select_reference').attr('target-row', uuid);
+					
+					$('.column_copy_base .delete_button').attr('target-row', uuid);
+					
+			        var $clone = $('.column_copy_base').clone(true);
+			        $('tbody#sortable_column').append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+			
+			        $('.column_copy_base .unique_id').attr('id', '');
+			        $('.column_copy_base .row_type').attr('id', '');
+			        $('.column_copy_base .calc_text').attr('id', '');
+					$('.column_copy_base .reference_id').attr('id', '');
+					$('.column_copy_base .select_reference').attr('id', '');
+					
+			        $('#sortable_column td.added_row').each(function(){
+			            $(this).css('width', $(this).width() +'px');
+			        });
+			        
+			        var result = $('#sortable_column').sortable("toArray");
+			        $('input#hidden_contents_order').val(result);
+			        
+			        updateEdited(true);
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/financial-totaling/get-unique-id',
+        });
+    });
+
+	// 保存
+    $(document).on('click', '.btn_save', function () {
+    	if (isEdited === false) {
+    		return false;
+    	}
+	    
+        jConfirm('保存しますか', '　', function(r) {
+            if(r) {
+		        var button = $(this);
+		        var $form = $('#register_form');
+		        var params = $form.serializeArray();
+		
+				showSpinner();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            processData:true,
+		            data: params,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                } else if (obj.result == 'OK') {
+		                    reloadFlag = true;
+		                    jAlert('保存しました', '　');
+		                    updateEdited(false);
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/financial-totaling/save-layout?category_id=<?php echo $this->escape($this->categoryId); ?>',
+		        });
+            } else {
+                return false;
+            }
+        });	
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+       // location.href = '/financial-totaling/category-list';
+    });
+
+    // 行削除
+    $(document).on('click', '.delete_button', function () {
+    	var targetId   = $(this).attr('target-row');
+		$('#sortable_column tr#' + targetId).remove();
+
+        var result = $('#sortable_column').sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+        
+        updateEdited(true);
+    });
+	
+	// 種別選択
+    $(document).on('change', '.row_type', function () {
+		var rowType   = $(this).val();
+		var targetRow = $(this).attr('target-row');
+		console.log(rowType);
+		console.log(targetRow);
+		if (rowType == '<?php echo Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_HEADING; ?>'
+		 || rowType == '<?php echo Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL; ?>'
+		 || rowType == '<?php echo Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_FREE; ?>') { 
+			$('#' + targetRow + '_reference').hide();
+			$('#' + targetRow + '_text_input').show();
+			
+			if (rowType == '<?php echo Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL; ?>') {
+				$('#' + targetRow + '_calc_text').show();
+			} else {
+				$('#' + targetRow + '_calc_text').hide();
+			}
+			
+		} else {
+			$('#' + targetRow + '_text_input').hide();
+			$('#' + targetRow + '_reference').show();
+		}
+		
+		updateEdited(true);
+    });
+
+    // 採算コード 選択ポップアップ表示
+    $(document).on('click', '.select_reference', function () {
+	    referenceTargetRow = $(this).attr('target-row');
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial-totaling/item-select?category_id=<?php echo $this->escape($this->categoryId); ?>&lock=1', null, function () {stopSpinner();});
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 採算コード 選択完了
+function selectAccountTotalingGroup(id, groupName, title) {
+	$('#' + referenceTargetRow + '_reference_name').html(title);
+	$('#' + referenceTargetRow + '_reference_id').val(id);
+	$('.btn_close').click();
+	
+	updateEdited(true);
+}
+  
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+.multi_rows_padding {padding:5px 10px 5px 10px;}
+.order_btn_frame {float:left;margin:6px 0 0 14px;}
+.order_btn_frame .icon-up-dir-1 {font-size:14px;color:#000;line-height:1;display:block;}
+.order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#000;line-height:1;display:block;}
+
+.sortable_column tr td {background-color:#fff;}
+
+a.option {
+float:right;
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;font-size:12px;margin:3px 4px;padding:3px 30px 1px 30px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+table.list_default tr td.td_count {border-right:none;background-color:#bae0ff;width:30px;}
+table.list_default tr td.td_item_info {border-right:none;}
+
+table.list_default tr td.td_action {width:70px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>採算グループ 出力レイアウト</strong></span>
+	    </div>
+	</div>
+    
+	<div class="col-sm-12 clearfix">
+		<form id="register_form" action="#" method="post"> 
+		<table class="list_default" style="margin-bottom:0;">
+			<tr>
+				<th style="width:14%">
+					<p>キー</p>
+				</th>
+
+				<th style="width:18%">
+					<p>種別</p>
+				</th>		
+
+				<th colspan="2">
+					<p>内容</p>
+				</th>
+			</tr>
+			<?php $groupTable = new Shared_Model_Data_AccountTotalingGroup(); ?>
+			<tbody class="sortable_column" id="sortable_column">
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['unique_id']); ?>">
+						<td>
+							<p class="unique_id_text" id="<?php echo $this->escape($each['unique_id']); ?>_unique_id_text"><?php echo $this->escape($each['unique_id']); ?></p>
+							<input type="hidden" class="unique_id" id="<?php echo $this->escape($each['unique_id']); ?>_unique_id" name="<?php echo $this->escape($each['unique_id']); ?>_unique_id" value="<?php echo $this->escape($each['unique_id']); ?>">
+						</td>
+	
+						<td>
+							<select class="row_type" id="<?php echo $this->escape($each['unique_id']); ?>_row_type" name="<?php echo $this->escape($each['unique_id']); ?>_row_type" target-row="<?php echo $this->escape($each['unique_id']); ?>" style="width:97%;margin-left:3px">
+								<?php foreach ($rowTypeList as $key => $val) { ?>
+									<option value="<?php echo $this->escape($key); ?>" <?php if ($each['row_type'] === (string)$key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+								<?php } ?>
+							</select>
+						</td>
+	
+						<td>
+							<div class="text_input" id="<?php echo $this->escape($each['unique_id']); ?>_text_input" <?php if ($each['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) { ?>style="display:none;"<?php } ?>>
+								<input type="text" class="content_text" name="<?php echo $this->escape($each['unique_id']); ?>_content_text" value="<?php if ($each['row_type'] !== (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) { echo $this->escape($each['content']); } ?>" style="width:99%;margin-left:3px" placeholder="項目名">
+								<input type="text" class="calc_text" id="<?php echo $this->escape($each['unique_id']); ?>_calc_text" name="<?php echo $this->escape($each['unique_id']); ?>_calc_text" value="<?php if ($each['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) { echo $this->escape($each['calc_text']); } ?>" style="width:99%;margin-left:3px;margin-bottom:5px;<?php if ($each['row_type'] !== (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) { echo 'display:none'; } ?>" placeholder="計算式">
+							</div>
+							<div class="reference" id="<?php echo $this->escape($each['unique_id']); ?>_reference" <?php if ($each['row_type'] !== (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) { ?>style="display:none;"<?php } ?>>
+								<?php
+									$referenceText = '---';
+									if ($each['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) {
+										$groupData = $groupTable->getById($this->adminProperty['management_group_id'], $each['content']);
+										if (!empty($groupData)) {
+											$referenceText = $groupData['title'];
+										}
+									}	
+								?>
+								<p class="reference_name" id="<?php echo $this->escape($each['unique_id']); ?>_reference_name" style="float:left;width:550px;"><?php echo $this->escape($referenceText); ?></p>
+								<input type="hidden" class="reference_id" id="<?php echo $this->escape($each['unique_id']); ?>_reference_id" name="<?php echo $this->escape($each['unique_id']); ?>_reference_id" value="<?php if ($each['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) { echo $this->escape($each['content']); } ?>">
+								<a class="option select_reference" target-row="<?php echo $this->escape($each['unique_id']); ?>">選択</a>
+							</div>
+						</td>
+						
+			            <td class="td_action" style="width:66px;">
+			            	<div class="delete_btn_frame">
+			            		<a class="delete_button" href="javascript:void(0);" target-row="<?php echo $this->escape($each['unique_id']); ?>"><i class="icon-cancel"></i></a>
+			            	</div>
+		                    <div class="order_btn_frame edit_value" >
+		                        <i class="icon-up-dir-1"></i>
+		                        <i class="icon-down-dir-1"></i>
+		                    </div>
+			            </td>
+					</tr>
+					<?php } ?>
+				<?php } ?>
+			</tbody>
+		</table>
+		
+        <div style="border-bottom:1px solid #ccc;height:34px;margin-bottom:13px;">
+            <p style="text-align:center;"><a class="btn_add_column" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+        
+        <input type="hidden" id="hidden_contents_order" name="item_list" value="">
+		</form>
+		
+	    <!-- copy base -->
+	    <table class="list_default" style="display:none;">
+	        <tr class="column_copy_base">
+				<td class="added_row">
+					<p class="unique_id_text" id="_unique_id_text">###</p>
+					<input type="hidden" class="unique_id" id="_unique_id" name="_unique_id" value="">
+				</td>
+
+				<td class="added_row">
+					<select class="row_type" id="_row_type" name="_row_type" target-row="" style="width:97%;margin-left:3px">
+						<?php foreach ($rowTypeList as $key => $val) { ?>
+							<option value="<?php echo $this->escape($key); ?>"><?php echo $this->escape($val); ?></option>
+						<?php } ?>
+					</select>
+				</td>
+
+				<td class="added_row">
+					<div class="text_input" id="_text_input">
+						<input type="text" class="content_text" name="" value="" style="width:99%;margin-left:3px" placeholder="項目名">
+						<input type="text" class="calc_text" name="_calc_text" value="" style="width:99%;margin-left:3px;margin-bottom:5px;display:none;" placeholder="計算式">
+					</div>
+					<div class="reference" id="_reference" style="display:none;">
+						<p class="reference_name" style="float:left;width:550px;"></p>
+						<input type="hidden" class="reference_id" id="_reference_id" name="_reference_id" value="">
+						<a class="option select_reference" target-row="##">選択</a>
+					</div>
+				</td>
+				
+	            <td class="added_row td_action" style="width:66px;">
+	            	<div class="delete_btn_frame">
+	            		<a class="delete_button" href="javascript:void(0);" target-row="##"><i class="icon-cancel"></i></a>
+	            	</div>
+                    <div class="order_btn_frame edit_value" >
+                        <i class="icon-up-dir-1"></i>
+                        <i class="icon-down-dir-1"></i>
+                    </div>
+	            </td>
+	        </tr>
+	    </table>    
+		<!-- copy base -->
+	</div>
+
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+

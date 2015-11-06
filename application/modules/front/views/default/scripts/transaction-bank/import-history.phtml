@@ -1,0 +1,163 @@
+<?php
+$statusList      = Shared_Model_Code::codes('payable_payment_status');
+$bankAccountType = Shared_Model_Code::codes('bank_account_type');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+$(function () {
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+			            stopSpinner();
+						var obj = res;
+				        if (obj.result == 'timeout') {
+				            location.href = '/login';
+				            return;            
+				        } else if(obj.result == 'OK') {
+			                reloadFlag = true;
+			                jAlert('削除しました', '　');
+				        	
+				        } else if(obj.result == 'NG') {
+				        	jAlert(res.error, 'エラー');
+				        } else {
+					        jAlert('予期せぬエラーが発生しました', 'エラー');
+				        }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-bank/delete-history'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	location.href = '/transaction-bank/import-history?bank_id=<?php echo $this->escape($this->bankId); ?>';
+        }
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+.align_center{text-align:center;margin-right:12px;}
+.term {font-size:1.2em;font-weight:bold;}
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:50px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+.view_type_list {margin-top:0.3em;}
+.view_type_list a.view_type {display:block;float:left;padding:11px 20px 0;height:22px;line-height:1;text-decoration:none;background-color: #c0f7fa;text-align:center;font-size: 1.1em;margin-right:5px;}
+.view_type_list a.view_type.selected {background-color:#098d94;color:#fff;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<?php if ($this->allowEditing === true) { ?>
+				<p style="position:absolute;width:100px;right:0;">
+	                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;" href="/transaction-bank/import?bank_id=<?php echo $this->escape($this->bankId); ?>">新規取込</a>
+	            </p>
+            <?php } ?>
+	        <span><strong>金融機関口座履歴管理 - CSV取込履歴</strong></span>
+	    </div>
+	</div>
+
+	<div class="item_title clearfix">
+    	<p class="item_name"><?php echo $this->escape($this->bankData['bank_name']) . '　' . $this->escape($this->bankData['branch_name']) . '　' . $bankAccountType[$this->bankData['account_type']] . '　' . $this->escape($this->bankData['account_no']) . '　' . $this->escape($this->bankData['account_name']) . '（略：' . $this->escape($this->bankData['short_name']) . '）'; ?></p>
+    </div>
+	
+	<?php if ($this->bankData['bank_code'] === '0033' || $this->bankData['bank_code'] === '0310') { /* paypay銀行+GMOのみ*/ ?>
+		<div class="view_type_list clearfix">
+	        <a class="view_type <?php if ($this->action == 'import-history') { echo 'selected'; }?>" href="/transaction-bank/import-history?bank_id=<?php echo $this->escape($this->bankId); ?>">取込履歴</span></a>
+	        <a class="view_type <?php if ($this->action == 'log-list') { echo 'selected'; }?>" href="/transaction-bank/log-list?bank_id=<?php echo $this->escape($this->bankId); ?>">JNB・GMO全一覧</span></a>
+		</div>
+	<?php } ?>
+	   
+	<div class="clearfix">
+		<p style="float:right;margin-top:13px;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>未割当あり</p></th>
+				<th style="width:16%;"><p>取込実施日時</p></th>
+				<th style="width:14%;"><p>取込キー</p></th>
+				<th><p>取込期間</p></th>
+				<th style="width:20%;"><p>取込実行者&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:4%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php $bankHitoryItemsTable = new Shared_Model_Data_AccountBankHistoryItem(); ?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<?php $haveNone = $bankHitoryItemsTable->haveNoneAttach($each['id']); ?>
+							<?php if ($haveNone) { ?>
+								<p style="color:#f00;">●</p>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y-m-d H:i:s', strtotime($each['created'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['import_key']); ?></p>
+						</td>
+						
+						<td>
+							<p class="term"><?php echo date('Y-m-d', strtotime($each['term_form'])) . '　▶︎　' . date('Y-m-d', strtotime($each['term_to'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['user_name']); ?></p>
+						</td>
+					
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p><a href="/transaction-bank/import-detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

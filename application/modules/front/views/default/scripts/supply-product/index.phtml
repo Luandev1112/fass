@@ -1,0 +1,446 @@
+<?php
+$statusList         = Shared_Model_Code::codes('supply_status');
+$usesNotSalesList   = Shared_Model_Code::codes('uses_not_sales');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/supply-product/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+
+    // 移行済み
+    $(document).on('click', '.btn_list_copied', function () {
+    	var targetId = $(this).attr('target-id');
+
+		$.ajax({
+            type:'POST',
+            dataType:'html',
+            data:'target_id=' + targetId,
+            success:function(res){
+	            jAlert('移行完了', '');
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/supply-product/copied'
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/supply-product?page=<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+    
+	// タグ 選択ポップアップ表示
+    $(document).on('click', '#select_tag', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/supply-product/tag-list-select', null, function () {stopSpinner();});
+    });
+    
+	// タグ 条件検索
+    $(document).on('click', '#search_tag', function () {
+		updateTagList(1);
+    });
+
+    // タグ リセット
+    $(document).on('click', '#reset_tag', function () {
+		$('#tag_name_display').html('');
+		$('#tag_name').val('');
+		$('#tag_id').val('');
+	});
+
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 取引先 リセット
+    $(document).on('click', '#reset_connection', function () {
+		$('#connection_name_display').html('');
+		$('#connection_name').val('');
+		$('#connection_id').val('');
+	});
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// タグ 一覧ページ切り替え
+function pageTag(pageNo) {
+	updateTagList(pageNo)
+}
+
+// タグ 一覧更新
+function updateTagList (pageNo) {
+    var $form = $('#tag_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:param,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/supply-product/tag-list-select?page=' + pageNo,
+    });
+}
+
+// タグ 選択完了
+function selectTag(id, name) {
+	$('#tag_name_display').html(name);
+	$('#tag_name').val(name);
+	$('#tag_id').val(id);
+	$('.btn_close').click();
+}
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name_display').html(name);
+	$('#connection_name').val(name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css">
+.multi_rows_padding {padding:5px 10px 5px 10px;}
+table.list_default tr td {overflow:inherit;}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.gray_out td {background-color:#eee}
+table.list_default tr.gray_out:hover td {background:#eee;}
+
+table.list_default tr td a.btn_list_delete {position:absolute;left:50px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+table.list_default tr td a.btn_list_copied {position:absolute;left:100px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#555;color:#fff;text-decoration:none;width:44px;text-align:center}
+table.list_default tr td a.btn_list_copied:hover {text-decoration:none;background-color:#e8315d;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:207px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:126px;padding:5px 0;margin:0;border:none;margin-right:5px;" href="/supply-product/tag-list">一般名称タグ管理</a>
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/supply-product/add">新規登録</a>
+            </p>
+	        <span style=""><strong>原料・製品</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/supply-product" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+			
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="status" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">一般名称タグ：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="tag_name_display"><?php echo $this->conditions['tag_name']; ?></span>
+							<a class="reset_popup" id="reset_tag" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_tag" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="tag_name" name="tag_name" value="<?php echo $this->conditions['tag_name']; ?>" />
+						<input type="hidden" id="tag_id" name="tag_id" value="<?php echo $this->conditions['tag_id']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">販売用途：</p>
+                        <select id="type" name="use_sale">
+                            <option value="">---</option>
+	                		<?php foreach ($this->usesSalesList as $each) { ?>
+			                	<option value="<?php echo $each['id']; ?>" <?php if ($each['id'] === $this->conditions['use_sale']) echo 'selected="selected"';?>><?php echo $this->escape($each['name']); ?></option>
+		                    <?php } ?>
+                        </select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">非売用途：</p>
+                        <select id="type" name="use_not_sale">
+                            <option value="">---</option>
+	                		<?php foreach ($usesNotSalesList as $key => $val) { ?>
+			                	<option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['use_not_sale']) echo 'selected="selected"';?>><?php echo $this->escape($val); ?></option>
+		                    <?php } ?>
+                        </select>
+					</div>
+				</div>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">仕入先企業：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="connection_name_display"><?php echo $this->conditions['connection_name']; ?></span>
+							<a class="reset_popup" id="reset_connection" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_connection" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="connection_name" name="connection_name" value="<?php echo $this->conditions['connection_name']; ?>" />
+						<input type="hidden" id="connection_id" name="connection_id" value="<?php echo $this->conditions['connection_id']; ?>" />
+					</div>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索" />
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+    <?php
+    	$productTable = new Shared_Model_Data_SupplyProduct();
+    	$itemTable = new Shared_Model_Data_Item();
+    ?>
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;"><p>原料製品ID</p></th>
+				<th style="width:9%;"><p>ステータス</p></th>
+				<th style="width:15%;"><p>一般名称タグ</p></th>
+				<th style="width:18%"><p>原料製品名</p></th>
+				<th><p>対象商品&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:20%"><p>仕入先&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:4%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+		
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<?php
+						$grayOut = '';
+						if ($each['status'] === (string)Shared_Model_Code::SUPPLY_STATUS_NOT_USING || $each['status'] === (string)Shared_Model_Code::SUPPLY_STATUS_FINISHED_USING) {
+							$grayOut = 'class="gray_out"';
+						}
+					?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php echo $grayOut; ?>>
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+							<?php if (!empty($each['is_copied'])) { ?><p>●</p><?php } ?>
+						</td>
+
+						<td>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['tag_name']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding">
+								<strong><?php echo $this->escape($each['title']); ?></strong><?php /*<br>(<?php echo implode(' / ', $selected); ?>) */ ?>
+							</div>
+						</td>
+
+				        <?php
+				        $fullItemName = '';
+				        $itemName = '';
+				        $itemIds = unserialize($each['item_ids']);
+				        //var_dump($each['item_ids']);
+				        if (!empty($itemIds)) {
+				        	foreach ($itemIds as $eachItemId) {
+				        		if (!empty($eachItemId)) {
+					        		$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $eachItemId);
+					        		
+			            			if (!empty($itemData['item_name'])) {
+			            				$fullItemName .= $this->escape($itemData['item_name']) . '<br>';
+			            				$itemName .= $this->roundText($this->escape($itemData['item_name']), 19) . '<br>';
+			            			}
+		            			}
+					    	}
+				        }
+				        ?>
+						<td class="desc" all-content="<?php echo $fullItemName; ?>">
+							<div class="multi_rows_padding">
+								<?php echo $itemName; ?>
+							</div>
+						</td>
+
+						<?php
+						$providerList      = '';
+						$providerListShort = '';
+						$providerItems = $productTable->getListByProjectId($this->adminProperty['management_group_id'], $each['id']);
+						if (!empty($providerItems)) {
+					        foreach ($providerItems as $eachProvider) {
+						        $providerList      .= $this->escape($eachProvider['company_name']) . '<br>';
+	                			$providerListShort .= $this->roundText($this->escape($eachProvider['company_name']), 15) . '<br>';
+					      	}
+					   	}
+					   	?>
+						<td class="desc" all-content="<?php echo $providerList; ?>">
+							<div class="multi_rows_padding">
+								<?php echo $providerListShort ?>
+					      	</div>
+				      	</td>
+					
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+								<?php if (empty($each['is_copied'])) { ?><a class="btn_list_copied" target-id="<?php echo $this->escape($each['id']); ?>">移行済</a><?php } ?>
+							<?php } ?>
+							<p><a href="/supply-product/detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

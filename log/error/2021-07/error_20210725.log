@@ -1,0 +1,22 @@
+2021-07-25T16:21:07+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-07-25T16:21:07+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+
+2021-07-25T17:11:21+09:00 (CRIT): /api/user/list - group_id required #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): Api_UserController->listAction()
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('listAction')
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#5 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#6 {main}
+2021-07-25T17:11:21+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => user
+    [action] => list
+    [module] => api
+)
+

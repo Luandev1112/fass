@@ -1,0 +1,135 @@
+<?php
+$statusList       = Shared_Model_Code::codes('item_status');
+$itemTypeCodeList = Shared_Model_Code::codes('item_type_code');
+$itemTypeList     = Shared_Model_Code::codes('item_type');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery.imgareaselect-0.9.10/css/imgareaselect-default.css" />
+<script type="text/javascript" src="/resource/js/jquery.imgareaselect-0.9.10/scripts/jquery.imgareaselect.pack.js"></script>
+
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+
+    });
+	
+
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/rakuten";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    cache: false,
+                    async: false,
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/rakuten/update?id=<?php echo $this->data['id']; ?>'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+});
+--></script>
+<style type="text/css">
+#container{width:1300px;}
+div.section {margin-top:58px}
+body input, body textarea, body select {color:#FFF;font-size:12px;}
+table.list_default tr td.column_value {border-bottom:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+div.main_menu {background-color:#444;}
+body {background-color:#000;}
+div#page_fotter{background-color:#000}
+div.page_title span{color:#fff}
+body input[type="text"],
+body input[type="password"],
+body textarea {border:1px solid #ccc;background-color:#111;color:#fff;line-height:1.4;font-size:14px;}
+
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>楽天ページ編集</strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="register_form">
+		<input type="hidden" name="type" value="<?php echo $this->type; ?>" />
+        <table class="list_default">            
+            <tr>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="text" style="height:520px;margin-bottom:6px;"><?php echo $this->data[$this->type]; ?></textarea>
+					</div>
+                </td>
+            </tr>
+		</table>
+		</form>
+				
+	</div><!-- clearfix -->	                
+
+</div>
+</div>
+</div>
+</div>
+

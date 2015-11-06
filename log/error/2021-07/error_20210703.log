@@ -1,0 +1,16 @@
+2021-07-03T16:26:42+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-07-03T16:26:42+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+
+2021-07-03T16:44:29+09:00 (NOTICE): Invalid controller specified (robots.txt) %info%
+2021-07-03T16:44:29+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => robots.txt
+    [module] => front
+    [action] => index
+)
+

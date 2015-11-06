@@ -1,0 +1,389 @@
+<?php
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+
+$bankAccountType     = Shared_Model_Code::codes('bank_account_type');
+
+$bankRegisteredType  = Shared_Model_Code::codes('bank_registered_type');
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+var deletedFlag = false;
+var editing = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+    	if (editing == true) {
+    		jAlert('複数のカテゴリを同時に編集することはできません', 'エラー');
+    		return false;
+    	}
+    	
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+       
+        if (categoryId == '4') {
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        }
+        
+        editing = true;
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/connection/update-basic?id=<?php echo $this->id ?>';
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:apiUrl,
+        });
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '<?php echo $this->backUrl; ?>';
+        	} else {
+            	location.href = '/connection/relational?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/connection/basic?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 口座確認済み
+    $(document).on('click', '.btn_account_confirmed', function () {
+       jConfirm('口座確認済みにしますか', '　', function(r) {
+        	if(r) {
+        	   $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:'target_id=<?php echo $this->id ?>',
+                    success:function(res){
+                        reloadFlag = true;
+                        jAlert('口座確認済みにしました', '　');
+                    },
+                    error:function(){
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/connection/account-confirmed'
+                });
+                
+        	} else {
+        	    return false;
+        	}
+        });
+    });
+     
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.multi_rows_padding {padding:5px 0 5px 10px}
+table.list_default tr td.column_value input.zip {width:130px;}
+
+table.list_default tr td a.btn_account_confirmed {display:block;float:left;z-index:100;margin:5px 0 0px 5px;padding:7px 0.8em 5px;line-height:1;cursor:pointer;background-color:#2b9944;color:#fff;text-decoration:none;text-align:center}
+table.list_default tr td a.btn_account_confirmed:hover {text-decoration:none;background-color:#3bad55;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>取引先 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>
+    </div>
+
+    <?php
+    /* 基本情報 */
+    $categoryId = 1;
+    ?>
+    <?php /*
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">振込先口座(旧バージョン)</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+	        <tr>
+                <td class="column_label"><p class="label_text">振込先確認</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div>
+						<p style="float:left;"><?php 
+							if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_CONFIRMED) {
+								echo '確認済み';
+								
+								if (!empty($this->confirmedUser)) {
+									echo '　　確認者：' . $this->escape($this->confirmedUser['user_name']);
+								}
+							} else if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_RENEWALED) {
+								echo '<span class="red">未確認</span>';
+							} else {
+								echo '---';
+							}
+						?></p>
+						
+						<?php if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_RENEWALED) { ?>
+							<a class="btn_account_confirmed">確認済みにする</a>
+						<?php } ?>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">振込先</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div class="multi_rows_padding">
+						<?php 
+							if ($this->data['gs_basic_bank_select'] !== (string)Shared_Model_Code::BASIC_BANK_OTHER) {
+								echo $basicbankList[$this->data['gs_basic_bank_select']] . '　(銀行コード：' . $this->data['gs_bank_code'] . ')';
+							} else {
+								echo $this->data['gs_other_bank_name'] . '　(銀行コード：' . $this->data['gs_bank_code'] . ')';
+							}
+						?><br>
+						<?php echo $this->escape($this->data['gs_bank_branch_name'])  . '　(支店コード：' . $this->data['gs_bank_branch_id'] . ')'; ?><br>
+						<?php echo $bankAccountTypeList[$this->data['gs_bank_account_type']]; ?>　<?php echo $this->escape($this->data['gs_bank_account_no']); ?><br>
+						<?php echo $this->escape($this->data['gs_bank_account_name']); ?><br>
+						<?php echo $this->escape($this->data['gs_bank_account_name_kana']); ?>
+					</div>
+                </td>
+            </tr>
+		</table>
+	</form>
+	*/ ?>
+
+
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">振込先口座</p></th>
+            <th class="add_category">
+                <a class="btn_add_category" href="/connection/bank-add?connection_id=<?php echo $this->escape($this->id); ?>"><p style="padding-left:0;">追加</p></a>
+            </th>
+        </tr>
+    </table>
+	<table class="list_default">
+		<tr>
+			<th style="width:11%;"><p>更新</p></th>
+			<th style="width:15%;"><p>登録種別</p></th>
+			<th style="width:14%;"><p>金融機関名/支店名</p></th>
+			<th style="width:11%;"><p>口座種別/口座番号</p></th>
+			<th style="width:15%;"><p>口座名義</p></th>
+			<th><p>備考</p></th>
+			<th style="width:5%;"><p>編集</p></th>
+		</tr>
+		<?php if (!empty($this->bankList)) { ?>
+			<?php foreach ($this->bankList as $each) { ?>
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td>
+						<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $bankRegisteredType[$each['bank_registered_type']]; ?><br>
+						    <?php if (!empty($each['target_display_id'])) { echo $this->escape($each['target_display_id']); } ?>
+					    </div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding">
+						    <string><?php echo $this->escape($each['bank_code']); ?></string>　<?php echo $this->escape($each['bank_name']); ?><br>
+						    <string><?php echo $this->escape($each['branch_code']); ?></string>　<?php echo $this->escape($each['branch_name']); ?>
+						</div>
+					</td>
+					
+
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $bankAccountType[$each['account_type']]; ?><br>
+						    <?php echo $this->escape($each['account_no']); ?>
+						</div>
+					</td>
+				
+
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $this->escape($each['account_name']); ?><br><?php echo $this->escape($each['account_name_kana']); ?>
+						</div>
+					</td>
+
+					<td>
+						<div class="multi_rows_padding" style="padding-right:0.6em;">
+						    <?php echo $this->roundText($this->escape($each['memo']), 30); ?>
+						</div>
+					</td>
+					
+					<td>
+                        <?php if ($each['bank_registered_type'] === (string)Shared_Model_Code::BANK_REGISTERED_TYPE_FASS) { ?>
+							 <p><a class="edit_item" href="/connection/bank-detail?connection_id=<?php echo $this->escape($this->id); ?>&id=<?php echo $this->escape($each['id']); ?>">編集</a></p>
+						<?php } ?>
+					</td>
+				</tr>
+	        <?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="9">
+					<p style="text-align:center;">登録がありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+    </table>
+
+	<div style="background-color:#e6f8ff;margin:0.6em 0;padding:0.6em;">
+		<strong style="color:#0038ff;">口座名義(カナ) での利用可能文字</strong><br>
+		<table>
+			<tr>
+				<td style="width:20%"><strong>カタカナ(下記を除く)</strong></td>
+				<td style="width:20%"><strong>丸括弧</strong>　( )</td>
+				<td style="width:20%"><strong>ハイフン</strong>　-</td>
+				<td style="width:20%"><strong>ピリオド</strong>　.</td>
+				<td style="width:20%"><strong>スペース</strong>　<span class="red">「 」</span></td>
+			</tr>
+			<tr>
+				<td style="width:20%"><strong>スラッシュ</strong>　/</td>
+				<td style="width:20%"><strong>カンマ</strong>　,</td>
+				<td style="width:20%"><strong>数字</strong>　0123456789</td>
+				<td colspan="2"><strong>英字</strong> ABCDEFGHIJKLMNOPQRSTUVWXYZ</td>
+			</tr>
+		</table>
+		<strong class="red">※カナ小文字（ァィゥェォャュョ）およびカナ「ヲ」は利用できません。<br>
+		※全角文字で入力した場合は、半角に変換されます<br>
+		※英字は大文字のみ利用可能です(小文字は大文字に変換されます)</strong>
+	</div>
+
+
+
+
+
+
+
+
+    <?php
+    /* goosa */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">goosa</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">サプライヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->data['gs_supplier_display_id']); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">バイヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->data['gs_buyer_display_id']); ?></p>
+                </td>
+            </tr>
+		</table>
+	</form>
+
+    <?php
+    /* GOOSCA */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">GOOSCA</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">サプライヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php /*echo $this->escape($this->data['gc_supplier_display_id']);*/ ?>---</p>
+                </td>
+            </tr>
+		</table>
+	</form>
+	
+</div>
+</div>
+</div>
+</div>
+

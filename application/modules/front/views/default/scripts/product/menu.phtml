@@ -1,0 +1,15 @@
+<div class="menu_list clearfix">
+<div class="clearfix">
+<a class="menu <?php if($this->action == 'basic') echo "selected"; ?>" href="/product/basic?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">基本情報</a>
+<a class="menu <?php if($this->action == 'supplying-price') echo "selected"; ?>" href="/product/supplying-price?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">調達・購入条件</a>
+<a class="menu <?php if($this->action == 'supplying-material') echo "selected"; ?>" href="/product/supplying-material?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">調達・資料</a>
+<a class="menu <?php if($this->action == 'image') echo "selected"; ?>" href="/product/image?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">商品画像</a>
+<a class="menu <?php if($this->action == 'document-list' && !empty($this->docType) && $this->docType == Shared_Model_Code::ITEM_DOCUMENT_TYPE_PUBLIC) echo "selected"; ?>" href="/product/document-list?id=<?php echo $this->id; ?>&doc_type=<?php echo Shared_Model_Code::ITEM_DOCUMENT_TYPE_PUBLIC; ?>&direct=<?php echo $this->direct; ?>">広告/営業/規格書</a>
+<a class="menu <?php if($this->action == 'document-list' && !empty($this->docType) && $this->docType == Shared_Model_Code::ITEM_DOCUMENT_TYPE_LIMITED) echo "selected"; ?>" href="/product/document-list?id=<?php echo $this->id; ?>&doc_type=<?php echo Shared_Model_Code::ITEM_DOCUMENT_TYPE_LIMITED; ?>&direct=<?php echo $this->direct; ?>">企画開発資料</a>
+<a class="menu <?php if($this->action == 'document-list' && !empty($this->docType) && $this->docType == Shared_Model_Code::ITEM_DOCUMENT_TYPE_PRIVATE) echo "selected"; ?>" href="/product/document-list?id=<?php echo $this->id; ?>&doc_type=<?php echo Shared_Model_Code::ITEM_DOCUMENT_TYPE_PRIVATE; ?>&direct=<?php echo $this->direct; ?>">試験検査結果</a>
+</div>
+<div class="clearfix" style="margin-top:3px;">
+<a class="menu <?php if($this->action == 'gs-basic') echo "selected"; ?>" href="/product/gs-basic?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">GS基本条件</a>
+<a class="menu <?php if($this->action == 'gs-price') echo "selected"; ?>" href="/product/gs-price?id=<?php echo $this->id; ?>&direct=<?php echo $this->direct; ?>">GS価格設定</a>
+</div>
+</div>

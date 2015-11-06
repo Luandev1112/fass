@@ -1,0 +1,149 @@
+<?php
+$templateNameList  = Shared_Model_Code::codes('template_type_name');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function() {   
+    //
+    // 中止
+    //
+    $(".back").click(function(){
+		jConfirm('保存せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/setting/template?type=<?php echo $this->escape($this->data['template_type']); ?>";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save_category').click( function(){
+        jConfirm('保存しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var params = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:params,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('保存しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/setting/template-update?id=<?php echo $this->escape($this->id); ?>'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = "/setting/template?type=<?php echo $this->escape($this->data['template_type']); ?>";
+        }
+    });
+   
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+a.back {float:left;font-size:1.3em;padding-top:2px;color:#00469b;margin-right:5px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+        <div style="float:left;width:15%;">
+        	<?php
+	            echo $this->partial('setting/menu.phtml', array(
+        			'action'        => $this->action,
+        			'id'            => $this->data['id'],
+        			'templateType'  => $this->data['template_type'],
+        		));
+	        ?>   		
+        </div>
+        <div class="col-xs-9" style="float:right;width:83%;">
+        
+		    <div class="col-xs-12">
+		        <div class="page_title">
+		            <span><strong><?php echo $templateNameList[$this->data['template_type']]; ?> - 編集</strong>
+		            <a class="back" href="javacript:void(0);"><i class="icon-left-circled-1"></i></a></span>
+		        </div>
+		    </div>
+
+	        <form id="register_form">
+	        <input type="hidden" name="template_type" value="<?php echo $this->data['template_type']; ?>" />
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom"><p class="label_text strong">&nbsp;</p></th>
+	                <th class="delete_category" style="border-top:1px solid #ff0000;border-bottom:1px solid #ff0000;">
+	                    <a class="btn_cancel_category" href="javascript:void(0);">
+	                    <span>削除</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category edit_mode">
+	                    <a class="btn_save_category" href="javascript:void(0);"><span>保存</span></a>
+	                </th>
+	            </tr>
+	        </table>
+	        
+	        <table class="list_default" style="margin-bottom:13px;">
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">テンプレート名<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                    <input type="text" name="title" value="<?php echo $this->escape($this->data['title']); ?>" maxlength="">
+	                </td>
+	            </tr>        
+
+				<tr>
+                    <td class="column_label"><p class="label_text">内容<span class="require">＊</span></p></td>
+                    <td class="colon"><p class="label_text">：</p></td>
+                    <td class="column_value" style="height:auto;">
+                        <textarea name="message" style="width:99%;height:200px;margin-bottom:5px;"><?php echo $this->escape($this->data['message']); ?></textarea>
+                    </td>
+                </tr>
+			</table>
+			</form>
+		
+	</div><!-- clearfix -->	
+    </form>
+                
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,346 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+
+$newMode = 'edit';
+if ($this->mode === 'edit') {
+	$newMode = 'normal';
+}
+?>
+<link rel="stylesheet" type="text/css" media="all" href="/resource/js/viewerjs-1.0.0/dist/viewer.original.css?<?php echo date('ymdHi') ?>" />
+<script type="text/javascript" src="/resource/js/viewerjs-1.0.0/dist/viewer.min.js?<?php echo date('ymdHi') ?>"></script>
+<script type="text/javascript">
+var reloadFlag = false;
+$(function () {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+	$('#edit_mode').click( function(){
+		showSpinner();
+		$.ajax({
+	        type:'POST',
+	        dataType:'html',
+	        data:'mode=<?php echo $newMode; ?>',
+	        success:function(res){
+	        	stopSpinner();
+	            location.href = "/office-manual/top?id=<?php echo $this->escape($this->id); ?>&chapter_id=<?php echo $this->escape($this->chapterId); ?>";
+	        },
+	        error:function(){
+	        	stopSpinner();
+	            jAlert('予期せぬエラーが発生しました', 'エラー');
+	        },
+	        url:'/office-manual/mode?id=<?php echo $this->escape($this->id); ?>'
+	    });
+    });
+
+    $('.btn_down').click( function(){
+    	var targetId = $(this).attr('target-id');
+		showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'html',
+            data:'target_id=' + targetId,
+            success:function(res){
+            	stopSpinner();
+                location.href = '/office-manual/top?id=<?php echo $this->escape($this->id); ?>&chapter_id=<?php echo $this->escape($this->chapterId); ?>&pos=' + $(window).scrollTop();
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/office-manual/update-position?direction=down'
+        });
+    });
+    
+    $('.btn_up').click( function(){
+    	var targetId = $(this).attr('target-id');
+    	showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'html',
+            data:'target_id=' + targetId,
+            success:function(res){
+            	stopSpinner();
+                location.href = '/office-manual/top?id=<?php echo $this->escape($this->id); ?>&chapter_id=<?php echo $this->escape($this->chapterId); ?>&pos=' + $(window).scrollTop();
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/office-manual/update-position?direction=up'
+        });
+    });
+
+    $('.btn_delete').click( function(){
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success: function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/office-manual/delete-item'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+           location.href = '/office-manual/top?id=<?php echo $this->escape($this->id); ?>&chapter_id=<?php echo $this->escape($this->chapterId); ?>&pos=' + $(window).scrollTop();
+        }
+    });
+     
+	var viewer;
+	$('#reset').click( function(){
+		$('.viewer-reset').click();
+	});
+	$(document).ready(function() {
+		var options = {
+			fullscreen:false,
+			rotatable:false,
+			transition:true,
+			scalable:false,
+			title:false,
+			built:function () {
+			  console.log('built!!!!!!');
+			},
+			shown: function () {
+			  console.log('shown!!!!!!');
+			  $('.viewer-play').hide();
+			  $('.viewer-one-to-one').hide();
+			  $('.viewer-play').hide();
+			  $('.viewer-zoom-in').hide();
+			  $('.viewer-zoom-out').hide();
+			  $('.viewer-reset').hide();
+			  
+			  $('#viewer_explanation').show();
+			  
+			  $('#zoom_in_area').show();
+			  $('#zoom_out_area').show();
+			  $('#reset_area').show();
+
+			  setTimeout(showClose, 500);
+			  setTimeout(hideExplanation, 5000);
+			},
+			viewed: function () {
+			  console.log('viewed!!!!!!');
+			  $('#viewer_explanation').hide();
+			},
+			hide: function () {
+				$('#zoom_in_area').hide();
+				$('#zoom_out_area').hide();
+				$('#reset_area').hide();
+				
+				$('.viewer-close').hide();
+			}
+		};
+		viewer = new Viewer(document.getElementById('images_base'), options);
+	});
+
+	$('#images a').click( function(){
+		viewer.view($(this).attr('target-index'));
+		viewer.show();
+	});
+});
+
+var showClose = function() {
+    $('.viewer-close').show();
+};
+
+var hideExplanation = function() {
+    $('#viewer_explanation').fadeOut();$('.viewer-close').show();
+};
+</script>
+<style type="text/css">
+div.left_menu {float:left;width:390px;background:#fafafa;margin-right:10px;padding-bottom:3px;}
+div.left_menu .inner a {padding:5px 0 5px 10px;display:block;background-color:#d8efff;margin:3px 3px 0;text-decoration:none;}
+div.left_menu .inner a:hover {text-decoration:none;background-color:#42b2ff;color:#fff;}
+div.left_menu .inner a.selected {background-color:#348acc;color:#fff;}
+div.left_menu .inner a.selected:hover {text-decoration:none;background-color:#3997de;}
+
+div.main_content {float:left;width:860px}
+.title_area_frame {border:1px solid #ccc;}
+.info {background-color:#dee5fa;padding:0.4em 0.8em;color:#001971;}
+.title_area {background-color:#d6eeff;}
+.title_area h2 {padding-top:5px;padding-bottom:5px;padding-left:10px;font-size:1.6em;float:left;width:560px;line-height:1.6em;}
+a.btn_edit_category, a.btn_cancel_category {float:right;text-align:center;margin-left:1px;}
+a.btn_edit_category i, a.btn_cancel_category i {margin-top:-3px;padding-left:1px;font-size:20px;color:#FFF;line-height:1;display:block;}
+div.main_content .inner {padding:10px;}
+div.main_content .content_frame {border:1px solid #ccc;margin-bottom:10px;}
+.add_frame {margin-bottom:10px}
+.add_frame a.add_item {width:8em;margin:0 auto;background-color:#00469b;color:#fff;display:block;padding:0.5em 0;text-align:center}
+
+a.btn_edit_category.inactive {background-color:#aaa;}
+.red {color:#f00;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:110px;right:0;">
+                <a class="btn_setting" id="edit_mode" style="display:block;float:left;width:110px;padding:5px 0;margin:0;border:none;" href="javascript:void(0);"><?php if ($this->mode === 'edit') { ?>編集モード終了<?php } else { ?>編集モード<?php } ?></a>
+            </p>
+	        <span style=""><strong>マニュアル</strong></span>
+	    </div>
+        <div class="item_title clearfix">
+	        <a class="btn_setting" style="float:right;margin-bottom:0;" href="/office-manual/detail?id=<?php echo $this->escape($this->id); ?>">マニュアル情報編集</a>
+	        
+    	    <?php
+                $name = '---';
+                if (!empty($this->manual['manager_user_id'])) {
+	                $userTable = new Shared_Model_Data_User();
+	                $userData = $userTable->getById($this->manual['manager_user_id']);
+	                $name = $this->escape($userData['department_name'] . '　' . $userData['user_name']);
+                }
+            ?>
+	                
+        	<p class="item_name" style="float:left;width:800px;line-height:1.6"><?php echo $this->escape($this->manual['title']); ?><br>管理責任者：<?php echo $this->escape($name); ?></p>
+        	
+        </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="left_menu">
+			<div class="title_area_frame">	
+				<div class="title_area clearfix">
+					<h2 style="width:120px;font-size:1.2em;">チャプター</h2>
+					<?php if ($this->mode === 'edit') { ?>
+						<a class="btn_edit_category" class="btn_edit" href="/office-manual/chapter-list?id=<?php echo $this->escape($this->id); ?>"><span id="btn_edit_label"><i class="budicon-setting"></i></span></a>
+					<?php } ?>
+				</div>
+			</div>
+			<div class="inner">
+				<?php if (!empty($this->chapterList)) { ?>
+					<?php foreach ($this->chapterList as $eachChapter) { ?>
+						<a href="/office-manual/top?id=<?php echo $this->escape($this->id); ?>&chapter_id=<?php echo $this->escape($eachChapter['id']); ?>" <?php if ((string)$eachChapter['id'] === (string)$this->chapterId) { ?>class="selected"<?php } ?>><?php echo $this->escape($eachChapter['chapter_name']); ?></a>
+					<?php } ?>
+				<?php } ?>
+			</div>
+		</div>
+		
+		<div class="main_content" id="images_base">
+			<?php if ($this->mode === 'edit' && !empty($this->chapterId)) { ?>
+			<div class="add_frame">
+				<a class="add_item" href="/office-manual/item-detail?chapter_id=<?php echo $this->escape($this->chapterId); ?>&pos=0"><span><i class="icon-plus-1"></i></span></a>
+			</div>
+			<?php } ?>
+			
+			<?php
+				$blockCount = 0;
+				$lastCount = count($this->items);
+			?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<div class="content_frame">
+						
+						<div class="title_area clearfix">
+							<h2><?php echo $this->escape($each['title']); ?></h2><?php /*'　<small>' . $each['content_order'] . '</small>'*/ ?>
+							<?php if ($this->mode === 'edit') { ?>
+								<a class="btn_cancel_category btn_delete" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>"><span id="btn_edit_label"><i class="icon-trash-1"></i></span></a>
+								<a class="btn_edit_category btn_edit" href="/office-manual/item-detail?chapter_id=<?php echo $this->escape($this->chapterId); ?>&item_id=<?php echo $this->escape($each['id']); ?>"><span id="btn_edit_label"><i class="budicon-setting"></i></span></a>
+								<a class="btn_edit_category <?php if ($blockCount === $lastCount - 1) { echo 'inactive'; } else { echo 'btn_down';} ?>" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>"><span id="btn_edit_label"><i class="icon-down"></i></span></a>
+								<a class="btn_edit_category <?php if ($blockCount === 0) { echo 'inactive'; } else { echo 'btn_up';} ?>" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>"><span id="btn_edit_label"><i class="icon-up"></i></span></a>
+							<?php } ?>
+						</div>
+						
+						<div class="info clearfix">
+							<p style="margin-bottom:0.3em;">
+								<?php
+									$countUp = 0;
+									for ($count = 1; $count <= 6; $count++ ) {
+										if (!empty($each['keyword_' . $count])) {
+											if ($countUp > 0) {
+												echo ' / ';
+											}
+										
+											echo $this->escape($each['keyword_' . $count]);
+											$countUp++;
+										}
+									}
+								?>
+							</p>
+							<p>最終更新：<?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?>　最終更新者：<?php echo $this->escape($each['user_name']); ?></p>
+						</div>
+						<div class="inner">
+							<?php if ($each['content_type'] === (string)Shared_Model_Code::MANUAL_CONTENT_TYPE_TEXT) { ?>
+								<?php
+									$content = str_replace('[*', '<span style="font-size:1.4em">', str_replace('*]', '</span>', $each['content']));
+									$content = str_replace('[[', '<strong>', str_replace(']]', '</strong>', $content));
+									$content = str_replace('{{', '<span class="red">', str_replace('}}', '</span>', $content));
+									echo nl2br($content);
+								?>
+							<?php } else { ?>
+								<?php
+									$fileList = json_decode($each['content'], true);
+    								
+									if (!empty($fileList)) {
+										foreach ($fileList as $eachFile) {
+								?>
+									<div class="clearfix">
+										<div style="border-bottom:1px solid #ccc;padding-bottom:0.5em">
+											<?php if ($each['content_type'] === (string)Shared_Model_Code::MANUAL_CONTENT_TYPE_IMAGE) { ?>
+												<img src="<?php echo Shared_Model_Resource_Manual::getResourceUrl($this->id, $each['id'], $eachFile['file_name']); ?>" style="max-width:100%;display:block;margin-bottom:0.2em;border:1px solid #ccc;">
+											<?php } else { ?>
+												<div style="float:left;width:50px;padding:15px 0 0 10px;">
+													<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+												</div>
+												<div class="multi_rows_padding" style="padding-left:18px;">
+													<span class="file_name_text"><?php echo $this->escape($eachFile['file_name']); ?></span>
+												</div>
+												<a class="btn_setting" style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_Manual::getResourceUrl($this->id, $each['id'], $eachFile['file_name']); ?>">ダウンロード</a>
+											<?php } ?>
+											<p style="padding-left:18px;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Manual::getFileSize($this->id, $each['id'], $eachFile['file_name']), 2); ?></p>
+										</div>
+										<div style="margin-bottom:1.4em;">
+											<?php
+												$summary = str_replace('[*', '<span style="font-size:1.4em">', str_replace('*]', '</span>', $eachFile['summary']));
+												$summary = str_replace('[[', '<strong>', str_replace(']]', '</strong>', $summary));
+												$summary = str_replace('{{', '<span class="red">', str_replace('}}', '</span>', $summary));
+												echo nl2br($summary);
+											?>
+										</div>
+									</div>
+								<?php 
+										}
+									} 
+								?>
+							<?php } ?>
+						</div>
+					</div>
+					
+					<?php if ($this->mode === 'edit') { ?>
+					<div class="add_frame">
+						<a class="add_item" href="/office-manual/item-detail?chapter_id=<?php echo $this->escape($this->chapterId); ?>&pos=<?php echo $this->escape($each['content_order']); ?>"><span><i class="icon-plus-1"></i></span></a>
+					</div>
+					<?php } ?>
+					
+					<?php $blockCount++; ?>
+				<?php } ?>
+			<?php } ?>
+		</div><!-- main content -->
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

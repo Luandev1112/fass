@@ -1,0 +1,29 @@
+<div class="error">
+
+<h1><?php echo $this->title ?></h1>
+<?php foreach ($this->messages as $message) : ?>
+  <p class="message"><?php echo $this->escape($message) ?></p>
+<?php endforeach ?>
+
+<?php if (isset($this->exception)): ?>
+
+<h3>Exception information:</h3>
+<p>
+  <b>Message:</b> <?php echo $this->exception->getMessage() ?>
+</p>
+
+<h3>Stack trace:</h3>
+<pre><?php echo $this->exception->getTraceAsString() ?>
+</pre>
+
+<h3>Request Parameters:</h3>
+<pre><?php echo $this->escape(var_export($this->request->getParams(), true)) ?>
+</pre>
+
+<h3>Queries:</h3>
+<pre><?php echo $this->showQueriesFromException($this->exception) ?>
+</pre>
+
+<?php endif ?>
+
+</div>

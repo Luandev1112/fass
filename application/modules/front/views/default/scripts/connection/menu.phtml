@@ -1,0 +1,19 @@
+<div class="menu_list connection clearfix">
+<a class="menu <?php if($this->action == 'history') echo "selected"; ?>" href="/connection/history?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">更新履歴</a>
+<a class="menu <?php if($this->action == 'progress') echo "selected"; ?>" href="/connection/progress?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">営業案件管理</a>
+<a class="menu <?php if($this->action == 'record') echo "selected"; ?>" href="/connection/record?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">議事録/資料</a>
+
+<a class="menu <?php if($this->action == 'transaction') echo "selected"; ?>" href="/connection/transaction?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">取引実績（発注受注）</a>
+<a class="menu <?php if($this->action == 'estimate') echo "selected"; ?>" href="/connection/estimate?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">見積提出実績</a>
+
+<a class="menu <?php if($this->action == 'sample') echo "selected"; ?>" href="/connection/sample?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">サンプル出荷</a>
+<a class="menu <?php if($this->action == 'contract') echo "selected"; ?>" href="/connection/contract?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">契約書</a>
+
+<a class="menu <?php if($this->action == 'basic') echo "selected"; ?>" href="/connection/basic?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>"><strong>基本情報</strong></a>
+<a class="menu <?php if($this->action == 'relational') echo "selected"; ?>" href="/connection/relational?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">サービス連携</a>
+<a class="menu <?php if($this->action == 'base') echo "selected"; ?>" href="/connection/base?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">納入先拠点</a>
+<a class="menu <?php if($this->action == 'department') echo "selected"; ?>" href="/connection/department?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">部門担当者</a>
+<a class="menu <?php if($this->action == 'sales-info') echo "selected"; ?>" href="/connection/sales-info?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">販売・受託情報</a>
+<a class="menu <?php if($this->action == 'provide-info') echo "selected"; ?>" href="/connection/provide-info?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->direct; ?>">仕入・委託情報</a>
+<a class="menu <?php if($this->action == 'investment-info') echo "selected"; ?>" href="/connection/investment-info?id=<?php echo $this->escape($this->id) ?>&direct=<?php echo $this->direct; ?>">投融資情報</a>
+</div>

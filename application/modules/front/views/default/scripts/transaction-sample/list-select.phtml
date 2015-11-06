@@ -1,0 +1,124 @@
+<?php
+$statusList      = Shared_Model_Code::codes('is_active');
+$stockStatusList = Shared_Model_Code::codes('stock_status');
+$typeList        = Shared_Model_Code::codes('item_type');
+?>
+<style type="text/css">
+.photo_image {padding:5px;width:90%;display:block;margin:0 auto;}
+.safety {color:#00a2ff;font-weight: bold;}
+.minimum{color:#ff00d2;font-weight: bold;}
+.is_safety {color:#00c486;font-weight:bold;}
+.is_caution {color:#ffba00;font-weight:bold;}
+.is_warning {color:#ff0000;font-weight:bold;}
+</style>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong>商品・資材選択</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="condition_items clearfix">
+		<form id="item_condition_form" action="javascript:$('#search_item').click();" method="get">
+			<p class="search_condition_title">検索条件</p>
+			
+			<div class="condition_items_row clearfix">
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">種別：</p>
+						<select id="type" name="type">
+                            <option value="">---</option>
+                        	<?php foreach ($typeList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['type']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="status" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+										
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+				</div>
+			</div>
+			
+			<div style="text-align:center">
+				<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+				<input type="submit" id="search_item" style="display:inline-block;width:150px;" value="検索">
+			</div>
+		
+		</form>
+	</div>
+</div>	
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<table class="list_default">
+		<tr>
+			<th style="width:7%;"><p>画像</p></th>
+			<th style="width:8%;"><p>ステータス</p></th>
+			<th><p>在庫資材名</p></th>
+			<th style="width:8%;"><p>選択</p></th>
+		</tr>
+		
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td>
+						<img class="photo_image" src="<?php echo Shared_Model_Resource_WarehouseItem::getResourceUrl($each['id'], $each['image_key']); ?>">
+					</td>
+					
+					<td>
+						<?php if ($each['status'] === (string)Shared_Model_Code::CONTENT_STATUS_ACTIVE) { ?>
+							<p class="status_active"><?php echo $statusList[$each['status']]; ?></p>
+						<?php } else { ?>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						<?php } ?>
+					</td>
+
+					<td>
+						<?php $name = ''; ?>
+						<?php if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+							<div class="multi_rows_padding"><?php echo $name = $this->escape($each['item_name']); ?></div>
+						<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+							<div class="multi_rows_padding"><?php echo $name = $this->escape($each['supply_product_name']); ?></div>
+						<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+							<div class="multi_rows_padding"><?php echo $name = $this->escape($each['supply_fixture_name']); ?></div>
+						<?php } else { ?>
+							<div class="multi_rows_padding"><?php echo $name = $this->escape($each['stock_name']); ?></div>
+						<?php } ?>
+					</td>
+				
+					<td>
+						<a class="option" href="javascript:selectItem('<?php echo $this->escape($each['id']); ?>', '<?php echo $this->escape($name); ?>', '<?php echo $this->unitTypeList[$each['unit_type']]['symbol']; ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="7">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding: 2.0em 0 5.0em;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+

@@ -1,0 +1,168 @@
+<?php
+$costCalcStatusList = Shared_Model_Code::codes('cost_calc_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+   		Tipped.create('#help_keyword', "商品ID / 商品名 / 仕入名");
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    //$('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+		$('#condition_form').submit();
+	});
+});
+</script>
+<style type="text/css">
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>原価計算</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="/price/cost" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+				
+				<div class="condition_items_row clearfix">
+					<?php /*
+					<div class="condition_item">
+						<p class="condition_label">商品区分：</p>
+                        <select id="user_id_in_charge" name="stock_status">
+                            <option value="">---</option>
+                        	<?php foreach ($stockStatusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['stock_status']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					*/ ?>
+
+					<div class="condition_item">
+						<p class="condition_label">原価計算ステータス：</p>
+                        <select id="cost_calc_status" name="cost_calc_status">
+                            <option value="">---</option>
+                        	<?php foreach ($costCalcStatusList as $key => $value) { ?>
+                                <option value="<?php echo $this->escape($key); ?>" <?php if ($this->conditions['cost_calc_status'] === (string)$key) echo 'selected="selected"';?>><?php echo $this->escape($value); ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">キーワード<span class="popup_help" id="help_keyword">&nbsp;<i class="icon-help-circled"></i></span>：</p>
+						<input type="text" name="keyword" value="<?php echo $this->escape($this->conditions['keyword']); ?>">
+					</div>
+				</div>
+
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>	
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:15%;"><p>最終更新日時</p></th>
+				<th style="width:12%;"><p>ステータス</p></th>
+				<th style="width:10%;"><p>商品ID</p></th>
+				<th><p>商品名<i class="icon-info-circle"></i></p></th>
+				<th style="width:10%;"><p>製品原価</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<p><?php
+								if (empty($each['cost_calc_updated'])) {
+									echo '---';
+								} else {
+									echo $each['cost_calc_updated'];
+								}
+							?></p>
+						</td>
+						
+						<td>
+							<p><?php 
+								if ($each['cost_calc_status'] === (string)Shared_Model_Code::COST_CALC_STATUS_APPROVED) {
+									echo '<span class="status_active">' . $costCalcStatusList[$each['cost_calc_status']] . '</span>';
+								} else {
+									echo $costCalcStatusList[$each['cost_calc_status']];
+								}
+							?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+
+						<?php 
+						$allName = '';
+						if (!empty($each['item_name'])) {
+							$allName .= "<span class='product_name'>商品名</span>&nbsp;" . str_replace("'", '&quot;', $this->escape($each['item_name'])) . '<br />';
+						}
+						
+						if (!empty($each['buying_item_name'])) {
+							$allName .= "<span class='import_name'>仕入名</span>&nbsp;" . str_replace("'", '&quot;', $this->escape($each['buying_item_name'], 40)) . '<br />';
+						}
+						?>
+						<td class="desc" all-content="<?php echo $allName; ?>">
+							<div class="multi_rows_padding">
+								<?php if (!empty($each['item_name'])) { ?>
+								<span class="product_name">商品名</span>&nbsp;<?php echo $this->escape($this->roundText($each['item_name'], 38)); ?><br />
+								<?php } ?>
+								<?php if (!empty($each['buying_item_name'])) { ?>
+								<span class="import_name">仕入名</span>&nbsp;<?php echo $this->escape($this->roundText($each['buying_item_name'], 38)); ?><br />
+								<?php } ?>
+							</div>
+						</td>
+
+						<td>
+							<p></p>
+						</td>
+						
+						<td>
+							<p><a href="/price/version-list?id=<?php echo $each['id']; ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

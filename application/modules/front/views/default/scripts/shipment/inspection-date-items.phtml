@@ -1,0 +1,69 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+    
+	$('#inspection_user_id').change(function() {
+	  $('#search_form').submit();
+	});
+});    
+</script>
+<style type="text/css"><!--
+table.list_default tr:hover td {background: #deeeff;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>検品履歴 - <?php echo $this->escape($this->inspectionDate); ?><?php if (!empty($this->inspectionUser)) { echo '（' . $this->escape($this->inspectionUser['user_name']) . '）'; } ?></strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:30%;">
+					<p>注文番号</p>
+				</th>
+
+				
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+				
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['relational_order_id']); ?></p>
+						</td>
+						
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="8">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,85 @@
+<?php
+$statusList   = Shared_Model_Code::codes('shipment_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+
+    });
+});    
+</script>
+<style type="text/css"><!--
+
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute; width:76px; right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/shipment/format-add">新規登録</a>
+            </p>
+	        <span style=""><strong>注文取込フォーマット</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>フォーマットID</p>
+				</th>
+
+				<th >
+					<p>フォーマット名</p>
+				</th>
+
+				<th style="width:15%;">
+					<p>作成日時</p>
+				</th>
+				
+				<th style="width:15%;">
+					<p>更新日時</p>
+				</th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['id']; ?></p>
+						</td>
+		
+						<td>
+							<p><a href="/shipment/format-detail?id=<?php echo $each['id']; ?>"><?php echo $each['name']; ?></a></p>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y/m/d H:i:s', strtotime($each['created'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y/m/d H:i:s', strtotime($each['updated'])); ?></p>
+						</td>
+						
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

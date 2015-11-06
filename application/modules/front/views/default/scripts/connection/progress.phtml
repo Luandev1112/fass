@@ -1,0 +1,252 @@
+<?php
+$startTypeList        = Shared_Model_Code::codes('progress_start_type');
+$startTypeShortList   = Shared_Model_Code::codes('progress_start_type_short');
+$importanceList       = Shared_Model_Code::codes('progress_importance');
+$importanceShortList  = Shared_Model_Code::codes('progress_importance_short');
+$possibilityList      = Shared_Model_Code::codes('progress_possibility');
+$possibilityShortList = Shared_Model_Code::codes('progress_possibility_short');
+?>
+<script type="text/javascript">
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+		
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });	
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+.multi_rows_padding {padding:0 0 0 3px;float:left;}
+table.list_default tr th p, table.list_default tr td p {padding:11px 0 0 3px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:inline-block;font-size:12px;margin:1px 3px 0 0;padding:5px 10px 3px 10px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+span.after {color:#3b5bc5}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>取引先 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>   
+    </div>
+
+	<table class="list_default" style="margin-bottom:1.0em;">
+        <tr>
+            <th class="border-left border-top border-bottom border-right">
+                <p class="label_text strong" style="padding:11px 0 0 12px">営業案件管理</p>
+            </th>
+        </tr>
+	</table>
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+	    
+	<?php
+	$userTable = new Shared_Model_Data_User();
+	$itemTable = new Shared_Model_Data_Item();	
+	?>
+	<table class="list_default">
+		<tr>
+			<th style="width:10%;"><p>ID/更新/担当</p></th>
+			<th style="width:9%;"><p>取引先</p></th>
+			<th style="width:10%;"><p>業種&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:12%;"><p>案件対象商品&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:10%;"><p>発足区分&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:6%;"><p>重要度&nbsp;<i class="icon-info-circle"></i></p></th>	
+			<th style="width:6%;"><p>可能性&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:10%;"><p>実績&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th><p>宿題&nbsp;<i class="icon-info-circle"></i></p></th>
+		</tr>
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+		    	<tr>
+				    <td>
+					    <div class="multi_rows_padding">
+						<?php echo $this->escape($each['display_id']); ?><br>
+					    <?php echo date('Y-m-d', strtotime($each['updated'])); ?><br>
+		                <?php
+			                $userData = $userTable->getById($each['user_id']);
+			                if (!empty($userData)) {
+			                	echo $this->escape($this->roundText($userData['user_name'] . '(' . $userData['department_name'] . ')', 8));
+			                }
+		                ?>
+					    <a class="option show_detail" style="margin-bottom:5px;" href="/connection-progress/detail?id=<?php echo $this->escape($each['id']); ?>&from=detail">詳細</a>
+					    </div>
+				    </td>
+				    <td>
+					    <div class="multi_rows_padding">
+				    	<?php echo $this->escape($each['company_name']); ?><br>
+				    	<?php if (!empty($each['area_name'])) { echo '(' . $this->escape($each['area_name']) . ')<br>'; } ?>
+					    </div>
+			    	</td>
+
+                	<?php
+                		$selectedItems = array();
+                		$industryTypes = unserialize($each['industry_types']);
+						
+                		if (!empty($industryTypes)) {
+	                		foreach ($this->industryList as $eachIndustry) {
+		                		foreach($industryTypes as $eachSelected) {
+			                		if ($eachSelected == $eachIndustry['id']) {
+			                			$selectedItems[] = $this->escape($eachIndustry['name']);
+			                		}
+		                		}
+		                	}
+	                	}
+	                ?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $selectedItems); ?>">
+				    	<div class="multi_rows_padding">
+
+			                <?php	
+			                	echo $this->roundText(implode('&nbsp;/&nbsp;', $selectedItems), 56);
+		                	?>
+				    	</div>
+			    	</td>
+					
+					
+					<?php
+						$itemIds  = unserialize($each['item_ids']);
+						$itemNameList      = array();
+						$itemNameListShort = array();
+						if (!empty($itemIds)) {
+							$count = 1;
+							foreach ($itemIds  as $eachId) {
+								$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $eachId);
+								$itemNameList[] = $this->escape($itemData['item_name']);
+								
+								if ($count <= 5) {
+									$itemNameListShort[] = $this->escape($this->roundText($itemData['item_name'], 8));
+								}
+								
+								$count++;
+							}
+						}
+					?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $itemNameList); ?>">
+				    	<div class="multi_rows_padding">
+							<?php echo implode('<br>', $itemNameListShort); ?>
+				    	</div>
+			    	</td>
+			    		    	
+			    	<td>
+				    	<div class="multi_rows_padding">
+				    	<?php echo $startTypeList[$each['start_type']]; ?><br>
+				    	<?php echo $this->escape($each['tag_name']); ?>
+				    	</div>
+			    	</td>
+			    	
+			    	<td class="desc" all-content="<?php echo $importanceList[$each['importance']]; ?>">
+				    	<p><?php echo $importanceShortList[$each['importance']]; ?></p>
+			    	</td>
+			    	
+			    	<td class="desc" all-content="<?php echo $possibilityList[$each['possibility']]; ?>">
+				    	<p><?php echo $possibilityShortList[$each['possibility']]; ?></p>
+			    	</td>
+
+            		<?php
+	            		$progressItems = array();
+	            		$progressItemsShort = array();
+	            		$lineCount = 0;
+	            		
+	            		$after = unserialize($each['after']);
+            			if (!empty($after)) {
+                			foreach ($this->afterList as $eachAfter) {
+		                		foreach($after as $eachSelected) {
+			                		if ($eachSelected == $eachAfter['id']) {
+			                			$progressItems[] = $this->escape($eachAfter['title']);
+			                			
+			                			if ($lineCount < 5) {
+				                			$progressItemsShort[] = '<span class="after">' . $this->escape($this->roundText($eachAfter['title'], 7)) . '</span>';
+			                			}
+			                			
+			                			$lineCount++;
+			                		}
+		                		}
+	                		}
+	                	}
+	                	
+	            		$progress = unserialize($each['progress']);
+            			if (!empty($progress)) {
+                			foreach ($this->progressList as $eachProgress) {
+		                		foreach($progress as $eachSelected) {
+			                		if ($eachSelected == $eachProgress['id']) {
+			                			$progressItems[] = $this->escape($eachProgress['title']);
+			                			
+			                			if ($lineCount < 5) {
+			                				$progressItemsShort[] = $this->escape($this->roundText($eachProgress['title'], 7));
+			                			}
+			                			$lineCount++;
+			                		}
+		                		}
+	                		}
+	                	}
+	                	
+            		?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $progressItems); ?>">
+				    	<div class="multi_rows_padding">
+							<?php echo implode('<br>', $progressItemsShort); ?>
+						</div>
+					</td>
+					
+					<td class="desc" all-content="<?php echo nl2br($this->escape($each['task'])); ?>">
+						<div class="multi_rows_padding">
+							<?php
+								if (!empty($each['has_no_task'])) {
+									echo '宿題なし';
+								} else {
+									$exploded = explode("\n", $each['task']);
+									
+									for ($i = 0; $i < 5; $i++) {
+										if (!empty($exploded[$i])) {
+											echo $this->roundText($exploded[$i], 22) . '<br>';
+										}
+									}
+								}
+							?>
+						</div>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="9">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+
+</div>
+</div>
+</div>
+</div>
+

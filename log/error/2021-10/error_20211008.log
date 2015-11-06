@@ -1,0 +1,8 @@
+2021-10-08T23:51:09+09:00 (NOTICE): Invalid controller specified (wp-content) %info%
+2021-10-08T23:51:09+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp-content
+    [module] => front
+    [action] => index
+)
+

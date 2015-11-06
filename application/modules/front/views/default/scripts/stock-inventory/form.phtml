@@ -1,0 +1,385 @@
+<?php
+$payementConditionList       = Shared_Model_Code::codes('order_payment_condition');
+$payementConditionMonthList  = Shared_Model_Code::codes('connection_payment_condition_month');
+$payementMonthlyList         = Shared_Model_Code::getPayementMonthlyList();
+$timingList                  = Shared_Model_Code::codes('shipment_timing');
+$deliveryCostList            = Shared_Model_Code::codes('delivery_cost');
+$stockTypeList               = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+var pos = 0;
+var reloadFlag = false;
+var rowCount = 0;
+var targetItemRow = '';
+
+function updateEdited(edited) {
+	isEdited = edited;
+	if (isEdited) {
+		$('.btn_estimate_save').removeClass('inactive');
+		$('.btn_estimate_preview').addClass('inactive');
+		$('.btn_save').addClass('inactive');
+	} else {
+		$('.btn_estimate_save').addClass('inactive');
+		$('.btn_estimate_preview').removeClass('inactive');
+		$('.btn_save').removeClass('inactive');
+	}
+}
+
+$(function() {
+    $(document).ready(function(){
+		calculate();
+    });
+
+  	$('input[type="text"]').on('input', function(e) {
+		updateEdited(true);
+  	}); 			    
+
+  	$('textarea').on('input', function(e) {
+		updateEdited(true);
+  	});
+
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/stock-inventory/history";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_estimate_save').click( function(){
+	    showSpinner();
+	    
+        var $form = $('#register_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                    
+                } else if(obj.result == 'OK') {
+	                updateEdited(false);
+                    return;
+                    
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/stock-inventory/save?id=<?php echo $this->escape($this->data['id']); ?>'
+		});
+	});
+
+    //
+    // 承認申請
+    //
+    $('.btn_save').click( function(){
+	    if ($(this).hasClass('inactive')) {
+		    jAlert('先に保存してください', '　');
+		    return;
+	    }
+	    
+		jQuery.alerts.yesButton = 'はい';
+		jQuery.alerts.cancelButton = 'もう一度確認';
+        jConfirm('計算や誤字、漏れなどの軽度なミスが無いことを最終チェック済みですか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+		        var $form = $('#register_form');
+		        var params = $form.serializeArray();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;jAlert('承認申請しました', '　');return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/stock-inventory/apply-apploval?id=<?php echo $this->escape($this->id); ?>'
+				});
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/stock-inventory/history';
+        }
+    });
+    
+    // 自動計算
+  	$('input').on('input', function(e) {
+		calculate();
+  	});
+});
+
+function separate(num){
+	var delimiter = '.'; // 小数点。
+	var splitedNum = num.toString().split(delimiter);
+	
+	
+	if (splitedNum[1]) {
+		return splitedNum[0].replace(/(\d)(?=(\d{3})+$)/g , '$1,') + delimiter + splitedNum[1];
+	}
+	
+	return splitedNum[0].replace(/(\d)(?=(\d{3})+$)/g , '$1,');
+	
+	
+    //return num.toLocaleString();
+}
+function isNumber(n) { return /^-?[\d.]+(?:e-?\d+)?$/.test(n); } 
+function initValue(value) {
+	if (isNumber(value)) {
+		return parseInt(value);
+	}
+	return 0;
+}
+
+// https://qiita.com/k_moto/items/0b576a3351b77fb0aa98
+
+function getDotPosition(value){
+  // 数値のままだと操作できないので文字列化する
+  var strVal = String(value);
+  var dotPosition = 0;
+
+  //　小数点が存在するか確認
+  if(strVal.lastIndexOf('.') === -1){
+    // 小数点があったら位置を取得
+    dotPosition = (strVal.length-1) - strVal.lastIndexOf('.');
+  }
+
+  return dotPosition;
+}
+
+function calcSubtract(value1, value2){
+ // それぞれの小数点の位置を取得
+ var dotPosition1 = getDotPosition(value1);
+ var dotPosition2 = getDotPosition(value2);
+
+ // 位置の値が大きい方（小数点以下の位が多い方）の位置を取得
+ var max = Math.max(dotPosition1,dotPosition2);
+
+//console.log('dotPosition1:' + dotPosition1);
+//console.log('dotPosition2:' + dotPosition2);
+
+ // 大きい方に小数の桁を合わせて文字列化、
+ // 小数点を除いて整数の値にする
+ var intValue1 = parseInt((value1.toFixed(max) + '').replace('.', ''));
+ var intValue2 = parseInt((value2.toFixed(max) + '').replace('.', ''));
+
+ // 10^N の値を計算
+ var power = Math.pow(10, max);
+
+
+console.log(intValue1 + ' ++ ' + intValue2);
+
+
+ // 整数値で引き算した後に10^Nで割る
+ return (intValue1 - intValue2) / power;
+
+}
+
+function calculate() {
+	var allTotal = 0;
+	
+	for (var i = 1; i <= <?php echo count($this->items); ?>; i++) {
+		var targetId = $('tr#' + i).attr('target-id');
+		var unit_price   = parseFloat($('input[name="' + targetId + '_unit_price"]').val().split(',').join(''));
+		var theory_stock = parseFloat($('#' + targetId + '_theory_stock').html().split(',').join(''));
+		
+		var input_amount = parseFloat($('input[name="' + targetId + '_input_amount"]').val().split(',').join(''));
+		
+		if (unit_price && input_amount) {
+			var total = unit_price * input_amount;
+			allTotal += total;
+			$('#' + targetId + '_total').html(separate(Math.floor(total)));
+		}
+		
+		if (isNaN(theory_stock)) {
+			theory_stock = 0;
+		}
+
+		if (isNaN(input_amount)) {
+			input_amount = 0;	
+		}
+		
+		
+		var diff = calcSubtract(input_amount, theory_stock);
+		//console.log(diff);
+		
+		if (diff >= 0) {
+			$('#' + targetId + '_diff').removeClass('minus').addClass('plus');
+		} else {
+			$('#' + targetId + '_diff').removeClass('plus').addClass('minus');
+		}
+		
+		$('#' + targetId + '_diff_count').html(separate(diff));
+	}
+	
+	$('#all_total').html(separate(Math.floor(allTotal)));
+	
+}
+
+</script>
+<style type="text/css">
+table.list_default tr td {padding:5px;height:auto;}
+table.list_default tr td p {height:auto;line-height:1.3;padding-top:4px;float:left;}
+table.list_default tr td textarea{height:100%;margin: 0}
+table.list_default tr td input {display:block;float:right;width:8em;text-align:right;}
+table.list_default tr td input[type="text"] {margin-top:0;}
+table.list_default tr p.align_center {text-align:center;padding-left:0;}
+.photo_image {height:60px;display:block;margin:0 auto;}
+.align_right {text-align:right;}
+.multi_rows_padding {padding:0 6px}
+table.list_default tr:hover td {background:#dbfffe;}
+
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+
+p.minus {color:#f00;}
+p.plus {color:#000;}
+table.list_default tr td p.diff_val {padding:0;margin-top:0.6em;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>棚卸在庫数入力　　実施日：<?php echo $this->data['target_date']; ?>　　在庫資材種別：<?php echo $stockTypeList[$this->data['stock_type']]; ?>　　合計資産額：<span id="all_total" style="display:inline"><?php echo $this->numberFormat($this->total); ?></span>&nbsp;円</strong></span>
+        </div>
+    </div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<form id="register_form">
+			<table class="list_default">
+				<tr>
+					<th style="width:6.5%;"><p>画像</p></th>
+					<th><p>在庫資材名</p></th>
+					<th style="width:11%;"><p class="align_center">棚卸単価(円)</p></th>
+					<th style="width:7%;"><p class="align_center">理論在庫数</p></th>
+					<th style="width:11%;"><p class="align_center">棚卸在庫数</p></th>
+					<th style="width:8%;"><p class="align_center">数量単位</p></th>
+					<th style="width:17%;"><p class="align_center">資産額(円・小数以下切り捨て)</p></th>
+					<th style="width:20%;"><p class="align_center">備考</p></th>
+				</tr>   
+				<?php if (!empty($this->items)) { ?>
+					<?php $count = 1; ?>
+					<?php foreach ($this->items as $each) { ?>
+						
+						<tr id="<?php echo $count; ?>" target-id="<?php echo $each['id']; ?>">
+							<td>
+								<img class="photo_image" src="<?php echo Shared_Model_Resource_WarehouseItem::getResourceUrl($each['warehouse_item_id'], $each['image_key']); ?>" />
+							</td>
+			
+							<td>
+								<?php if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['item_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_product_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_fixture_name']); ?></div>
+								<?php } else { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['stock_name']); ?></div>
+								<?php } ?>
+							</td>
+	
+							<td style="padding:5px">
+								<div class="clearfix">
+									<input type="text" name="<?php echo $this->escape($each['id']); ?>_unit_price" value="<?php if ((float)$each['unit_price'] !== 0.0) { echo $this->numberFormat($each['unit_price']); } ?>">
+								</div>
+							</td>
+							
+							<td>
+								<p class="align_right" id="<?php echo $this->escape($each['id']); ?>_theory_stock">
+									<?php echo $this->numberFormat($each['theory_stock']); ?>
+								</p>
+							</td>
+							
+							<td style="padding:5px">
+								<div class="clearfix">
+									<input type="text" name="<?php echo $this->escape($each['id']); ?>_input_amount" value="<?php if ((float)$each['input_amount'] !== 0.0) { echo $this->numberFormat($each['input_amount']); } ?>">
+									
+									<?php
+										$diff = (float)$each['input_amount'] - (float)$each['theory_stock'];
+										
+										$flag = 'minus';
+										if ($diff >= 0) {
+											$flag = 'plus';
+										}
+										
+									?>
+								</div>
+								<p id="<?php echo $this->escape($each['id']); ?>_diff" class="diff_val <?php echo $flag; ?>">差：<span id="<?php echo $each['id'] ?>_diff_count"><?php echo $this->numberFormat($diff); ?></span></p>
+							</td>
+							
+							<td>
+								<p class="align_center"><?php echo $this->unitTypeList[$each['unit_type']]['symbol']; ?></p>
+							</td>
+
+							<td style="padding:5px">
+								<p class="align_right" id="<?php echo $each['id']; ?>_total"></p>
+								<input id="hidden_<?php echo $this->escape($each['id']); ?>_total" type="hidden" name="<?php echo $this->escape($each['id']); ?>_total" value="">
+							</td>
+
+							<td style="padding:5px">
+								<textarea name="<?php echo $this->escape($each['id']); ?>_memo"><?php echo $this->escape($each['memo']); ?></textarea>
+							</td>
+						</tr>
+						<?php $count++; ?>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="8">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>
+			
+	    	<?php if (!empty($this->costData['approval_comment'])){ ?>
+		    	<div class="private_memo">
+		    		<p>修正依頼コメント</p>
+		    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->costData['approval_comment'])); ?></div>
+		    	</div>
+	    	<?php } ?>
+		</form>
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

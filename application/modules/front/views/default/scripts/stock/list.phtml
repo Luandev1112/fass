@@ -1,0 +1,202 @@
+<?php
+$statusList      = Shared_Model_Code::codes('warehouse_item_status');
+$stockStatusList = Shared_Model_Code::codes('stock_status');
+$typeList        = Shared_Model_Code::codes('item_type');
+$yesNoList       = Shared_Model_Code::codes('yes_no');
+?>
+<script type="text/javascript">
+$(function () {
+});    
+</script>
+<style type="text/css">
+table.list_default tr.inactive td{background-color:#ccc}
+table.list_default tr td {height:90px;}
+table.list_default tr td p {height:auto;line-height:1.6;}
+table.list_default tr td p.align_right {text-align:right;padding-right:12px;}
+table.list_default tr td .multi_rows_padding {padding:5px 10px 5px 10px;}
+.photo_image {padding:5px;width:90%;display:block;margin:0 auto;}
+.safety {color:#00a2ff;font-weight: bold;}
+.minimum{color:#ff00d2;font-weight: bold;}
+.is_safety {color:#00c486;font-weight:bold;}
+.is_caution {color:#ffba00;font-weight:bold;}
+.is_warning {color:#ff0000;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+		    <?php if ($this->allowEditing === true) { ?>
+				<p style="position:absolute;width:76px;right:0;">
+	                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/stock/add/<?php echo $this->escape($this->type); ?>">新規登録</a>
+	            </p>
+            <?php } ?>
+	        <span><strong>在庫資材管理 - <?php echo $typeList[$this->typeCode]; ?></strong></span>
+	    </div>
+	    
+	    <div class="menu_list clearfix">
+			<a class="menu <?php if($this->action == 'list') echo "selected"; ?>" href="/stock/list/<?php echo $this->escape($this->type); ?>">在庫数</a>
+			<a class="menu <?php if($this->action == 'list-analytics') echo "selected"; ?>" href="/stock/list-analytics/<?php echo $this->escape($this->type); ?>">分析</a>
+		</div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">		
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="user_id_in_charge" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">在庫状況：</p>
+                        <select id="user_id_in_charge" name="stock_status">
+                            <option value="">---</option>
+                        	<?php foreach ($stockStatusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['stock_status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+				
+				<input type="submit" value="検索">
+			
+			</form>
+		</div>
+	</div>
+	
+	<div class="legend" style="margin-bottom:2em;">
+		<img style="display:block;margin:10px auto;" src="/resource/img/stock_legend.png">
+		<p style="text-align:center;font-size:1.1em;line-height:1.3"><span style="font-weight:bold;color:#e300b6">最低在庫数</span> = 直近３ヶ月平均出荷数 × 警告基準期間（設定値）<br>
+		<span style="font-weight:bold;color:#1d89db">安全在庫数</span> = 直近３ヶ月平均出荷数 × 注意基準期間（設定値）</p>
+	</div>
+	
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>画像</p></th>
+				<th style="width:7%;"><p>ステータス</p></th>
+				<th><p>在庫資材名</p></th>
+				<th style="width:6%;"><p style="text-align:center;padding-left:0">DM便利用</p></th>
+				<th style="width:10%;text-align:center;"><p style="padding-left:0;">棚卸単価</p></th>
+				<th style="width:13%;"><p style="text-align:center;padding-left:0">直近１/3ヶ月平均出荷数</p></th>
+				<th style="width:15%;"><p style="text-align:center;padding-left:0">最低在庫数 / 安全在庫数</p></th>
+				<th style="width:10%;"><p style="text-align:center;padding-left:0">理論在庫数</p></th>
+				<th style="width:7%;"><p style="text-align:center;padding-left:0">数量単位</p></th>
+				<th style="width:5%;"><p style="text-align:center;padding-left:0">詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] === (string)Shared_Model_Code::ITEM_STATUS_INACTIVE) { echo 'class="inactive"'; }	?>>
+						<td>
+							<img class="photo_image" src="<?php echo Shared_Model_Resource_WarehouseItem::getResourceUrl($each['id'], $each['image_key']); ?>">
+						</td>
+						
+						<td>
+							<?php if ($each['status'] === (string)Shared_Model_Code::ITEM_STATUS_ACTIVE) { ?>
+								<p class="status_active"><?php echo $statusList[$each['status']]; ?></p>
+							<?php } else { ?>
+								<p><?php echo $statusList[$each['status']]; ?></p>
+							<?php } ?>
+						</td>
+
+						<td>
+							<?php if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($each['item_name']); ?></div>
+							<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($each['supply_product_name']); ?></div>
+							<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($each['supply_fixture_name']); ?></div>
+							<?php } else { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($each['stock_name']); ?></div>
+							<?php } ?>
+						</td>
+
+						<td>
+							<?php if ($each['use_dm'] === (string)Shared_Model_Code::CONTENT_STATUS_ACTIVE) { ?>
+								<p class="status_active"><?php echo $yesNoList[$each['use_dm']]; ?></p>
+							<?php } else { ?>
+								<p><?php echo $yesNoList[$each['use_dm']]; ?></p>
+							<?php } ?>
+						</td>
+							
+						<td>
+			                <p class="align_right">
+			                	<?php if ((float)$each['unit_price'] !== (float)0) { echo $this->numberFormat($each['unit_price']) . '&nbsp;円'; } else { echo '---'; } ?>
+		                	</p>
+						</td>
+
+						<td>
+							<p style="text-align:center;padding-left:0">
+								1ヶ月：<?php echo $this->numberFormat(floor($each['shipped_last_month'])); ?><br>
+								3ヶ月：<?php echo $this->numberFormat(floor($each['shipped_3_month_average'])); ?>
+							</p>
+						</td>
+						
+						<td>
+							<p style="text-align:center;padding-left:0">
+								<span class="minimum"><?php echo $this->numberFormat($each['minimum_count']); ?></span>
+								&nbsp;/&nbsp;
+								<span class="safety"><?php echo $this->numberFormat($each['safety_count']); ?></span>
+							</p>
+						</td>
+						
+						<td>
+							<?php
+								$class = 'is_safety';
+								if ((int)$each['stock_count'] < (int)$each['minimum_count']) { 
+									$class = 'is_warning';
+								} else if ((int)$each['stock_count'] < (int)$each['safety_count']) {
+									$class = 'is_caution';
+								}
+							?>
+							<p style="font-size:1.6em;text-align:right;padding-right:12px" class="<?php echo $class; ?>"><?php echo $this->numberFormat($each['stock_count']); ?></p>
+						</td>
+						
+						<td>
+							<p style="font-size:1.3em;text-align:center;padding-left:0;"><?php echo $this->unitTypeList[$each['unit_type']]['symbol']; ?></p>
+						</td>
+						
+						<td>
+							<p><a href="/stock/basic?id=<?php echo $this->escape($each['id']); ?>&from=list">詳細</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="9">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

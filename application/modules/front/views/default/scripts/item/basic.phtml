@@ -1,0 +1,463 @@
+<?php
+$statusList       = Shared_Model_Code::codes('item_status');
+$itemTypeCodeList = Shared_Model_Code::codes('item_type_code');
+$itemTypeList     = Shared_Model_Code::codes('item_type');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery.imgareaselect-0.9.10/css/imgareaselect-default.css" />
+<script type="text/javascript" src="/resource/js/jquery.imgareaselect-0.9.10/scripts/jquery.imgareaselect.pack.js"></script>
+
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+	
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('画像は一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData();
+    formData.append('image', fd);
+
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url: '/item/upload-image?id=<?php echo $this->data['id']; ?>',
+      data: formData,
+      dataType :'json'
+    }).done(function(res){
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;
+            
+        } else if(obj.result == true) {
+        	$('#add_image_box').removeClass('over');
+        
+        	$('#glayLayer').show();
+        	$('#overBoxLayer').show();
+			$('#overBoxLayerFlame .content').css('height', res.height + 40);
+			$('#overBoxLayerFlame img#crop_image').attr({'src':res.file_url});
+			
+	        $('#overBoxLayerFlame img#crop_image').imgAreaSelect({
+	            handles: false,
+	            aspectRatio : '1:1',
+	            onSelectEnd: function (img, selection) {
+	                $('input[name="x"]').val(selection.x1);
+	                $('input[name="y"]').val(selection.y1);
+	                $('input[name="w"]').val(selection.x2 - selection.x1);
+	                $('input[name="h"]').val(selection.y2 - selection.y1);
+	                $('input[name="base_image_key"]').val(obj.key);
+	            },
+	            x1: 0,
+	            y1: 0,
+	            x2: 100,
+	            y2: 100,
+	            maxWidth: 420,
+	            maxHeight: 420,
+	            minWidth: 100,
+	            minHeight: 100,
+	        });
+        }
+    });
+}
+
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		targetE.addEventListener('dragenter', function () {
+		    innerFlag = true;
+		}, false);
+		
+		targetE.addEventListener('dragover', function () {
+		    innerFlag = false;
+		    targetE.className = 'over';
+		}, false);
+		
+		targetE.addEventListener('dragleave', function () {
+		    if (innerFlag) {
+		        innerFlag = false;
+		    } else {
+		        targetE.className = '';
+		    }
+		}, false);
+    });
+	
+	// 切り取りキャンセル
+	$(document).on('click', '#btn_cancel_crop', function () {
+		$('#glayLayer').hide();
+	    $('#overBoxLayer').hide();
+		$('#overBoxLayerFlame img#crop_image').imgAreaSelect( {remove: true} );
+	});
+	
+	// 切り取り
+    $(document).on('click', '#btn_crop', function () {
+        var $form = $('#crop_area_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	var obj = res;
+            	
+            	if (obj.result == 'timeout') {
+		            location.href = '/login';
+		            return;
+		            
+		        } else if (obj.result == 'OK') {
+	        		$('#glayLayer').hide();
+	        		$('#overBoxLayer').hide();
+	        		$('#overBoxLayerFlame img#crop_image').imgAreaSelect( {remove: true} );
+
+					$('#photo_image').attr({'src':obj.image_url});
+	        	}
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/item/crop?id=<?php echo $this->data['id']; ?>'
+        });
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/item/update-basic?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/item/update-image?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '/item/list/<?php echo $itemTypeCodeList[$this->data['item_type']]; ?>';
+        	} else {
+            	location.href = '/item/basic?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/item/basic?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 削除
+    $(document).on('click', '.btn_delete_menu', function () {
+       jConfirm('本当に削除しますか', '　', function(r) {
+        	if(r) {
+        	   $.ajax({
+                    type:'POST',
+                    dataType:'html',
+                    data: 'id=<?php echo $this->id ?>',
+                    success: function(res){
+                        reloadFlag = true;
+                        deletedFlag = true;
+                        jAlert('削除しました', '　');
+                    },
+                    error: function(){
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/item/delete'
+                });
+                
+        	} else {
+        	    return false;
+        	}
+        });
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+</style>
+
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div id="overBoxLayerFlame">
+		<div class="header clearfix">
+			<a href="javascript:void(0);" id="btn_cancel_crop">キャンセル</a>
+			<a href="javascript:void(0);" id="btn_crop">切り取り</a>
+		</div>
+		<div class="content">
+			<img id="crop_image" src="" style="width:420px;"/>
+			
+	        <form id="crop_area_form" method="post" action="#">  
+		        <input type="hidden" name="x" value="0" />
+		        <input type="hidden" name="y" value="0" />
+		        <input type="hidden" name="w" value="0" />
+		        <input type="hidden" name="h" value="0" />
+		        <input type="hidden" name="base_image_key" value="" />
+	        </form>
+		</div>
+    </div><!-- overBoxLayerFlame -->
+</div>
+
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>在庫管理 - <?php echo $itemTypeList[$this->data['item_type']]; ?>詳細</strong></span>
+        </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        	<p class="stock">引当可能在庫数：<?php echo $this->escape($this->data['useable_count']); ?></p>
+        	<p class="stock">実在庫数：<?php echo $this->escape($this->data['stock_count']); ?></p>
+        </div>
+        
+    	<?php
+            echo $this->partial('item/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    			'itemType'  => $this->data['item_type'],
+    		));
+        ?>   
+    </div>
+
+    <div class="clearfix">
+
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">基本情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text"><?php echo $itemTypeList[$this->data['item_type']]; ?>ID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->data['item_type_id']; ?></p>
+                </td>
+            </tr>
+                 
+            <tr>
+                <td class="column_label"><p class="label_text">アイテム名(日本語)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['item_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="item_name" value="<?php echo $this->escape($this->data['item_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+			
+            <tr>
+                <td class="column_label"><p class="label_text">アイテム名(英語)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['item_name_en']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="item_name_en" value="<?php echo $this->escape($this->data['item_name_en']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">配送向け内容品表記(日本語)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['delivery_item_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="delivery_item_name" value="<?php echo $this->escape($this->data['delivery_item_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">配送向け内容品表記(英語)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['delivery_item_name_en']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="delivery_item_name_en" value="<?php echo $this->escape($this->data['delivery_item_name_en']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">JANコード</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->data['jan_code']; ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" class="short" name="jan_code" value="<?php echo $this->escape($this->data['jan_code']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+
+            
+            <tr>
+                <td class="column_label"><p class="label_text">検品用棚番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php if (!empty($this->data['shelf_no'])) { echo $this->data['shelf_no']; } else { echo '未設定'; } ?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" class="short" name="shelf_no" value="<?php echo $this->escape($this->data['shelf_no']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">商品内容</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>" style="height:auto;margin-bottom:12px;line-height:1.6;"><?php if (!empty($this->data['memo'])) { echo nl2br($this->data['memo']); } else { echo '---'; } ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['memo']); ?></textarea>
+					</div>
+                </td>
+            </tr>
+		            
+<!--        
+            <tr>
+                <td class="column_label"><p class="label_text">アラート在庫数</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                        <?php
+                    	if (!empty($this->data['alert_count'])) {
+                    		echo $this->escape($this->data['alert_count']);
+                    	} else {
+                    		echo '---';
+                    	}
+                    	?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" class="short" name="alert_count" value="<?php echo $this->escape($this->data['alert_count']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+-->
+
+		</table>
+		</form>
+
+
+	    <?php
+        /* 写真 */
+        $categoryId = 2;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #ddd;">
+                	<p class="label_text strong" style="float:left;">商品写真</p>
+                	<p style="float:right;padding-right:13px;">写真を変更するには画像ファイルをドラッグ&amp;ドロップ</p>
+                </th>
+            </tr>
+        </table>
+
+        
+		<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)" style="margin-bottom:13px;">
+			<img id="photo_image" style="max-width:300px;" src="<?php echo Shared_Model_Resource_Item::getResourceUrl($this->data['id'], $this->data['image_file_name']); ?>" />
+		</div>
+			
+		</form>
+				
+	</div><!-- clearfix -->	                
+
+</div>
+</div>
+</div>
+</div>
+

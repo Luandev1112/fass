@@ -1,0 +1,41 @@
+<?php
+
+?>
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong>テンプレート選択</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="template_list">
+		<?php foreach ($this->items as $each) { ?>
+			<div class="template_item">
+				<a class="select_template" template-id="<?php echo $this->escape($each['id']); ?>" template-name="<?php echo $this->escape($each['title']); ?>" href="javascript:void(0)">
+					<div class="image">
+						<?php if ($each['id'] == 9) { ?>
+							<img src="/resource/img/sample/thumb_estimate_upload.jpg" style="width:180px;" />
+						<?php } else { ?>
+							<img src="/resource/img/sample/estimate.jpg" style="width:180px;" />
+						<?php } ?>
+					</div>
+					<div class="description">
+						<p class="title"><?php echo $this->escape($each['title']); ?></p>
+					</div>
+				</a>
+			</div>
+		<?php } ?>
+	</div>        
+</div>
+<style type="text/css">
+.template_list .template_item {width:470px;margin-right:20px;margin-bottom:20px;float:left;border:1px solid #ccc;}
+.template_list .template_item a {display:table;width:100%;text-decoration:none;}
+.template_list .template_item a:hover {background:#deeeff;text-decoration:none;}
+.template_list .template_item .image {display:table-cell;width:200px}
+.template_list .template_item .image img{display:block;margin:10px;}
+.template_list .template_item .description {display:table-cell;vertical-align:top;padding:20px 10px;}
+.template_list .template_item .description p.title {font-weight:bold;font-size:1.3em;line-height:1.6}
+</style>

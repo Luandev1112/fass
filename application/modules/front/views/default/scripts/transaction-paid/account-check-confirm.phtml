@@ -1,0 +1,190 @@
+<?php
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->escape($this->posTop); ?>);
+        <?php } ?>
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	location.href = '<?php echo $this->escape($this->backUrl); ?>';
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/connection/basic?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 口座確認済み
+    $(document).on('click', '.btn_account_confirmed', function () {
+       jConfirm('口座確認済みにしますか', '　', function(r) {
+        	if(r) {
+        	   $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:'target_id=<?php echo $this->escape($this->id); ?>',
+                    success:function(res){
+                        reloadFlag = true;
+                        jAlert('口座確認済みにしました', '　');
+                    },
+                    error:function(){
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/connection/account-confirmed'
+                });
+                
+        	} else {
+        	    return false;
+        	}
+        });
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+table.list_default tr td.column_value input.zip {width:130px;}
+
+table.list_default tr td a.btn_account_confirmed {display:block;float:left;z-index:100;margin:5px 0 0px 5px;padding:7px 0.8em 5px;line-height:1;cursor:pointer;background-color:#2b9944;color:#fff;text-decoration:none;text-align:center}
+table.list_default tr td a.btn_account_confirmed:hover {text-decoration:none;background-color:#3bad55;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>口座確認 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    </div>
+
+    <?php
+    /* 基本情報 */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">振込先口座</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">       
+	         <tr>
+                <td class="column_label"><p class="label_text">振込先確認</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div>
+						<p style="float:left;"><?php 
+							if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_CONFIRMED) {
+								echo '確認済み　' . date('Y-m-d H:i:s', strtotime($this->data['gs_bank_confirmed_date_time']));
+								
+								if (!empty($this->confirmedUser)) {
+									echo '　　確認者：' . $this->escape($this->confirmedUser['user_name']);
+								}
+							} else if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_RENEWALED) {
+								echo '<span class="red">未確認</span>';
+							} else {
+								echo '---';
+							}
+						?></p>
+						
+						<?php if ($this->data['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_RENEWALED) { ?>
+							<a class="btn_account_confirmed">確認済みにする</a>
+						<?php } ?>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">振込先</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div class="multi_rows_padding">
+						<?php 
+							if ($this->data['gs_basic_bank_select'] !== (string)Shared_Model_Code::BASIC_BANK_OTHER) {
+								echo $basicbankList[$this->data['gs_basic_bank_select']] . '　(銀行コード：' . $this->data['gs_bank_code'] . ')';
+							} else {
+								echo $this->data['gs_other_bank_name'] . '　(銀行コード：' . $this->data['gs_bank_code'] . ')';
+							}
+						?><br>
+						<?php echo $this->escape($this->data['gs_bank_branch_name'])  . '　(支店コード：' . $this->data['gs_bank_branch_id'] . ')'; ?><br>
+						<?php echo $bankAccountTypeList[$this->data['gs_bank_account_type']]; ?>　<?php echo $this->escape($this->data['gs_bank_account_no']); ?><br>
+						<?php echo $this->escape($this->data['gs_bank_account_name']); ?><br>
+						<?php echo $this->escape($this->data['gs_bank_account_name_kana']); ?>
+					</div>
+                </td>
+            </tr>
+		</table>
+	</form>
+	
+
+    <?php
+    /* goosa */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">goosa</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">サプライヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->data['gs_supplier_display_id']); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">バイヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->data['gs_buyer_display_id']); ?></p>
+                </td>
+            </tr>
+		</table>
+	</form>
+
+    <?php
+    /* GOOSCA */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">GOOSCA</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">サプライヤーID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php /*echo $this->escape($this->data['gc_supplier_display_id']);*/ ?>---</p>
+                </td>
+            </tr>
+		</table>
+	</form>
+	
+</div>
+</div>
+</div>
+</div>
+

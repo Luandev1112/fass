@@ -1,0 +1,686 @@
+<?php
+?>
+<script type="text/javascript">
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+	
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('ファイルは一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData();
+    formData.append('file', fd);
+	
+	showSpinner();
+	
+    $.ajax({
+      async: true,
+      type:'POST',
+      contentType: false,
+      processData: false,
+      url:'/price-estimate/upload-file?id=<?php echo $this->id; ?>&version_id=<?php echo $this->versionId; ?>',
+      data:formData,
+      dataType :'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;            
+        } else if(obj.result == true) {
+        	$('#file_name_text').html(obj.file_name);
+        	$('#file_name').val(obj.file_name);
+        	updateEdited(true);
+        	
+        } else {
+        	jAlert('予期せぬエラーが発生しました', 'エラー');
+        }
+    });
+}
+
+var isEdited = false;
+var rowCount = <?php echo count($this->versionData['item_list']); ?>;
+var lineHeight = 20;
+var lineHeightCompany = 22;
+var lineHeightOther = 14;
+var targetRow = 0;
+
+function updateEdited(edited) {
+	isEdited = edited;
+	if (isEdited) {
+		$('.btn_estimate_save').removeClass('inactive');
+		$('.btn_estimate_preview').addClass('inactive');
+		$('.btn_save').addClass('inactive');
+	} else {
+		$('.btn_estimate_save').addClass('inactive');
+		$('.btn_estimate_preview').removeClass('inactive');
+		$('.btn_save').removeClass('inactive');
+	}
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker({onSelect: function(dateText) {updateEdited(true);}});
+        $('.datepicker').datepicker("option", "dateFormat", "yy年mm月dd日");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+
+        <?php if (!empty($this->data['estimate_date'])) { ?>
+        	$("#estimate_date").datepicker("setDate", "<?php echo date('Y年m月d日', strtotime($this->data['estimate_date'])); ?>");
+        <?php } ?>
+         
+		$('table.estimate_form tr').each(function(){
+			var rowId = $(this).attr('id');
+			var maxLines = 1;
+	    	$('tr#' + rowId + ' textarea').each(function(){
+	    		var lines = ($(this).val() + '\n').match(/\n/g).length;
+	    		if (lines > maxLines) {
+	      			maxLines = lines;
+	    		}
+	    	});
+	    	$('tr#' + rowId + ' textarea').each(function(){
+	    		$(this).height(lineHeight * maxLines);
+	    	});
+    	});
+
+    	var linesToName = ($('#connection_name').val() + '\n').match(/\n/g).length;
+    	$('#connection_name').height(lineHeightCompany * linesToName);
+
+    	var linesMemo = ($('#memo').val() + '\n').match(/\n/g).length;
+    	$('#memo').height(lineHeightOther * linesMemo);
+
+    	var linesMemoPrivate = ($('#memo_private').val() + '\n').match(/\n/g).length;
+    	$('#memo_private').height(lineHeightOther * linesMemoPrivate);
+
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+        
+        
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		if (targetE) {
+			targetE.addEventListener('dragenter', function () {
+			    innerFlag = true;
+			}, false);
+			
+			targetE.addEventListener('dragover', function () {
+			    innerFlag = false;
+			    targetE.className = 'over';
+			}, false);
+			
+			targetE.addEventListener('dragleave', function () {
+			    if (innerFlag) {
+			        innerFlag = false;
+			    } else {
+			        targetE.className = '';
+			    }
+			}, false);
+		}
+    });
+
+  	$('input[type="text"]').on('input', function(e) {
+		updateEdited(true);
+  	});
+
+  	
+	// 自動改行
+  	$('.flex').on('input', function(e) {
+		updateEdited(true);
+    	var maxLines = 1;
+    	var targetRow = $(this).attr('target-row');
+    
+    	$('tr#' + targetRow + ' textarea').each(function(){
+    		var lines = ($(this).val() + '\n').match(/\n/g).length;
+    		if (lines > maxLines) {
+      			maxLines = lines;
+    		}
+    	});
+    	$('tr#' + targetRow + ' textarea').each(function(){
+    		$(this).height(lineHeight * maxLines);
+    	});
+  	});
+
+	// 提出先 自動改行
+   	$('.flex_company').on('input', function(e) {
+		updateEdited(true);
+    	var lines = ($(this).val() + '\n').match(/\n/g).length;
+    	$(this).height(lineHeightCompany * lines);
+  	});
+
+	// 備考 自動改行
+   	$('.flex_other').on('input', function(e) {
+		updateEdited(true);
+    	var lines = ($(this).val() + '\n').match(/\n/g).length;
+    	$(this).height(lineHeightOther * lines);
+  	});
+  			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+    	if (isEdited == true) {
+			jConfirm('保存せずに中止しますか', '　', function(r) {
+	            if(r) {
+	               location.href = '/price-estimate/version-list?id=<?php echo $this->escape($this->id); ?>';
+	            } else {
+	                return false;
+	            }
+	        });
+        } else {
+	        location.href = '/price-estimate/version-list?id=<?php echo $this->escape($this->id); ?>';
+        }
+	});
+
+    // テンプレート選択
+    $('.btn_estimate_template').click( function(){
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/price-estimate/template-list');
+	});
+
+    // テンプレート選択完了
+    $(document).on('click', '.select_template', function () {
+    	var templateId = $(this).attr('template-id');
+		showSpinner();
+        var $form  = $('#register_form');
+        var params = $form.serializeArray();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';return;
+                } else if(obj.result == 'OK') {
+                    location.href = '/price-estimate/form?id=<?php echo $this->escape($this->id); ?>&version_id=<?php echo $this->escape($this->versionId); ?>';
+                    return;
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/price-estimate/change-template?id=<?php echo $this->escape($this->id); ?>&version_id=<?php echo $this->escape($this->versionId); ?>&template_id=' + templateId,
+		});
+	});
+
+
+    // PDFプレビュー
+    $('.btn_estimate_preview').click( function(){
+    	if (isEdited) {
+    		return false;
+    	}
+    	<?php if ($this->versionData['template_id'] == '9') { ?>
+    	window.open('<?php echo Shared_Model_Resource_EstimateUpload::getResourceUrl($this->data['id'], $this->versionData['id'], $this->versionData['file_name']); ?>', '_blank');
+    	<?php } else { ?>
+    	window.open('/price-estimate/preview/<?php echo $this->escape($this->id); ?>/<?php echo $this->escape($this->versionId); ?>/見積書プレビュー_' + getTimeStamp() + '.pdf', '_blank');
+    	<?php } ?>
+    });
+    
+    // 保存
+    $('.btn_estimate_save').click( function(){
+		showSpinner();
+        var $form  = $('#register_form');
+        var params = $form.serializeArray();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';return;
+                } else if(obj.result == 'OK') {
+                    updateEdited(false);
+                    return;
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/price-estimate/update?id=<?php echo $this->escape($this->id); ?>&version_id=<?php echo $this->escape($this->versionId); ?>'
+		});
+	});
+	
+    //
+    // 承認申請
+    //
+    $('.btn_save').click( function(){
+    	if (isEdited) {
+    		return false;
+    	}
+
+		jQuery.alerts.yesButton = 'はい';
+		jQuery.alerts.cancelButton = 'もう一度確認'; 
+
+        jConfirm('計算や誤字、漏れなどの軽度なミスが無いことを最終チェック済みですか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+                var $form  = $('#register_form');
+                var params = $form.serializeArray();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;jAlert('承認申請しました', '　');return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/price-estimate/apply-apploval?id=<?php echo $this->escape($this->id); ?>&version_id=<?php echo $this->escape($this->versionId); ?>'
+				});
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/price-estimate/version-list?id=<?php echo $this->escape($this->id); ?>';
+        }
+    });
+
+    $(".sortable_column").sortable({
+        items:"tr:not(.not-sortable)",
+        update:function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay:100,
+        stop:function (event, ui) {},
+        start:function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+        var uuid = guid();
+        rowCount++;
+        $('.column_copy_base .count').html(rowCount);
+        $('.column_copy_base textarea').height(lineHeight);
+        
+        $('.column_copy_base .select_product').attr('id', uuid + '_select_product').attr('target-row', uuid);
+        $('.column_copy_base .item_id').attr('id', uuid + '_item_id').attr('name', uuid + '_item_id').attr('target-row', uuid);
+        $('.column_copy_base .item_name').attr('id', uuid + '_item_name').attr('name', uuid + '_item_name').attr('target-row', uuid);
+        $('.column_copy_base .standard_price').attr('id', uuid + '_standard_price').attr('name', uuid + '_standard_price').attr('target-row', uuid);
+        $('.column_copy_base .standard_price_tax').attr('id', uuid + '_standard_price_tax').attr('name', uuid + '_standard_price_tax').attr('target-row', uuid);
+        $('.column_copy_base .standard_price_import_currency').attr('id', uuid + '_standard_price_import_currency').attr('name', uuid + '_standard_price_import_currency').attr('target-row', uuid);
+        $('.column_copy_base .standard_price_import').attr('id', uuid + '_standard_price_import').attr('name', uuid + '_standard_price_import').attr('target-row', uuid);
+        $('.column_copy_base .wholesale_rate_overseas').attr('id', uuid + '_wholesale_rate_overseas').attr('name', uuid + '_wholesale_rate_overseas').attr('target-row', uuid);
+        $('.column_copy_base .price_per_month').attr('id', uuid + '_price_per_month').attr('name', uuid + '_price_per_month').attr('target-row', uuid);
+        
+        $('.column_copy_base .unit').attr('id', uuid + '_unit').attr('name', uuid + '_unit').attr('target-row', uuid);
+        $('.column_copy_base .unit_price').attr('id', uuid + '_unit_price').attr('name', uuid + '_unit_price').attr('target-row', uuid);
+        $('.column_copy_base .wholesale_rate').attr('id', uuid + '_wholesale_rate').attr('name', uuid + '_wholesale_rate').attr('target-row', uuid);
+        $('.column_copy_base .flex').attr('target-row', uuid);
+        $('.column_copy_base .delete_button').attr('target-row', uuid);
+
+        var $clone = $('.column_copy_base').clone(true);
+        $('tbody#sortable_column').append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+        
+        $('.column_copy_base .select_product').attr('id', '');
+        $('.column_copy_base .item_id').attr('id', '').attr('name', '');
+        $('.column_copy_base .item_name').attr('id', '').attr('name', '');
+        $('.column_copy_base .standard_price').attr('id', '').attr('name', '');
+        $('.column_copy_base .standard_price_tax').attr('id', '').attr('name', '');
+        $('.column_copy_base .standard_price_import_currency').attr('id', '').attr('name', '');
+        $('.column_copy_base .standard_price_import').attr('id', '').attr('name', '');
+        $('.column_copy_base .wholesale_rate_overseas').attr('id', '').attr('name', '');
+        $('.column_copy_base .price_per_month').attr('id', '').attr('name', '');
+        
+        $('.column_copy_base .unit').attr('id', '').attr('name', '');
+        $('.column_copy_base .unit_price').attr('id', '').attr('name', '');
+        $('.column_copy_base .wholesale_rate').attr('id', '').attr('name', '');
+
+        $('.column_copy_base td.added_row').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });
+
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+        
+        updateEdited(true);
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column").sortable("toArray");
+        $('input#hidden_contents_order').val(result);
+        
+        // 番号振り直し
+        var countUp = 0;
+    	$('#sortable_column tr').each(function(){
+    		countUp++;
+    		$('#sortable_column tr#' + $(this).attr('id') + ' .count').html(countUp);
+    	});
+    	rowCount = countUp;
+    	
+    	updateEdited(true);
+    });
+    
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select');
+    });
+
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+
+    // 見積作成者 ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select');
+    });
+    
+	// 見積作成者 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 商品選択 ポップアップ表示
+    $(document).on('click', '.select_product', function () {
+    	targetRow = $(this).attr('target-row');
+    	var targetItemId = $('#' + targetRow + '_item_id').val();
+
+    	$('#data_area').html('');
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+			
+    	if (targetItemId != '') {
+			$('#data_area').load('/product/detail-selected?id=' + targetItemId);
+    	} else {
+			$('#data_area').load('/product/list-select');
+		}
+    });
+    
+    // 商品選択 条件検索
+    $(document).on('click', '#search_product', function () {
+		updateProductList(1);
+    });
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form  = $('#connection_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先選択完了
+function selectConnection(id, displayId, name) {
+	updateEdited (true);
+	$('#connection_name').val(name + ' 御中');
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+	
+    var lines = ($('#connection_name').val() + '\n').match(/\n/g).length;
+	$('#connection_name').height(lineHeightCompany * lines);
+}
+
+
+// 見積作成者 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 見積作成者 一覧更新
+function updateUserList (pageNo) {
+    var $form  = $('#user_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/user/list-select?page=' + pageNo,
+    });
+}
+
+// 見積作成者 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	updateEdited (true);
+	$('#creater_user_name').html(departmentName + '　' + name);
+	$('#created_user_id').val(id);
+	$('.btn_close').click();
+}
+
+
+// 商品一覧ページ切り替え
+function pageProduct(pageNo) {
+	updateProductList(pageNo)
+}
+
+// 商品一覧更新
+function updateProductList (pageNo) {
+    var $form  = $('#product_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/product/list-select?page=' + pageNo,
+    });
+}
+
+// 商品選択完了
+function selectProduct(id, displayId, name) {
+	updateEdited (true);
+	$('#' + targetRow + '_select_product').addClass('active');
+	$('#' + targetRow + '_item_id').val(id);
+	$('#' + targetRow + '_item_name').val(name);
+	$('.btn_close').click();
+}
+
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:330px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value p.value {padding-left:0;padding-bottom:3px}
+#from_logo {width:200px;}
+.from p {margin-bottom:0.4em;}
+.from p.company_name {font-size:1.3em}
+table.estimate_form tr td {padding:0;border-top:1px solid #000;border-bottom:1px solid #000;border-right:1px dotted #000;border-left:1px dotted #000;vertical-align:top}
+table.estimate_form tr td input[type="text"]{border:none;width:100%;padding-left:5px;padding-right:5px;}
+table.estimate_form tr td textarea{border:none;width:100%;}
+table.estimate_form tr td.td_item_action {width:50px;border-left:none;border-bottom:none;border-top:none;}
+table.estimate_form tr td.td_item_action .item_btn_frame {float:left;margin:8px 0 0 18px;}
+table.estimate_form tr td.td_item_action .item_btn_frame a {text-decoration:none;color:#000;font-size:1.6em;}
+table.estimate_form tr td.td_item_action .item_btn_frame a.select_product.active {color:#219c11}
+table.estimate_form tr td.td_action {width:50px;border-right:none;border-bottom:none;border-top:none;}
+table.estimate_form tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.estimate_form tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+table.estimate_form tr td p.count {padding-left:5px;padding-right:5px;padding-top:12px;}
+textarea.flex {resize:none;padding:8px;line-height:20px;}
+textarea.flex_other {resize:none;padding:8px;line-height:14px;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.align_right {text-align:right;}
+.align_center {text-align:center;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;text-align:center;}
+table.stamp {width:auto;float:right;}
+table.stamp tr td {border:1px solid #000;text-align:center;width:60px;padding:0;}
+.private_memo {padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;margin:20px 120px 0}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin:0.8em}
+.add_row_button_frame {height:34px;margin-left:50px;margin-right:50px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left base_frame">
+
+	<div class="col-xs-12">
+        <div class="item_title clearfix">
+        	<p class="item_name">使用中テンプレート：<?php echo $this->escape($this->formatData['title']); ?></p>
+        </div>
+	</div>
+	        
+    <form id="register_form" action="javascript:void(0);" method="post">
+    	
+    	<input type="hidden" id="template_id" name="template_id" value="<?php echo $this->escape($this->versionData['template_id']); ?>" />
+    
+	    <?php
+            echo $this->partial('price-estimate/template_' . $this->formatData['id'] . '.phtml', array(
+    			'action'      => $this->action,
+    			'data'        => $this->data,
+    			'versionData' => $this->versionData,
+    			'createdUser' => $this->createdUser,
+    			'groupData'   => $this->groupData,
+    		));
+        ?>
+        	    
+	    <div class="private_memo">
+	    	<p>社内共有メモ（ここに入力した内容は見積書には記載されません）</p>
+	    	<textarea class="flex_other" id="memo_private" name="memo_private" style="height:150px;width:760px;"><?php echo $this->escape($this->versionData['memo_private']); ?></textarea>
+	    </div>
+	    
+
+    	<?php if (!empty($this->versionData['approval_comment'])){ ?>
+	    	<div class="private_memo">
+	    		<p>修正依頼コメント</p>
+	    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->versionData['approval_comment'])); ?></div>
+	    	</div>
+    	<?php } ?>
+    </form>
+
+               
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+
+

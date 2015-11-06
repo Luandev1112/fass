@@ -1,0 +1,96 @@
+2021-07-22T07:13:04+09:00 (NOTICE): Invalid controller specified (.env) %info%
+2021-07-22T07:13:04+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .env
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T07:13:04+09:00 (NOTICE): Invalid controller specified (c99.php) %info%
+2021-07-22T07:13:04+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => c99.php
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T07:13:05+09:00 (NOTICE): Invalid controller specified (.git) %info%
+2021-07-22T07:13:05+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .git
+    [action] => config
+    [module] => front
+)
+
+2021-07-22T07:13:05+09:00 (NOTICE): Invalid controller specified (db_backup.sql) %info%
+2021-07-22T07:13:05+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => db_backup.sql
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T08:16:47+09:00 (NOTICE): Invalid controller specified (.env) %info%
+2021-07-22T08:16:47+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .env
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T08:16:47+09:00 (NOTICE): Invalid controller specified (.git) %info%
+2021-07-22T08:16:47+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .git
+    [action] => config
+    [module] => front
+)
+
+2021-07-22T08:16:47+09:00 (NOTICE): Invalid controller specified (c99.php) %info%
+2021-07-22T08:16:47+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => c99.php
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T08:16:47+09:00 (NOTICE): Invalid controller specified (db_backup.sql) %info%
+2021-07-22T08:16:47+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => db_backup.sql
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T12:00:04+09:00 (NOTICE): Invalid controller specified (backup.tar) %info%
+2021-07-22T12:00:04+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => backup.tar
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T12:00:06+09:00 (NOTICE): Invalid controller specified (backup.zip) %info%
+2021-07-22T12:00:06+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => backup.zip
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T13:23:58+09:00 (NOTICE): Invalid controller specified (backup.tar) %info%
+2021-07-22T13:23:58+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => backup.tar
+    [module] => front
+    [action] => index
+)
+
+2021-07-22T13:23:59+09:00 (NOTICE): Invalid controller specified (backup.zip) %info%
+2021-07-22T13:23:59+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => backup.zip
+    [module] => front
+    [action] => index
+)
+

@@ -1,0 +1,83 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+
+</script>
+<style type="text/css"><!--
+ul li {display:block;margin-bottom:3px;}
+label {display:block;background-color:#fafafa;padding:0.8em 30px;border:1px solid #ccc;}
+label:hover {background-color:#deeeff;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:700px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>検品割り当て</strong></span>
+	    </div>
+	</div>
+
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		
+		<?php
+			$data = array();
+		
+		//$address = '東京都○○○○5-1-12○○○○302号室';
+		//$address[] = '2-9-6ロイヤル清風荘104';
+		//$address[] = '2-9-6 ロイヤル清風荘104';
+		//$address[] = '2-9-6　ロイヤル清風荘104';
+		
+		$address[] = '2-9-6-104';
+		
+		$address[] = '2丁目9番6号番組ビル104';
+		//$address[] = '2丁目9番6号ロイヤル清風荘104';
+		
+foreach ($address as $each) {
+	
+	$parts = preg_split(
+		'/^([^\d０-９－―-]*+[\d０-９－―丁目番号-]*+[\d０-９－―号-]*+)/u',
+		$each,
+		2,
+		PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+	);
+var_dump($parts);
+}
+
+	
+/*			
+			$data = array(
+				'delivery_address1' => '豊中市清風荘',
+				'delivery_address2' => '2-9-6ロイヤル清風荘104'
+			);
+		
+			$address = $data['delivery_address2'];
+			$parts = preg_split(
+			'/^(([^\d０-９－―-]*+[\d０-９－―-]*+)|*号)/u',
+			$address,
+			2,
+			PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
+			);
+
+			var_dump($address) . '|';
+			var_dump($parts);
+			*/
+		?>
+		
+		
+		
+		
+		
+		
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

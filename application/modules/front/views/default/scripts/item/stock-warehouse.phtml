@@ -1,0 +1,303 @@
+<?php
+$statusList      = Shared_Model_Code::codes('item_status');
+$typeList        = Shared_Model_Code::codes('item_type');
+$addActionList   = Shared_Model_Code::codes('stock_add_input');
+$prefixList      = Shared_Model_Code::codes('item_type_prefix');
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+
+        <?php if (!empty($this->conditions['from'])) { ?>
+        $("#from").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->conditions['from'])); ?>"); 
+        <?php } ?>
+           
+        <?php if (!empty($this->conditions['to'])) { ?>
+        $("#to").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->conditions['to'])); ?>"); 
+        <?php } ?> 
+    });
+    
+    $(".btn_stock_warehouse_completed").click(function(){
+		var targetId = $(this).attr('target-id');
+
+		jConfirm('入庫完了しますか？', '　', function(r) {
+			if(r) {
+	   			showSpinner();
+	    	   	$.ajax({
+	                type:'POST',
+	                dataType:'json',
+	                data: 'target_id=' + targetId,
+	                success: function(res){
+	                    stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('入庫しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+	                },
+	                error: function(){
+	                	stopSpinner();
+	                    jAlert('予期せぬエラーが発生しました。', 'エラー');
+	                },
+	                url: '/item/warehouse-completed'
+	            });
+	            
+	    	} else {
+	    	    return false;
+	    	}
+		});
+	});
+
+    $(".btn_stock_plan_warehouse_cancel").click(function(){
+		var targetId = $(this).attr('target-id');
+
+		jConfirm('入庫予定をキャンセルしますか？', '　', function(r) {
+	   		if(r) {
+	    	   $.ajax({
+	                type:'POST',
+	                dataType:'json',
+	                data: 'target_id=' + targetId,
+	                success: function(view){
+	                    stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('入庫予定をキャンセルしました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+	                },
+	                error: function(){
+	                	stopSpinner();
+	                    jAlert('予期せぬエラーが発生しました。', 'エラー');
+	                },
+	                url: '/item/warehouse-cancel'
+	            });
+	            
+	    	} else {
+	    	    return false;
+	    	}
+		});
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/item/stock-warehouse?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop() + '&page=<?php echo $this->page; ?>';
+        }
+    });
+    
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:150px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>在庫管理 - <?php echo $typeList[$this->data['item_type']]; ?>詳細</strong></span>
+        </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        	<p class="stock">引当可能在庫数：<?php echo $this->escape($this->data['useable_count']); ?></p>
+        	<p class="stock">実在庫数：<?php echo $this->escape($this->data['stock_count']); ?></p>
+        </div>
+        <div>
+        	<?php
+	            echo $this->partial('item/menu.phtml', array(
+        			'action'    => $this->action,
+        			'id'        => $this->data['id'],
+        			'itemType'  => $this->data['item_type'],
+        		));
+	        ?>   		
+        </div>
+    </div>
+    
+    <div class="clearfix">
+
+        <div>
+    	    <?php
+            /* 在庫履歴 */
+            $categoryId = 2;
+            ?>
+			
+			<?php /*
+			<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+				<div class="condition_items clearfix">
+					<form action="#" method="get">
+						<p class="search_condition_title">検索条件</p>
+						
+						<div class="condition_items_row clearfix">		
+							<div class="condition_item">
+								<p class="condition_label">アクション：</p>
+		                        <select id="add_action" name="add_action">
+		                            <option value="">---</option>
+		                        	<?php foreach ($addActionList as $key => $value) { ?>
+		                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['add_action']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+		                            <?php } ?>
+		                        </select>
+							</div>
+							
+							<div class="condition_item">
+								<p class="condition_label">日時(From)：</p>
+		                        <input type="text" name="from" id="from" class="datepicker" value="" />
+							</div>
+							
+							<div class="condition_item">
+								<p class="condition_label">日時(To)：</p>
+		                        <input type="text" name="to" id="to" class="datepicker" value="" />
+							</div>
+						</div>
+						
+						<input type="submit" value="検索" />
+					
+					</form>
+				</div>
+			</div>
+			*/ ?>
+			
+            <table class="list_default" style="margin-bottom:0px;">
+                <tr>
+                    <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">入庫履歴</p></th>
+                    <th class="edit_category">
+                        <a class="btn_edit_category" href="/item/stock-warehouse-add?id=<?php echo $this->escape($this->id); ?>">
+                        	<span>入力</span>
+						</a>
+                    </th>
+                </tr>
+            </table>
+            <table class="list_default" style="margin-bottom:13px;">            
+				<tr>
+					<td style="width:12%;"><p><strong>入庫管理ID</strong></p></td>
+					<td style="width:16%;"><p><strong>在庫管理コード</strong></p></td>
+					<td style="width:14%;"><p><strong>日時</strong></p></td>
+					<td><p><strong>アクション<strong></p></td>
+					<td style="width:9%;"><p><strong>入庫数</strong></p></td>
+					
+					<td style="width:9%;"><p><strong>残数</strong></p></td>
+					<td style="width:10%;"><p><strong>消費期限</strong></p></td>
+					<td style="width:18%;"><p><strong>操作</strong></p></td>
+				</tr>
+				
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+		                <tr>
+							<td>
+		                		<?php if ($each['action_code'] == Shared_Model_Code::STOCK_ACTION_PLAN_WAREHOUSE) { ?>
+		                			<p>---</p>
+		                		<?php } else { ?>
+		                			<p><?php echo $this->escape($each['warehouse_manage_id']); ?></p>
+		                		<?php } ?>
+		                	</td>
+		                	<td>
+		                		<?php if ($each['action_code'] == Shared_Model_Code::STOCK_ACTION_PLAN_WAREHOUSE) { ?>
+		                			<p>---</p>
+		                		<?php } else { ?>
+		                			<p><?php echo $this->escape($prefixList[$this->data['item_type']] . '_' . $this->data['item_type_id'] . '_' . $each['warehouse_manage_id'] . '_' . $each['lot_count']); ?></p>
+		                		<?php } ?>
+		                	</td>
+		                	
+		                    <td>
+		                    	<p><?php echo date('Y/m/d H:i', strtotime($each['action_date'])); ?></p>
+		                    </td>
+		                    
+							<td>
+		                    	<p><?php echo $addActionList[$each['action_code']]; ?></p>
+		                    </td>
+
+		                    <td>
+		                    	<p><?php echo $each['amount']; ?></p>
+		                    </td>
+		                    
+		                    <td>
+		                    	<?php if ($each['action_code'] == Shared_Model_Code::STOCK_ACTION_WAREHOUSE) { ?>
+		                    		<p><?php echo $each['last_count']; ?></p>
+		                    	<?php } else { ?>
+		                    		<p>---</p>
+		                    	<?php } ?>
+		                    </td>
+	
+
+		                    <td>
+		                    	<?php if ($each['action_code'] == Shared_Model_Code::STOCK_ACTION_WAREHOUSE) { ?>
+		                    		<p><?php echo $each['expiration_date']; ?></p>
+		                    	<?php } else { ?>
+		                    		<p>---</p>
+		                    	<?php } ?>
+		                    </td>
+		                    
+							<td>
+								<?php if ($each['action_code'] == Shared_Model_Code::STOCK_ACTION_WAREHOUSE && $each['last_count'] > 0) { ?>
+									<a class="btn_stock_edit" href="/item/stock-consumption-add?id=<?php echo $this->data['id']; ?>&stock_id=<?php echo $each['id']; ?>">在庫調整</a>
+									<?php /*<a class="btn_stock_discard" href="javascript:void(0);">一括破棄</a>*/ ?>
+									
+								<?php } else if($each['action_code'] == Shared_Model_Code::STOCK_ACTION_PLAN_WAREHOUSE) { ?>
+									<a class="btn_stock_warehouse" target-id="<?php echo $each['id']; ?>" href="/item/stock-warehouse-add?id=<?php echo $this->escape($this->data['id']); ?>&plan_stock_id=<?php echo $this->escape($each['id']); ?>">入庫</a>
+									<a class="btn_stock_plan_warehouse_cancel" target-id="<?php echo $each['id']; ?>" href="javascript:void(0);">キャンセル</a>
+									
+								<?php } else { ?>
+		                    		<p>&nbsp;</p>
+		                    	<?php } ?>
+							</td> 
+		                </tr>
+					<?php } ?>
+				<?php } else { ?>
+	                <tr>
+	                	<td colspan="9"><p style="text-align:center;">入庫履歴はありません</p></td>
+	                </tr>
+				<?php } ?>
+				
+                   
+			</table>
+
+	        <div style="padding:2.0em 0;">
+	        <?php echo $this->pager() ?>
+	        </div>
+        
+		</div><!-- right -->
+		
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>

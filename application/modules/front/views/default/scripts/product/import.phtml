@@ -1,0 +1,145 @@
+<?php
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+		
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+
+	if ($('#format_id').val() == '') {
+		jAlert('取込フォーマットを選択してください。', 'エラー');
+  		return;
+	}
+	
+  	if (files.length > 1) {
+  		jAlert('CSVファイルは一枚ずつドロップしてください。', 'エラー');
+  		return;
+	}
+  
+	// アップロード処理へ
+	fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData();
+    formData.append('csv', fd);
+    	
+    showSpinner();
+
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url: '/product/import-csv',
+      data: formData,
+      dataType :'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;
+        } else if (obj.result == 'NG') {
+        	jAlert(obj.message, '　');
+        	return;
+        	
+        } else if (obj.result == 'OK') {
+        	jAlert('取込完了', '　');
+        	
+        	$('#import_result').load('/product/import-result?key=' + obj.key);
+        	return;
+        }
+        
+        jAlert('予期せぬエラーが発生しました', 'エラー');
+    });   
+}
+
+$(function() {
+    $(document).ready(function(){
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		targetE.addEventListener('dragenter', function () {
+		    innerFlag = true;
+		}, false);
+		
+		targetE.addEventListener('dragover', function () {
+		    innerFlag = false;
+		    targetE.className = 'over';
+		}, false);
+		
+		targetE.addEventListener('dragleave', function () {
+		    if (innerFlag) {
+		        innerFlag = false;
+		    } else {
+		        targetE.className = '';
+		    }
+		}, false);
+    });
+});
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%; dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>商品管理 - 取り込み</strong></span>
+        </div>
+    </div>
+
+    
+    <div class="clearfix">
+		<form id="register_form" action="#" method="post"> 
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+	                    <p class="label_text strong">CSV取り込み</p>
+	                </th>
+	            </tr>
+			</table>
+	         
+	        <table class="list_default" style="margin-bottom:13px;">   
+	            <tr>
+	                <td class="column_value" colspan="3">
+						<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)">
+							<span><i class="icon-upload-cloud" style="font-size:40px;color:#999;"></i><br />ファイルをドラッグしてください</span>
+						</div>
+	                </td>
+	            </tr> 
+	
+			</table>
+		</form>
+		
+		<div id="import_result">
+		
+		</div>
+		
+	</div><!-- clearfix -->	
+    
+                
+</div>
+</div>
+</div>
+</div>

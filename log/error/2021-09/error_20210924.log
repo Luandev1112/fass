@@ -1,0 +1,17 @@
+2021-09-24T10:51:11+09:00 (NOTICE): Invalid controller specified (wp-includes) %info%
+2021-09-24T10:51:11+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp-includes
+    [action] => wlwmanifest.xml
+    [module] => front
+)
+
+2021-09-24T10:51:11+09:00 (NOTICE): Invalid controller specified (xmlrpc.php) %info%
+2021-09-24T10:51:11+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => xmlrpc.php
+    [module] => front
+    [action] => index
+    [rsd] => 
+)
+

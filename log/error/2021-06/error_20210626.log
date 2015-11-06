@@ -1,0 +1,8 @@
+2021-06-26T20:05:44+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-06-26T20:05:44+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+

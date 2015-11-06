@@ -1,0 +1,109 @@
+2021-06-09T16:03:51+09:00 (NOTICE): Invalid controller specified (wp-login.php) %info%
+2021-06-09T16:03:51+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp-login.php
+    [module] => front
+    [action] => index
+)
+
+2021-06-09T16:03:53+09:00 (NOTICE): Invalid controller specified (wordpress) %info%
+2021-06-09T16:03:53+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wordpress
+    [action] => wp-login.php
+    [module] => front
+)
+
+2021-06-09T16:03:55+09:00 (NOTICE): Invalid controller specified (blog) %info%
+2021-06-09T16:03:55+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => blog
+    [action] => wp-login.php
+    [module] => front
+)
+
+2021-06-09T16:03:56+09:00 (NOTICE): Invalid controller specified (wp) %info%
+2021-06-09T16:03:56+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => wp
+    [action] => wp-login.php
+    [module] => front
+)
+
+2021-06-09T18:03:04+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/Connection.php(223): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ConnectionController.php(1135): Shared_Model_Data_Connection->getById('2', NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ConnectionController->relationalListAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('relationalListA...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-06-09T18:03:04+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => connection
+    [action] => relational-list
+    [module] => front
+)
+
+2021-06-09T19:23:15+09:00 (CRIT): SQLSTATE[HY093]: Invalid parameter number: no parameters were bound #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/models/Data/ConnectionBank.php(80): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/ConnectionController.php(1143): Shared_Model_Data_ConnectionBank->getListByConnectionId(NULL)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): ConnectionController->relationalListAction()
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('relationalListA...')
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#11 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#12 {main}
+2021-06-09T19:23:15+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => connection
+    [action] => relational-list
+    [module] => front
+)
+
+2021-06-09T21:10:32+09:00 (NOTICE): Invalid controller specified (mana) %info%
+2021-06-09T21:10:32+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => mana
+    [module] => front
+    [action] => index
+)
+
+2021-06-09T21:12:15+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_connection.transfer_to_connection_bank_id' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/TransactionPaidController.php(871): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): TransactionPaidController->exportCsvCheckAction()
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('exportCsvCheckA...')
+#7 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#10 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#11 {main}
+2021-06-09T21:12:15+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => transaction-paid
+    [action] => export-csv-check
+    [module] => front
+    [paying_type] => 15
+    [type] => jnb
+)
+
+2021-06-09T21:46:22+09:00 (NOTICE): Invalid controller specified (favicon.ico) %info%
+2021-06-09T21:46:22+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => favicon.ico
+    [module] => front
+    [action] => index
+)
+

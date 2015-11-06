@@ -1,0 +1,599 @@
+<?php
+$statusList   = Shared_Model_Code::codes('competition_status');
+$ratingList   = Shared_Model_Code::codes('competition_rating');
+?>
+
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 修正依頼
+    $('.btn_mod_request').click( function(){
+        jConfirm('修正依頼しますか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+ 
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: param,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('修正依頼しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/supply-competition/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+				});
+            } else {
+                return false;
+            }
+        });
+    });
+    
+    //
+    // 承認
+    //
+    $('.btn_save').click( function(){
+        jConfirm('この内容で承認しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+                
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: param,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('承認しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/supply-competition/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+				});
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/approval/list';
+        }
+    });
+
+    // 商品選択 ポップアップ表示
+    $(document).on('click', '.select_product', function () {
+    	targetItemRow = $(this).attr('target-row');
+    	var targetItemId = $('#' + targetItemRow + '_item_id').val();
+
+    	$('#data_area').html('');
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+			
+    	if (targetItemId != '') {
+			$('#data_area').load('/product/detail-selected');
+    	} else {
+			$('#data_area').load('/product/list-select');
+		}
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:330px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+table.list_default tr td.td_count {border-right:none;background-color:#bae0ff;width:30px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;font-weight:bold;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:300px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>コンペ - <?php echo $this->escape($this->data['title']); ?></strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 1. コンペ基本情報 */
+        $categoryId = 1;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">コンペ基本情報</p></th>      
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">  
+        	<tr>       
+            <td class="column_label"><p class="label_text" style="padding-left:12px;">コンペ・企画件名<span class="require">&nbsp;＊</span></p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="multi_rows_padding"><?php echo $this->escape($this->data['title']); ?></div>
+            </td>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新日時</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo date('Y-m-d H:i:s', strtotime($this->data['updated'])); ?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新者</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->lastUpdatedUser['user_name']); ?>　（<?php echo $this->escape($this->lastUpdatedUser['display_id']); ?>）</p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">本件管理担当者<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="management_user_name"><?php
+                		if (!empty($this->managementUser)) {
+                			echo $this->escape($this->managementUser['user_name']) . '　（' . $this->escape($this->managementUser['display_id']) . '）';
+                		} else {
+                			echo '---';
+                		}
+                	?></p>
+                </td>
+            </tr>
+                  
+            <tr>
+                <td class="column_label"><p class="label_text">コンペ開始日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo date('Y-m-d', strtotime($this->data['competiion_started_date'])); ?></p>
+                </td>
+            </tr>
+			
+			<tr>
+	            <td class="column_label"><p class="label_text">ステータス<span class="require">&nbsp;＊</span></p></td>
+	            <td class="colon"><p class="label_text">：</p></td>
+	            <td class="column_value">
+	                <p><?php echo $statusList[$this->data['status']]; ?></p>
+	            </td>
+			</tr>
+			
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">本件概要<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="multi_rows_padding">
+                		<?php echo nl2br($this->escape($this->data['description'])); ?>
+                	</div>
+                </td>
+            </tr>
+		</table>
+ 
+	    <?php
+        /* 2. 主な使用前提原料・仕入品 */
+        $categoryId = 2;
+        ?>
+        <div style="margin-bottom:13px">
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">主な使用前提原料・仕入品</p></th>
+            </tr>
+        </table>
+        <?php $itemTable = new Shared_Model_Data_Item(); ?>
+        <table class="list_default" style="margin-bottom:0;">
+	        <?php if (!empty($this->data['material_list'])) { ?>
+		        <?php foreach ($this->data['material_list'] as $each) { ?>
+			        <tr id="<?php echo $this->escape($each['id']); ?>">
+			        	<?php
+			        		$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $each['item_id']);
+			        		
+	            			$itemName = '<strong>' . $this->escape($itemData['display_id']) . '</strong>&nbsp;';
+	            			
+	            			if (!empty($itemData['item_name'])) {
+	            				$itemName .= "<span class='product_name'>商品名</span>&nbsp;" . $this->escape($itemData['item_name']) . '&nbsp;&nbsp;';
+	            			}
+	            			
+	            			if (!empty($itemData['buying_item_name'])) {
+	            				$itemName .= "<span class='import_name'>仕入名</span>&nbsp;" . $this->escape($itemData['buying_item_name'])  . '&nbsp;&nbsp;';
+	            			}
+
+			        	?>
+						<td class="column_value">
+							<div class="item_name multi_rows_padding" id="##_item_name"><?php echo $itemName; ?></div>
+		                </td>
+						<td class="column_value" style="width:140px">
+
+						</td>
+			            <td class="td_action">
+			            	&nbsp;
+			            </td>
+			        </tr>
+		        <?php } ?>
+	        <?php } ?>
+		</table>
+		</div>
+		
+
+	    <?php
+        /* 3. コンペ依頼内容 */
+        $categoryId = 3;
+        ?>
+        <div style="margin-bottom:13px">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">コンペ依頼内容</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">
+	        <?php if (!empty($this->data['condition_list'])) { ?>
+		        <?php foreach ($this->data['condition_list'] as $each) { ?>
+			        <tr id="<?php echo $this->escape($each['id']); ?>">
+		                <td class="column_label">
+		                	<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['label'])); ?></div>
+		                </td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+		                	<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['value'])); ?></div>
+		                </td>
+			            <td class="td_action">
+			            	&nbsp;
+			            </td>
+			        </tr>
+		        <?php } ?>
+	        <?php } ?>
+		</table>
+		</div>
+
+
+	    <?php
+        /* 4. コンペ・企画比較結果・進捗表 */
+        $categoryId = 4;
+        $itemTable           = new Shared_Model_Data_Item();
+        $supplyProductTable   = new Shared_Model_Data_SupplyProductProject();
+        $productionTable     = new Shared_Model_Data_SupplyProductionProject();
+        $subcontractingTable = new Shared_Model_Data_SupplySubcontractingProject();
+        $fixtureTable        = new Shared_Model_Data_SupplyFixtureProject();
+		$connectionTable      = new Shared_Model_Data_Connection();
+		$connectionStaffTable = new Shared_Model_Data_ConnectionStaff();
+        ?>
+        <div style="margin-bottom:13px">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">コンペ・企画比較結果・進捗表（極力、6社以上をコンペすること。多ければ多いほど良い）</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">        
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['competition_list'])) { ?>
+			        <?php foreach ($this->data['competition_list'] as $each) { ?>
+				        <tr id="<?php echo $this->escape($each['id']); ?>">
+				        	<td class="td_count">
+				        		<p><?php echo $this->escape($each['id']); ?></p>
+				        	</td>
+			                <td class="column_value" style="background-color:#e0f1ff;width:320px;">
+			                	<?php
+									$companyName = '---';
+									$staffName = '---';
+	                				if (!empty($each['connection_id'])) {
+			                			$connectionData = $connectionTable->getById($this->adminProperty['management_group_id'], $each['connection_id']);
+			                			$companyName = $connectionData['company_name'];
+			                		}
+			                		if (!empty($each['connection_id'])) {
+			                			$staffData      = $connectionStaffTable->getById($this->adminProperty['management_group_id'], $each['staff_id']);
+			                			$staffName = $staffData['staff_name'];
+			                		}
+			                	?>
+			                	<div class="clearfix">
+			                		<p style="float:left;width:80px;">取引先名</p>
+				            		<p style="float:left;width:10px;">：</p>		
+			                		<div style="float:left;width:180px;">
+			                			<div class="connection_name multi_rows_padding" id="<?php echo $this->escape($each['id']); ?>_connection_name"><?php echo $this->escape($companyName); ?></div>
+			                		</div>
+			                	</div>
+
+			                	<div class="clearfix">
+			                		<p style="float:left;width:80px;">担当者名</p>
+				            		<p style="float:left;width:10px;">：</p>		
+			                		<div style="float:left;width:180px;">
+			                			<div class="staff_name multi_rows_padding" id="<?php echo $this->escape($each['id']); ?>_staff_name"><?php echo $this->escape($staffName); ?></div>
+			                		</div>
+			                	</div>
+								
+			                	<div class="clearfix" style="margin-top:10px;">
+			                		<p style="float:left;width:80px;">評価</p>
+				            		<p style="float:left;width:10px;">：</p>		
+			                		<div style="float:left;width:180px;">
+			                			<p><?php if (!empty($each['rating'])) { echo $ratingList[$each['rating']]; } else { echo '---'; } ?></p>
+			                		</div>
+			                	</div>
+			                </td>
+			                <td class="column_value" style="padding-left:10px;">
+			                	<div class="clearfix">
+			                		<div class="clearfix">
+				            			<p style="float:left;width:180px;">進捗①　見積入手</p>
+				            			<p style="float:left;width:10px;">：</p>
+				            			<div style="float:left;width:450px;">
+				            				<div class="multi_rows_padding"><?php echo $this->escape($each['progress1']); ?></div>
+				            			</div>
+									</div>
+			                		<div class="clearfix">
+			                			<p style="float:left;width:180px;">進捗②　サンプル入手</p>
+			                			<p style="float:left;width:10px;">：</p>
+			                			<div style="float:left;width:450px;">
+			                				<div class="multi_rows_padding"><?php echo $this->escape($each['progress2']); ?></div>
+			                			</div>
+			                		</div>
+			                					                		
+			                		<div class="clearfix">
+			                			<p style="float:left;width:180px;">見積内容・ロット等前提</p>
+			                			<p style="float:left;width:10px;">：</p>
+			                			<div style="float:left;width:450px;">
+			                				<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['estimate_info'])); ?></div>
+			                			</div>
+			                		</div>
+			                		
+			                		<div class="clearfix">
+			                			<p style="float:left;width:180px;">内容・特徴・エビデンス是非</p>
+			                			<p style="float:left;width:10px;">：</p>
+			                			<div style="float:left;width:450px;">
+			                				<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['competition_description'])); ?></div>
+			                			</div>
+			                		</div>
+
+			                		<div class="clearfix">
+			                			<p style="float:left;width:180px;">調達管理ID</p>
+			                			<p style="float:left;width:10px;">：</p>
+			                			<div style="float:left;width:450px;margin-bottom:20px;">
+				                			<?php
+								        	$itemName = '---';
+								        	if (!empty($each['reference_target_id'])) {
+									        	if ($each['reference_type'] == 'product') {
+									        		$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+									        		
+									        		$itemName = '<strong>商品 ' . $this->escape($itemData['display_id']) . '</strong>&nbsp;';
+							            			
+							            			if (!empty($itemData['item_name'])) {
+							            				$itemName .= "<span class='product_name'>商品名</span>&nbsp;" . $this->escape($itemData['item_name']) . '&nbsp;&nbsp;';
+							            			}
+							            			
+							            			if (!empty($itemData['buying_item_name'])) {
+							            				$itemName .= "<span class='import_name'>仕入名</span>&nbsp;" . $this->escape($itemData['buying_item_name'])  . '&nbsp;&nbsp;';
+							            			}
+									        	} else if ($each['reference_type'] == 'supply-product') {
+									        		$data = $supplyProductTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+									        		if ($data) {
+									        			$itemName = '<strong>原料製品 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+									        		}
+									        	} else if ($each['reference_type'] == 'supply-production') {
+									        		$data = $productionTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+									        		if ($data) {
+									        			$itemName = '<strong>製造加工委託 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+									        		}
+									        	} else if ($each['reference_type'] == 'supply-subcontracting') {
+									        		$data = $subcontractingTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+									        		if ($data) {
+									        			$itemName = '<strong>業務委託 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+									        		}
+									        	} else if ($each['reference_type'] == 'supply-fixture') {
+									        		$data = $fixtureTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+									        		if ($data) {
+									        			$itemName = '<strong>備品資材 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+									        		}
+									        	}
+								        	}
+								        	?>
+				                			<div class="multi_rows_padding">
+				                				<div id="<?php echo $this->escape($each['id']); ?>_supply_name" style="float:left;margin-right:10px;"><?php echo $itemName; ?></div>
+				                			</div>
+				                		</div>
+			                		</div>
+			                	</div>
+			                	
+			                </td>
+				            <td class="td_action">
+				            	&nbsp;
+				            </td>
+				        </tr>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+		</table>
+  		</div>
+  		
+  		
+	    <?php
+        /* 5. コンペ・企画の比較の総評と結論／商品化の方向 */
+        $categoryId = 5;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">コンペ・企画の比較の総評と結論／商品化の方向</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+        	<tr>
+                <td class="column_value">
+					<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding" style="min-height100px;"><?php echo nl2br($this->escape($this->data['result_comment'])); ?>&nbsp;</div>
+                </td>
+            </tr>
+		</table>
+		
+	    <?php
+        /* 6. 本案件で得た商品／業界の知見・一般情報・注意点 */
+        $categoryId = 6;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">本案件で得た商品／業界の知見・一般情報・注意点</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+        	<tr>
+                <td class="column_value">
+					<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding" style="min-height100px;"><?php echo nl2br($this->escape($this->data['knowledge_comment'])); ?>&nbsp;</div>
+                </td>
+            </tr>
+		</table>
+
+	    <?php
+        /* 7. その他メモ */
+        $categoryId = 7;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">その他メモ</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+        	<tr>
+                <td class="column_value">
+					<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding" style="min-height100px;"><?php echo nl2br($this->escape($this->data['other_memo'])); ?>&nbsp;</div>
+					<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                		<textarea name="other_memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['other_memo']); ?></textarea>
+                	</div>
+                </td>
+            </tr>
+		</table>
+		
+	    <?php
+        /* 8. 資料アップロード／資料名と資料概略 */
+        $categoryId = 8;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">資料アップロード</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">
+	        <?php if (!empty($this->data['file_list'])) { ?>
+		        <?php foreach ($this->data['file_list'] as $each) { ?>
+			        <tr id="<?php echo $this->escape($each['id']); ?>">
+						<td class="column_value">
+							<div class="clearfix">
+								<div style="float:left;width:360px;">
+									<div class="clearfix" style="margin-bottom:5px">
+										<div style="float:left;width:50px;padding:15px 0 0 10px;">
+											<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+										</div>
+										<div style="float:left;width:300px;">
+											<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="##_file_name_text"><?php echo $this->escape($each['file_name']); ?></span></div>
+										</div>
+									</div>
+									<div class="display_value_<?php echo $categoryId; ?>">
+										<a class="btn_setting" style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_SupplyCompetition::getResourceUrl($this->id, $each['id'], $each['file_name']); ?>">ダウンロード</a>
+									</div>
+								</div>
+								<div style="float:left;margin-left:10px;width:670px;">
+									<p>資料概略:</p>
+				                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $this->escape($each['summary']); ?></div>
+								</div>
+							</div>
+						</td>
+			            <td class="td_action">
+			            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix" style="display:none;">
+			            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+			            	</div>
+			            </td>
+			        </tr>
+		        <?php } ?>
+	        <?php } ?>
+		</table>
+
+		<form id="register_form" action="#" method="post"> 
+	    <div class="private_memo">
+	    	<p>修正依頼コメント</p>
+	    	<textarea  class="flex_other" name="apploval_comment" style="height:150px;width:1000px;"><?php echo $this->escape($this->data['apploval_comment']); ?></textarea>
+	    </div>
+	    </form>		
+	</div><!-- clearfix -->
+
+            
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;"><div class="menu_frame"><div id="data_area"></div></div></div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,236 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+$typeList     = Shared_Model_Code::codes('item_type');
+$actionList   = Shared_Model_Code::codes('stock_add_input');
+$hourList     = Shared_Model_Code::getHourList();
+$minuteList   = Shared_Model_Code::getMinuteList();
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery.imgareaselect-0.9.10/css/imgareaselect-default.css" />
+<script type="text/javascript" src="/resource/js/jquery.imgareaselect-0.9.10/scripts/jquery.imgareaselect.pack.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        $("#action_time_day").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->today)); ?>"); 
+    });
+
+    $("#warehouse_action").change(function(){
+    	var selectVal = $(this).val();
+    	
+    	if (selectVal == <?php echo Shared_Model_Code::STOCK_ACTION_PLAN_WAREHOUSE; ?>) {
+    		$('#row_lot').show();
+			$('#row_number_of_lot').hide();
+			$('#label_lot').html('入庫予定数：');
+			$('#input_lot').val('');
+			$('#input_number_of_lot').val('');
+			
+    	} else {
+    		$('#row_expiration_date').show();
+			$('#row_lot').show();
+			$('#row_number_of_lot').show();
+			$('#label_lot').html('ロット単位：');
+			$('#input_lot').val('');
+			$('#input_number_of_lot').val('');
+    	}
+	});
+				    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/item/stock-warehouse?id=<?php echo $this->escape($this->id); ?>";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/item/stock-warehouse-add-post?item_id=<?php echo $this->id; ?>'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/item/stock-warehouse?id=<?php echo $this->escape($this->id); ?>';
+        }
+    });
+   
+});
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color: #777;font-size: 12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left: 6px;}
+table.list_default tr td.column_value input[type="text"]{width: 99%; dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width: 280px;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>在庫管理 - <?php echo $typeList[$this->data['item_type']]; ?>詳細</strong></span>
+        </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        	<p class="stock">引当可能在庫数：<?php echo $this->escape($this->data['useable_count']); ?></p>
+        	<p class="stock">実在庫数：<?php echo $this->escape($this->data['stock_count']); ?></p>
+        </div>
+    	<?php
+            echo $this->partial('item/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    			'itemType'  => $this->data['item_type'],
+    		));
+        ?> 
+	</div>
+                
+    <div class="clearfix">
+
+	    <form id="register_form" action="#" method="post">
+	    	
+	    	<input type="hidden" name="plan_stock_id" value="<?php echo $this->escape($this->planStockId); ?>" ?>
+	    	
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;">
+	                    <p class="label_text strong">入庫情報入力</p>
+	                </th>
+	                <th class="edit_category edit_mode">
+	                    <a class="btn_save_category btn_save" href="javascript:void(0);"><span>登録</span></a>
+	                </th> 
+	            </tr>
+			</table>
+	         
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">アクション：<span class="require">＊</span></p></td>
+	                <td class="column_value">
+                        <div class="clearfix" style="width:230px;float:left;">
+	                        <?php if (!empty($this->planStockId)) { ?>
+	                        	<p>入庫</p>
+	                        	<input type="hidden" name="warehouse_action" value="<?php echo Shared_Model_Code::STOCK_ACTION_WAREHOUSE; ?>"
+	                        <?php } else { ?>
+	                            <select id="warehouse_action" name="warehouse_action" style="dispaly:block;float:left;width:280px;">
+	                                <option value="" selected="selected">---</option>
+	                                <?php foreach ($actionList as $key => $eachAction) { ?>
+	                                    <option value="<?php echo $key; ?>"><?php echo $eachAction; ?></option>
+	                                <?php } ?>
+	                            </select>
+	                        <?php } ?>
+                        </div>
+	                </td>
+	            </tr>
+	        
+	            <tr>
+	                <td class="column_label"><p class="label_text" style="padding-left:12px;">日時：<span class="require">＊</span></p></td>
+	                <td class="column_value">
+                        <div class="clearfix" style="width:230px;float:left;">
+                            <input type="text" class="datepicker" id="action_time_day" name="action_time_day" value="" maxlength="10" style="width: 99px; margin-right:10px; dispaly:block; float:left;" />
+
+                            <?php
+                            	$defaultHour = date('H', strtotime($this->today));
+                            	$defaultMin  = date('i', strtotime($this->today));
+                            ?>
+                            <select class="hour_min" name="action_time_hour" style="dispaly:block;float:left;width:50px;">
+                                <option value="">---</option>
+                                <?php foreach ($hourList as $key => $eachHour) { ?>
+                                    <option value="<?php echo $eachHour; ?>" <?php if ($defaultHour == $eachHour) { echo 'selected="selected"'; } ?>><?php echo $eachHour; ?></option>
+                                <?php } ?>
+                            </select>
+                            <p class="hour_min" style="float:left;wiidth:15px;text-align:center;padding-left:0;">：</p>
+                            <select class="hour_min" name="action_time_min" style="dispaly:block;float:left;width:50px;">
+                                <option value="">---</option>
+                                <?php foreach ($minuteList as $key => $eachMinute) { ?>
+                                    <option value="<?php echo $eachMinute; ?>" <?php if ($defaultMin == $eachMinute) { echo 'selected="selected"'; } ?> ><?php echo $eachMinute; ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+	                </td>
+	            </tr>                      
+
+	            <tr id="row_expiration_date" <?php if (empty($this->planStockId)) { ?>style="display:none;"<?php } ?>>
+	                <td class="column_label"><p class="label_text"><span>消費期限：</p></td>
+	                <td class="column_value">
+	                    <input type="text" class="datepicker short" id="expiration_date" name="expiration_date" value="" maxlength="" />
+	                </td>
+	            </tr>
+	            
+	            <tr id="row_lot" <?php if (empty($this->planStockId)) { ?>style="display:none;"<?php } ?>>
+	                <td class="column_label"><p class="label_text"><span id="label_lot">ロット単位：</span><span class="require">＊</span></p></td>
+	                <td class="column_value">
+	                    <input type="text" id="input_lot" name="lot" class="short" value="" maxlength="" />
+	                </td>
+	            </tr>
+	            
+	            <tr id="row_number_of_lot" <?php if (empty($this->planStockId)) { ?>style="display:none;"<?php } ?>>
+	                <td class="column_label"><p class="label_text">ロット数：<span class="require">＊</span></p></td>
+	                <td class="column_value">
+	                    <input type="text" id="input_number_of_lot" name="number_of_lot" class="short" value="" maxlength="" />
+	                </td>
+	            </tr>
+			</table>
+	    </form>
+
+    </div>
+    
+</div>
+</div>
+</div>
+</div>

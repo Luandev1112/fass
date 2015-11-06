@@ -1,0 +1,5 @@
+<div class="menu_list connection clearfix">
+<a class="menu <?php if($this->action == 'detail') echo "selected"; ?>" href="/supply-material/detail?id=<?php echo $this->escape($this->id); ?>&material_id=<?php echo $this->escape($this->materialId); ?>">詳細</a>
+<a class="menu <?php if($this->action == 'version') echo "selected"; ?>" href="/supply-material/version?id=<?php echo $this->escape($this->id); ?>&material_id=<?php echo $this->escape($this->materialId); ?>">ファイル更新履歴</a>
+
+</div>

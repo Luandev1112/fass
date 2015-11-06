@@ -1,0 +1,108 @@
+<?php
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+   		Tipped.create('#help_keyword', "名称 / 内容 / 標準サイズ / メモ");
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+		$('#condition_form').submit();
+	});
+});    
+</script>
+<style type="text/css">
+
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/price-expense/postage-add">新規登録</a>
+            </p>
+	        <span style=""><strong>原単位・送料</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/price-expense/postage" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">キーワード：<span class="popup_help" id="help_keyword">&nbsp;<i class="icon-help-circled"></i></span></p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+					
+					<div class="condition_item" style="width:400px;padding-top:23px;">
+						<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット" />
+						<input type="submit" style="display:inline-block;width:150px;" value="検索" />
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:15%;"><p>最終更新日時</p></th>
+				<th><p>名称&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:35%;"><p>標準サイズ&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:15%;"><p>原価計算用　一律送料</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['title']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['title']), 25); ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['size']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['size']), 28); ?></p>
+						</td>
+						
+						<td>
+							<p style="text-align:right;padding-right:12px;"><?php echo number_format($this->escape($each['standard_price'])); ?>&nbsp;円</p>
+						</td>
+						
+						<td>
+							<p><a href="/price-expense/postage-detail?id=<?php echo $each['id'] ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

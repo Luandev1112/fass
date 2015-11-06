@@ -1,0 +1,519 @@
+<?php
+$payementTypeList            = Shared_Model_Code::codes('connection_payment_type');
+$payementConditionList       = Shared_Model_Code::codes('connection_payment_condition');
+$payementConditionMonthList  = Shared_Model_Code::codes('connection_payment_condition_month');
+$payementMonthlyList         = Shared_Model_Code::getPayementMonthlyList();
+
+$accountTypeList             = Shared_Model_Code::codes('bank_account_type');
+?>
+
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+var editing = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+<?php
+$count = count($this->data['supply_payment_conditions']) + 1;
+?>
+var count = <?php echo $count; ?>;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+    	if (editing == true) {
+    		jAlert('複数のカテゴリを同時に編集することはできません', 'エラー');
+    		return false;
+    	}
+    	
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+        
+        if (categoryId == '1') {
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        }
+        
+        editing = true;
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/connection/update-provide-info?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/connection/update-provide-account?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+
+    $('.supply_payment_method').change(function() {
+		if ($(this).val() == '<?php  echo Shared_Model_Code::CONNECTION_PAYMENT_TYPE_OTHER; ?>') {
+			if ($(this).prop('checked')) {
+				$('#supply_payment_method_other_text').prop("disabled", false);
+			} else {
+				$('#supply_payment_method_other_text').prop("disabled", true);
+			}
+		}
+    });
+
+    $('.payment_condition').change(function() {
+    	var targetId = $(this).attr('target-id');
+    	if ($(this).val() == '<?php echo Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_OTHER; ?>') {
+    		$('#' + targetId + '_payment_condition_other').show();
+    	} else {
+    		$('#' + targetId + '_payment_condition_other').hide();
+    	}
+    	
+    	if ($(this).val() == '<?php echo Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_DELIVERY; ?>' || $(this).val() == '<?php echo Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_CLAIM; ?>') {
+    		$('#' + targetId + '_condition_option_val').show();
+    	} else {
+    		$('#' + targetId + '_condition_option_val').hide();
+    	}
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '<?php echo $this->backUrl; ?>';
+        	} else {
+            	location.href = '/connection/provide-info?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/connection/provide-info?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+    
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+    
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+		if (categoryId == '1') {
+
+	        var uuid = guid();
+			$('.column_copy_base_' + categoryId + ' .column_label .label_text').html('通常支払条件' + count);
+			$('.column_copy_base_' + categoryId + ' .payment_condition').attr('target-id', uuid);
+	        $('.column_copy_base_' + categoryId + ' .payment_condition').attr('id', uuid + '_payment_condition').attr('name', uuid + '_payment_condition');
+	        $('.column_copy_base_' + categoryId + ' .payment_condition_close').attr('id', uuid + '_payment_condition_close').attr('name', uuid + '_payment_condition_close');
+	        $('.column_copy_base_' + categoryId + ' .payment_condition_month').attr('id', uuid + '_payment_condition_month').attr('name', uuid + '_payment_condition_month');
+	        $('.column_copy_base_' + categoryId + ' .payment_condition_pay').attr('id', uuid + '_payment_condition_pay').attr('name', uuid + '_payment_condition_pay');
+	        $('.column_copy_base_' + categoryId + ' .payment_condition_other').attr('id', uuid + '_payment_condition_other').attr('name', uuid + '_payment_condition_other');
+	        $('.column_copy_base_' + categoryId + ' .condition_option_val').attr('id', uuid + '_condition_option_val');
+			$('.column_copy_base_' + categoryId + ' .payment_condition_other').attr('id', uuid + '_payment_condition_other').attr('name', uuid + '_payment_condition_other');
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+			
+	        $('.column_copy_base td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+	        count++;
+        }
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td.column_value select.short {width:280px;}
+table.list_default tr td.column_value select.monthly {width:60px;float:left;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.multi_rows_padding {padding:5px 0 5px 10px}
+
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>取引先 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>   
+    </div>
+
+
+    <?php
+    /* 基本情報 */
+    $categoryId = 1;
+    ?>
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">仕入・委託情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">主要取引品目・委託内容</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                		<?php if (!empty($this->data['supply_content'])) { echo nl2br($this->data['supply_content']); } ?>
+                	</div>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<textarea name="supply_content" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['supply_content']); ?></textarea>
+					</div>
+                </td>
+            </tr>
+                 
+            <tr>
+                <td class="column_label"><p class="label_text">通常支払方法</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<?php
+                		$displayString = '';
+                		foreach ($payementTypeList as $key => $val) {
+                			if (!empty($this->data['supply_payment_method'])) {
+		                		foreach($this->data['supply_payment_method'] as $eachSelected) {
+			                		if ($eachSelected == $key) {
+			                			if ($key == Shared_Model_Code::CONNECTION_PAYMENT_TYPE_OTHER) {
+			                				$displayString .= $val . '　（' . $this->data['supply_payment_method_other_text'] . '） <br>';
+			                			} else {
+			                				$displayString .= $val . '<br>';
+			                			}
+			                		}
+		                		}
+	                		}
+	                	}
+                	?>
+                	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+                	
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+	                	<div class="clearfix">
+	                		<?php foreach ($payementTypeList as $key => $val) { ?>
+			                	<div class="checkbox_item relation_type_item">
+				                	<label>
+				                    	<input type="checkbox" class="supply_payment_method" name="supply_payment_method[]" value="<?php echo $this->escape($key); ?>" <?php if (in_array($key, $this->data['supply_payment_method'])) { echo 'checked="checked"'; } ?> value="<?php echo $this->escape($key); ?>"><?php echo $this->escape($val); ?>
+				                    </label>
+			                    </div>
+		                    <?php } ?> 
+						</div>
+						<div class="clearfix" style="padding-bottom:8px;">
+		                    <input type="text" id="supply_payment_method_other_text" name="supply_payment_method_other_text" placeholder="その他支払方法" <?php if (!in_array(Shared_Model_Code::CONNECTION_PAYMENT_TYPE_OTHER, $this->data['supply_payment_method'])) { echo 'disabled="disabled"'; } ?> value="<?php echo $this->escape($this->data['supply_payment_method_other_text']); ?>" maxlength="" style="width:280px;float:left;" />
+						</div>
+					</div>
+                </td>
+            </tr>
+        </table>
+        
+        <div style="margin-bottom:13px;">
+ 		<table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['supply_payment_conditions'])) { ?>
+			        <?php foreach ($this->data['supply_payment_conditions'] as $each) { ?>
+			            <tr id="<?php echo $each['id']; ?>">
+			                <td class="column_label"><p class="label_text">通常支払条件<?php echo $each['id']; ?></p></td>
+			                <td class="colon"><p class="label_text">：</p></td>
+			                <td class="column_value">
+			                	<p class="display_value_<?php echo $categoryId; ?>">
+			                	<?php
+			                		if ($each['payment_condition'] == '') {
+			                			echo '---';
+			                			
+			                		} else if ($each['payment_condition'] == (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_DELIVERY
+			                			|| $each['payment_condition'] == (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_CLAIM) {
+			                			echo $payementConditionList[$each['payment_condition']] . '　（' . $payementMonthlyList[$each['payment_condition_close']] . '締め　'
+			                		 	. $payementConditionMonthList[$each['payment_condition_month']] . $payementMonthlyList[$each['payment_condition_pay']] . '払い）';
+			                		
+			                		} else if ($each['payment_condition'] == (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_OTHER) {
+			                			echo $payementConditionList[$each['payment_condition']] . '　（' . $this->escape($each['payment_condition_other']) . '）';
+			                		
+			                		} else if (array_key_exists($each['payment_condition'], $payementConditionList)) {
+			                			echo $payementConditionList[$each['payment_condition']];
+			                		
+			                		}
+			                	?>
+			                	</p>
+			                	
+			                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+				                	<div class="clearfix">
+					                	<select class="short payment_condition" target-id="<?php echo $this->escape($each['id']); ?>" id="<?php echo $this->escape($each['id']); ?>_payment_condition" name="<?php echo $this->escape($each['id']); ?>_payment_condition" style="float:left;margin-right:20px;">
+				                            <option value="">---</option>
+				                            <?php foreach ($payementConditionList as $key => $val) { ?>
+				                                <option value="<?php echo $key; ?>" <?php if ($key == $each['payment_condition']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+				                            <?php } ?>
+				                    	</select>
+				                    	
+				                    	<div class="clearfix condition_option_val" id="<?php echo $this->escape($each['id']); ?>_condition_option_val" style="float:left;<?php if ($each['payment_condition'] != (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_DELIVERY && $each['payment_condition'] != (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_BASED_CLAIM) { echo 'display:none;'; } ?>">
+				                    		<select class="monthly" id="<?php echo $this->escape($each['id']); ?>_payment_condition_close" name="<?php echo $this->escape($each['id']); ?>_payment_condition_close">
+					                            <option value="">---</option>
+					                            <?php foreach ($payementMonthlyList as $key => $val) { ?>
+					                                <option value="<?php echo $key; ?>" <?php if ($key == $each['payment_condition_close']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+					                            <?php } ?>
+					                    	</select>
+					                    	<p style="float:left;margin-right:20px;">締め</p>
+					                    	<select class="monthly" id="<?php echo $this->escape($each['id']); ?>_payment_condition_month" name="<?php echo $this->escape($each['id']); ?>_payment_condition_month" style="margin-right:5px;">
+					                            <option value="">---</option>
+					                            <?php foreach ($payementConditionMonthList as $key => $val) { ?>
+					                                <option value="<?php echo $key; ?>" <?php if ($key == $each['payment_condition_month']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+					                            <?php } ?>
+					                    	</select>
+				                    		<select class="monthly" id="<?php echo $this->escape($each['id']); ?>_payment_condition_pay" name="<?php echo $this->escape($each['id']); ?>_payment_condition_pay">
+					                            <option value="">---</option>
+					                            <?php foreach ($payementMonthlyList as $key => $val) { ?>
+					                                <option value="<?php echo $key; ?>" <?php if ($key == $each['payment_condition_pay']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+					                            <?php } ?>
+					                    	</select>
+				                    		<p style="float:left;margin-right:20px;">払い</p>
+				                    	</div>
+			 							<input type="text" id="<?php echo $this->escape($each['id']); ?>_payment_condition_other" name="<?php echo $this->escape($each['id']); ?>_payment_condition_other" value="<?php echo $this->escape($each['payment_condition_other']); ?>" placeholder="その他条件内容" maxlength="" style="width:500px;float:left;<?php if ($each['payment_condition'] != (string)Shared_Model_Code::CONNECTION_PAYMENT_CONDITION_OTHER) { echo 'display:none;'; } ?>" />
+									</div>
+								</div>
+			                </td>
+			            </tr>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+    	</table>
+        <div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #ccc;height:34px;display:none">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="supply_payment_conditions" value="" />
+		</div>
+    </form>
+
+
+
+
+    <table class="list_default" style="display:none;">
+        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+            <td class="column_label"><p class="label_text">通常入金条件XXX</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="clearfix">
+                	<select class="short payment_condition" target-id="###" id="###_payment_condition" name="###_payment_condition" style="float:left;margin-right:20px;">
+                        <option value="">---</option>
+                        <?php foreach ($payementConditionList as $key => $val) { ?>
+                            <option value="<?php echo $key; ?>"><?php echo $val; ?></option>
+                        <?php } ?>
+                	</select>
+                	
+                	<div class="clearfix condition_option_val" id="###_condition_option_val" style="float:left;display:none;">
+                		<select class="monthly payment_condition_close" id="###_payment_condition_close" name="###_payment_condition_close">
+                            <option value="">---</option>
+                            <?php foreach ($payementMonthlyList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>"><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                    	<p style="float:left;margin-right:20px;">締め</p>
+                    	<select class="monthly payment_condition_month" id="###_payment_condition_month" name="###_payment_condition_month" style="margin-right:5px;">
+                            <option value="">---</option>
+                            <?php foreach ($payementConditionMonthList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>"><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                		<select class="monthly payment_condition_pay" id="###_payment_condition_pay" name="###_payment_condition_pay">
+                            <option value="">---</option>
+                            <?php foreach ($payementMonthlyList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>"><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                		<p style="float:left;margin-right:20px;">払い</p>
+                	</div>
+					<input type="text" class="payment_condition_other" id="###_payment_condition_other" name="payment_condition_other" value="" placeholder="その他条件内容" maxlength="" style="width:500px;float:left;display:none;" />
+				</div>
+            </td>
+        </tr>
+    </table>
+
+
+
+
+
+    <?php
+    /* 指定振込先 */
+    $categoryId = 2;
+    ?> 
+	<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-left border-top border-bottom"><p class="label_text strong">指定振込先</p></th>
+                <th class="cancel_category" id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">金融機関名（本支店名）</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['supply_account_bank']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="supply_account_bank" value="<?php echo $this->escape($this->data['supply_account_bank']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">預金種別</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                	<?php
+                		if (array_key_exists($this->data['supply_account_type'], $accountTypeList)) {
+                			echo $accountTypeList[$this->data['supply_account_type']];
+                		}
+                	?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="supply_account_type" name="supply_account_type" style="float:left;margin-right:20px;">
+                            <option value="0">---</option>
+                            <?php foreach ($accountTypeList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->data['supply_account_type']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">口座番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['supply_account_no']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="supply_account_no" value="<?php echo $this->escape($this->data['supply_account_no']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">口座名義</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['supply_account_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="supply_account_name" value="<?php echo $this->escape($this->data['supply_account_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">口座名義カナ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['supply_account_name_kana']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="supply_account_name_kana" value="<?php echo $this->escape($this->data['supply_account_name_kana']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>             
+        </table>
+    </form>               
+
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,78 @@
+<?php
+$statusList   = Shared_Model_Code::codes('payable_payment_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+});    
+</script>
+<style type="text/css">
+.align_right{text-align:right;margin-right:12px;}
+.align_center{text-align:center;margin-right:12px;}
+.view_type_list {}
+.view_type_list a.view_type {display:block;float:left;padding:11px 20px 0;height:22px;line-height:1;text-decoration:none;background-color: #c0f7fa;text-align:center;font-size: 1.1em;margin-right:5px;}
+.view_type_list a.view_type.selected {background-color:#098d94;color:#fff;}
+div.total {border:1px solid #ccc;background-color:#fafafa;padding:10px 11px;}
+div.total p {font-size:1.2em;font-weight:bold;line-height:1.3}
+div.total p.currency {float:left;width:70px;text-align:right}
+div.total p.account_count {float:left;width:80px;text-align:right}
+div.total p.total_amount {float:left;width:170px;text-align:right}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>カード利用履歴管理</strong></span>
+	    </div>
+	</div>
+      
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>未割当あり</p></th>
+				<th><p>カード名</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<p>(仮)</p>
+							<?php if (false) { ?>
+							<p style="color:#f00;">●</p>
+							<?php } ?>
+						</td>
+
+						<td>
+							<p><?php echo $each['card_name']; ?></p>
+						</td>
+					
+						<td>
+							<p><a href="/transaction-paid/card-import-history?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

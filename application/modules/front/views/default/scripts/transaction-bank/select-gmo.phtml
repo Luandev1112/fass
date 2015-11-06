@@ -1,0 +1,242 @@
+<?php
+$bankAccountType  = Shared_Model_Code::codes('bank_account_type');
+$statusList       = Shared_Model_Code::codes('payable_payment_status');
+$payingMethodList = Shared_Model_Code::codes('payable_paying_method_bank');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+function separate(num){
+    return String(num).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+}
+
+$(function () {
+	$(document).ready(function(){
+    });   
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('チェックした総合振込を割当しますか', '　', function(r) {
+            if(r) {
+                var $form  = $('#register_form');
+                var query  = $form.serialize();
+                var params = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:params,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            location.href = '<?php echo $this->backUrl; ?>';
+                            //jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/transaction-bank/select-gmo-attach'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+});
+
+</script>
+<style type="text/css">
+table.list_default tr th p.align_center, table.list_default tr td p.align_center{text-align:center;padding-left:0;}
+table.list_default tr th p.align_right, table.list_default tr td p.align_right{text-align:right;padding-right:12px;}
+
+table.list_default tr td a.show_detail {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#005bd9;color:#fff !important;text-decoration:none;}
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#02ad00}
+body input, body textarea, body select {font-size: 12px;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1100px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value {border-right:none;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:120px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {float:left;width:20px;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding {width:280px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding.long {width:740px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value input[type="text"] {width:240px;display:block;float:left;}
+.menu_frame table.list_default tr td textarea{width:620px;height:60px;}
+.menu_frame table.list_default tr td.td_action {width:56px;border-right:none;padding-right:5px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+.menu_frame table.list_default .multi_rows_padding {padding:5px 10px 5px 10px;}
+
+input[type=checkbox] {margin:0.8em 0.6em 0;}
+p.total_price {font-size:1.3em;font-weight:bold;color:#f00;padding-left:0.6em;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>金融機関口座履歴 - GMO総合振込分割当</strong></span>
+	    </div>
+		<div class="item_title clearfix">
+			<p class="item_name">
+				<?php echo $this->escape($this->bankData['bank_name']) . '　' . $this->escape($this->bankData['branch_name']) . '　' . $bankAccountType[$this->bankData['account_type']] . '　' . $this->escape($this->bankData['account_no']) . '　' . $this->escape($this->bankData['account_name']) . '（略：' . $this->escape($this->bankData['short_name']) . '）'; ?>
+			</p>
+		</div>
+	</div>
+	
+	<p style="color:#a400e6;margin-bottom:0.6em;font-weight:bold;padding-left:0.8em;">※APIで総合振込を行なった場合のみ、選択できます</p>
+	
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style="color:#f00;"><strong>対象CSVデータ</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>行番号</p></th>
+				<th style="width:10%;"><p>取引日</p></th>
+				<th><p>対象</p></th>
+				<th style="width:8%"><p>通貨</p></th>
+				<th style="width:14%"><p>出金額</p></th>
+			</tr>
+			<tr>
+				<td>
+					<p><?php echo $this->escape($this->rowData['row_count']); ?></p>
+				</td>
+				
+				<td>
+					<p><?php echo $this->rowData['target_date']; ?></p>
+				</td>
+				
+				<td>
+					<div class="multi_rows_padding"><?php echo $this->escape($this->rowData['name']); ?></div>
+				</td>
+				
+				<td>
+					<p class="align_center"><?php echo $this->escape($this->rowData['currency_name']); ?></p>
+				</td>
+				
+				<td>
+					<p class="align_right"><?php if (!empty($this->rowData['paid_amount'])) { echo number_format($this->rowData['paid_amount']); } else { echo '---'; } ?></p>
+				</td>
+			</tr>
+		</table>     
+	</div>
+
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style="color:#f00;"><strong>割当候補</strong></span>
+	    </div>
+	</div>
+	<?php $transferTable = new Shared_Model_Data_AccountGmoTransfer(); ?>
+	
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		
+		<form id="register_form" action="#" method="post">
+			<input type="hidden" name="row_id" value="<?php echo $this->escape($this->rowId); ?>">
+			<table class="list_default">
+				<tr>
+					<th style="width:5%;"><p>選択</p></th>
+					<th style="width:13%;"><p>受付番号（振込申請番号）</p></th>
+					<th style="width:9%;"><p class="align_center">合計金額</p></th>
+					<th style="width:13%;"><p>振込予定日</p></th>
+					<th><p>振込先</p></th>
+				</tr>
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+						<?php
+							$grayOut = '';
+						?>
+						<tr>
+							<td>
+								<input type="checkbox" name="apply_no[]" value="<?php echo $this->escape($each['apply_no']); ?>" target-amount="<?php echo $this->escape($each['apply_total']); ?>">
+							</td>
+							
+							<td>
+	                            <p><?php echo $this->escape($each['apply_no']); ?></p>
+							</td>
+	
+							<td>
+	                            <p class="align_right"><?php echo $this->numberFormat($each['apply_total']); ?></p>
+							</td>
+							
+							<td>
+	                            <p><?php echo date('Y-m-d', strtotime($each['paying_plan_date'])); ?></p>
+							</td>
+							
+							<td>
+	                            <div class="multi_rows_padding">
+	                            	<?php $list = $transferTable->getListByApplyNo($each['apply_no']); ?>
+	                            	<?php foreach ($list as $eachItem) { ?>
+	                            		<?php echo $this->escape($eachItem['company_name']); ?>　<?php echo $this->numberFormat($eachItem['total_amount']); ?><br>
+	                            	<?php } ?>
+	                            </div>
+							</td>
+							
+						</tr>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="13">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>
+		</form>
+		
+		<p class="total_price">合計金額：<span></span></p>
+	</div>	
+		
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

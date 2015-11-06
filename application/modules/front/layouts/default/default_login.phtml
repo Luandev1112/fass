@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<?php echo $this->headTitle(); ?>
+<link rel="shortcut icon" href="/resource/favicon.png">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/common.css" media="all">
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_layout.css?<?php echo date('ymdHi') ?>" media="all" />
+<link type="text/css" rel="stylesheet" href="/resource/management/css/management_module.css?<?php echo date('ymdHi') ?>" media="all" />
+<link type="text/css" rel="stylesheet" href="/resource/type/fontello.css">
+<link type="text/css" rel="stylesheet" href="/resource/type/budicons.css">
+</head>
+<body class="ll-skin-melon">
+
+<div class="main_menu">
+	<div id="container" class="menu_container">
+    	<h1><a><img src="/resource/management/img/logo_main.png" /></a></h1>
+    </div>
+</div>
+   
+<div class="main_area">
+    <div id="container">
+    	<?php echo $this->partialWithParentView($this->bodyLayoutName) ?>
+    </div><!-- container -->
+</div><!-- main area -->
+
+<div class="loading_frame" style="display:none;">
+    <div id="loading"></div>
+</div>
+
+<div id="page_fotter_fixed">
+	<div id="container" class="clearfix">
+        <p class="copyright">copyright (C)fResco corporation, All Right Reserved.</p> 
+    </div><!-- container -->
+</div><!-- main menu -->
+
+</body>
+</html>

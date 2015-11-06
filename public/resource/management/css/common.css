@@ -1,0 +1,240 @@
+@charset "UTF-8";
+/*------------------------------
+
+common
+
+------------------------------*/
+
+/*------------------------------
+font
+------------------------------*/
+html, body {
+font-family:"ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, "ＭＳ Ｐゴシック", sans-serif;
+font-size: 14px;
+color: #666;
+}
+input, textarea, select {
+font-size: 14px;
+color: #666;
+line-height: 1.25;
+}
+p,li,dt,dd,pre {
+}
+th,td {
+
+}
+h1,h2,h3,h4,h5,h6,p,li,dt,dd {
+line-height: 1.0;
+}
+
+/*------------------------------
+base
+------------------------------*/
+* {
+margin: 0;
+padding: 0;
+}
+html {
+overflow-y: scroll;
+}
+img {
+border: 0;
+}
+hr {
+margin-top: 1.0em;
+margin-bottom: 1.0em;
+}
+p{
+margin:0;
+padding:0;
+}
+/*------------------------------
+form object
+------------------------------*/
+textarea{
+width: 99%;
+}
+/*------------------------------
+headers
+------------------------------*/
+h1 {
+font-size: 1.2em;
+}
+h2 {
+font-size: 1.1em;
+}
+h3 {
+font-size: 1.1em;
+}
+h4 {
+font-size: 0.9em;
+}
+h3.title_bar {
+padding-left: 15px;
+font-size: 1em;
+min-height: 21px;
+background-image: url('/common/img/title_bar.png');
+background-repeat: no-repeat;
+background-position: left 40%;
+margin-bottom: 7px;
+}
+/*------------------------------
+default list
+------------------------------*/
+ul {
+list-style: none;
+}
+li {
+list-style: none;
+}
+/*------------------------------
+default table
+------------------------------*/
+table {
+width:100%;
+margin-bottom: 1em;
+border-collapse: collapse;
+}
+table tr th {
+padding: 5px;
+}
+table tr td {
+padding: 5px;
+}
+table tr th.no-border {
+border: 0;
+background-color: #ffffff;
+color: #000000;
+font-weight: normal;
+}
+table tr td.no-border {
+border: 0;
+}
+.ta-center {
+text-align:center;
+}
+
+/*------------------------------
+clearfix
+------------------------------*/
+.clearfix:after {
+content: ".";
+display: block;
+height: 0px;
+clear: both;
+visibility: hidden;
+font-size: 0.1em;
+}
+.clearfix {
+display: inline-block;
+}
+/*Hides from IE-mac\*/
+*html .clearfix {
+height: 1%;
+}
+.clearfix {
+display: block;
+}
+/*End hide from IE-mac*/
+/*------------------------------
+messages
+------------------------------*/
+p.info,
+p.caution,
+p.success,
+p.error {
+background-position: 8px center;
+background-repeat: no-repeat;
+border: 1px solid #FFF;
+clear: both;
+padding: 5px 5px 5px 20px;
+}
+p.info {
+background-color: #BDE5F8;
+color: #00529B;
+margin-top: 5px;
+}
+p.caution {
+background-color: #FEEFB3;
+color:#CC3300;
+}
+p.success {
+background-color: #00B91C;
+color: #fff;
+}
+p.error {
+background-color: #ff0000;
+color: #fff;
+}
+
+/*------------------------------
+pagger
+------------------------------*/
+.pgtitle{
+float:left;
+}
+.pg {
+float:right;
+text-align:right;
+padding-bottom:0.5em;
+margin:0 0 10px;
+font-size:90%;
+}
+.pg .num {
+height:28px;
+}
+.pg .num strong {
+font-size:120%;
+}
+.pg .item {
+padding:4px 8px;
+border:1px solid #888;
+}
+.pg .current {
+font-weight:bold;
+background-color:#990033;
+color:#FEFEFE;
+}
+.pg .disabled {
+color:#666;
+}
+.pg a {
+color:#990033;
+font-weight:bold;
+text-decoration:underline;
+}
+.pg a:hover {
+background:#CEF;
+}
+/*------------------------------
+basic colors
+------------------------------*/
+.red {
+color: #ff0000;
+}
+.gray {
+color: #777;
+}
+.darkgray {
+color: #333;
+}
+.pink{
+color:#990030;
+}
+.blue{
+color: #006699;
+}
+.white{
+color: #FFFFFF;
+}
+
+span.year select {
+width:90px;
+}
+span.month select {
+width:60px;
+}
+span.day select {
+width:60px;
+}
+

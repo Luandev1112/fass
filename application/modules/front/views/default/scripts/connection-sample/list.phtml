@@ -1,0 +1,154 @@
+<?php
+
+?>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+.multi_rows_padding {padding:4px 0 0 10px;float:left;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>サンプル出荷管理</strong></span>
+        </div> 
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">取引関係：</p>
+                        <select id="user_id_in_charge" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $eachUser['id']; ?>" <?php if ($key == $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">業種：</p>
+                        <select id="user_id_in_charge" name="stock_status">
+                            <option value="">---</option>
+                        	<?php foreach ($stockStatusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['stock_status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+				</div>
+				
+				<input type="submit" value="検索" />
+			
+			</form>
+		</div>
+	</div>
+	
+	
+    <div class="clearfix">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>日時</p>
+				</th>
+
+				<th style="width:30%;">
+					<p>商品</p>
+				</th>
+
+				<th>
+					<p>特記事項</p>
+				</th>
+				
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+			
+<?php
+
+$items = array();
+
+/*
+$items[] = array(
+'contact_date' => '2018/04/09',
+'items' => "健康美人の習慣　ライシアBeauty  2個\n健骨・健歯の習慣　ライシアBone  2個",
+'memo'  => '健康博覧会',
+);
+
+
+$items[] = array(
+'contact_date' => '2018/02/09',
+'items' => '健骨・健歯・健康美　ライシア原粉末  2個',
+'memo'  => '',
+);
+*/
+
+$this->items = $items;
+
+?>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['contact_date']); ?></p>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['items'])); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo nl2br($this->escape($each['memo'])); ?></div>
+						</td>
+						
+						<td>
+							<p>
+								<a href="/connection/progress-detail?id=<?php echo $each['id']; ?>">表示</a>
+							</p>
+						</td>
+
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">現在この機能はまだ利用できません<?php /*データがありません*/ ?></p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div><!-- clearfix -->
+              
+
+</div>
+</div>
+</div>
+</div>

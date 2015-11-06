@@ -1,0 +1,34 @@
+<style type="text/css">
+.define_menu_frame {background-color:#fafafa;}
+.define_menu_frame p {padding:0.6em 0 0.6em 15px;}
+.define_menu_frame a.block {display:block;font-size:1.1em;background-color:#222;color:#fff;padding:5px 15px;margin-bottom:5px;text-decoration:none;}
+.define_menu_frame a.block:hover{background-color:#63b02d;color:#fff;}
+.define_menu_frame a.block.selected {background-color:#63b02d;}
+</style>
+<div class="define_menu_frame clearfix">
+    <p>共通</p>
+	<a class="block <?php if ($this->action === 'country-list') { echo 'selected'; } ?>" href="/system/country-list">
+		<span class="title">国</span><br>
+	</a>
+	
+	<a class="block <?php if ($this->action === 'industry-category-list') { echo 'selected'; } ?>" href="/system/industry-category-list">
+		<span class="title">業種カテゴリ</span><br>
+	</a>
+	
+	<a class="block <?php if ($this->action === 'business-list') { echo 'selected'; } ?>" href="/system/business-list">
+		<span class="title">当社事業</span><br>
+	</a>
+	
+	<p>商品管理関連</p>
+	<a class="block <?php if ($this->action === 'product-class-list') { echo 'selected'; } ?>" href="/system/product-class-list">
+		<span class="title">調達製造区分</span><br>
+	</a>
+	
+	<a class="block <?php if ($this->action === '') { echo 'selected'; } ?>" href="#">
+		<span class="title">商品区分</span><br>
+	</a>
+	
+	<a class="block <?php if ($this->action === '') { echo 'selected'; } ?>" href="#">
+		<span class="title">調達方法</span><br>
+	</a>
+</div>

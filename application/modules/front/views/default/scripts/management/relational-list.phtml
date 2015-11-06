@@ -1,0 +1,127 @@
+<?php
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+$bankAccountType     = Shared_Model_Code::codes('bank_account_type');
+$bankRegisteredType  = Shared_Model_Code::codes('bank_registered_type');
+
+?>
+<style type="text/css">
+table.list_default tr th{position:relative;}
+table.list_default tr th i{position:absolute;right:10px;margin-left:5px;font-size:1.2em}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.deleted td {background:#ccc}
+table.list_default tr.deleted:hover td {background:#bbb;}
+table.list_default tr td p {height:auto;}
+table.list_default tr td p.imported {color:#f00;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:162px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin-right:10px;border:none;" href="/connection/add">新規登録</a>
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/connection/import">取込</a>
+            </p>
+	        <span style=""><strong>取引先一覧</strong></span>
+	    </div>
+	</div>
+				
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		
+		<?php
+			$connectionBankTable = new Shared_Model_Data_ConnectionBank();
+		?>
+		
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;"><p>取引先ID</p></th>
+				<th><p>企業・機関名</p></th>
+				<th style="width:30%;"><p>旧データ</p></th>
+				<th style="width:30%;"><p>新データ</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>" <?php if ($each['status'] == Shared_Model_Code::CONNECTION_STATUS_REMOVE) { echo 'class="deleted"'; } ?>>
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 25); ?></p>
+						</td>
+						
+						<td>
+							
+							<div class="multi_rows_padding">
+								<?php 
+									if ($each['gs_basic_bank_select'] !== (string)Shared_Model_Code::BASIC_BANK_OTHER) {
+										echo $basicbankList[$each['gs_basic_bank_select']] . '　(銀行コード：' . $each['gs_bank_code'] . ')';
+									} else {
+										echo $each['gs_other_bank_name'] . '　(銀行コード：' . $each['gs_bank_code'] . ')';
+									}
+								?><br>
+								<?php echo $this->escape($each['gs_bank_branch_name'])  . '　(支店コード：' . $each['gs_bank_branch_id'] . ')'; ?><br>
+								<?php echo $bankAccountTypeList[$each['gs_bank_account_type']]; ?>　<?php echo $this->escape($each['gs_bank_account_no']); ?><br>
+								<?php echo $this->escape($each['gs_bank_account_name']); ?><br>
+								<?php echo $this->escape($each['gs_bank_account_name_kana']); ?>
+							</div>
+						</td>
+						
+						
+						<td>
+							<?php 
+								$bankList = $connectionBankTable->getListByConnectionId($each['id']);
+								
+								if (!empty($bankList)) {
+							?>
+								<div class="multi_rows_padding">
+									<?php foreach ($bankList as $eachBank) { ?>
+										ID:<?php echo $this->escape($eachBank['id']); ?><?php 
+				    						if (!empty($eachBank['is_confirmed'])) {
+				    						    echo '<strong style="color:#347de">確認済</strong>　'; 
+				    						} else {
+				    						    echo '<strong class="red">未確認</strong>　'; 
+				    						}
+										?><strong style="color:#4347de"><?php echo $bankRegisteredType[$eachBank['bank_registered_type']]; ?></strong>　<?php if (!empty($eachBank['target_display_id'])) { echo $this->escape($eachBank['target_display_id']); } ?><br>
+					
+									
+									    <string><?php echo $this->escape($eachBank['bank_code']); ?></string>　<?php echo $this->escape($eachBank['bank_name']); ?><br>
+									    <string><?php echo $this->escape($eachBank['branch_code']); ?></string>　<?php echo $this->escape($eachBank['branch_name']); ?><br>
+		
+									    <?php echo $bankAccountType[$eachBank['account_type']]; ?>　<?php echo $this->escape($eachBank['account_no']); ?><br>
+			
+									    <?php echo $this->escape($eachBank['account_name']); ?><br><?php echo $this->escape($eachBank['account_name_kana']); ?><br>
+	
+							        <?php } ?>
+								</div>				
+							<?php
+								}
+                			?>
+						</td>
+					</tr>
+					
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="3">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+
+

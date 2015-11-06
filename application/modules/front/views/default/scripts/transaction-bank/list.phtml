@@ -1,0 +1,119 @@
+<?php
+$bankAccountType = Shared_Model_Code::codes('bank_account_type');
+?>
+<script type="text/javascript">
+$(function () {
+	$(document).ready(function(){
+	});
+});    
+</script>
+<style type="text/css">
+.multi_rows_padding {padding:5px 10px 5px 10px;}
+
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.inactive td {background:#ddd;}
+table.list_default tr.inactive:hover td {background:#ccc;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">            
+	        <span><strong>金融機関口座履歴管理</strong></span>
+	    </div>
+	</div>
+
+	<?php $bankHitoryItemsTable = new Shared_Model_Data_AccountBankHistoryItem(); ?>
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<form id="register_form" action="#" method="post"> 
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>未割当あり</p></th>
+				<th style="width:18%;"><p>金融機関コード・金融機関名</p></th>
+				<th style="width:16%;"><p>支店コード・支店名</p></th>
+				<th style="width:8%;"><p>口座種別</p></th>
+				<th style="width:9%;"><p>口座番号</p></th>
+				<th><p>口座名義</p></th>
+				<th style="width:6%;"><p>略名</p></th>
+				<th style="width:5%;"><p>履歴</p></th>
+			</tr>
+			<tbody class="sortable_column" id="sortable_column">
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<?php
+						$class = '';
+						if ($each['status'] === (string)Shared_Model_Code::CONTENT_STATUS_INACTIVE) {
+							$class = 'inactive';
+						}
+						?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" class="<?php echo $class; ?>">
+						<td>
+							<?php /*$haveNone = $bankHitoryItemsTable->haveNoneAttachWithBank();*/ 
+							$haveNone = false;
+							?>
+							<?php if ($haveNone) { ?>
+								<p style="color:#f00;">●</p>
+							<?php } ?>
+							<p>(仮)</p>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding"><string><?php echo $this->escape($each['bank_code']); ?></string>　<?php echo $this->escape($each['bank_name']); ?></div>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding"><string><?php echo $this->escape($each['branch_code']); ?></string>　<?php echo $this->escape($each['branch_name']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo $bankAccountType[$each['account_type']]; ?></div>
+						</td>
+						
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['account_no']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['account_name']); ?></div>
+						</td>
+
+						<td>
+							<div class="multi_rows_padding"><?php echo $this->escape($each['short_name']); ?></div>
+						</td>
+						
+						<td>
+							<div class="display_value">
+								<?php if ($each['bank_code'] === '0033' || $each['bank_code'] === '0310') { ?>
+									<p><a class="edit_item" href="/transaction-bank/log-list?bank_id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+								<?php } else { ?>
+									<p><a class="edit_item" href="/transaction-bank/import-history?bank_id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+								<?php } ?>
+							</div>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="<?php if (!empty($this->adminProperty['allow_editing_accounting_title'])) { ?>5<?php } else { ?>4<?php } ?>">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+		<input type="hidden" id="hidden_contents_order" name="item_list" value="" />
+		</form>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

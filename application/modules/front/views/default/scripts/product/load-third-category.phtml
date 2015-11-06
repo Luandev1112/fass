@@ -1,0 +1,6 @@
+<select id="third_category_id" name="third_category_id" class="category">
+	<option value="">---</option>
+	<?php foreach ($this->thirdCategoryList as $each) { ?>
+		<option value="<?php echo $this->escape($each['id']) ?>"><?php echo $this->escape($each['third_category_name']); ?></option>
+	<?php } ?>
+</select>

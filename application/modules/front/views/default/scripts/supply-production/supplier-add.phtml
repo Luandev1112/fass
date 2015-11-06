@@ -1,0 +1,311 @@
+<?php
+$supplierStatusList   = Shared_Model_Code::codes('supplier_status');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var pos = 0;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        Tipped.create('#help_base_name', "支店,支社,営業所,工場等の名称");
+    });
+    			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = '/supply-production/detail?id=<?php echo $this->escape($this->projectId); ?>';
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 登録
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form  = $('#register_form');
+                var query  = $form.serialize();
+                var params = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:params,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/supply-production/supplier-add-post?project_id=<?php echo $this->escape($this->projectId); ?>'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/supply-production/detail?id=<?php echo $this->escape($this->projectId); ?>';
+        }
+    });
+
+    // 取引先選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先選択
+function selectConnection(id, displayId, name) {
+	$('.connection_name').html(name);
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.zip {width:130px;}
+.condition_label{float:left;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+a.btn_setting#btn_copy {padding:1px 8px 0px;float:left;margin-left:20px;margin-top:5px;margin-bottom:0}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.add_image_box {padding:13px 0;}
+table.list_default tr td.column_value input.target_date, table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+select.currency {float:left;width:100px;margin-left:5px;}
+p.currency_total { float:left;margin:left:5px; }
+select.currency_delivery { float:left;width:100px;margin-left:5px; }
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>製造加工委託　仕入・調達先 - 新規登録</strong></span>
+        </div>
+    </div>
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">仕入先</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">    
+            <tr>
+                <td class="column_label"><p class="label_text">取引先<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="connection_name">---</p>
+                    <a class="option" id="select_connection">取引先選択</a>
+                    <input type="hidden" id="target_connection_id" name="target_connection_id" value="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">取引拠点名<span id="help_base_name">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<input type="text" name="base_name" value="" maxlength="" />
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">ステータス<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div class="clearfix">
+						<select class="short" id="status" name="status">
+							<option value="">---</option>
+                            <?php foreach ($supplierStatusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>"><?php echo $this->escape($val); ?></option>
+                            <?php } ?>
+                    	</select>
+	            	</div>
+	            </td>
+	        </tr>
+		</table>
+		
+		
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">委託方法</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+                		<?php foreach ($this->methodList as $each) { ?>
+		                	<div class="checkbox_item relation_type_item">
+			                	<label>
+			                    	<input type="checkbox" name="methods[]" value="<?php echo $this->escape($each['id']); ?>"><?php echo $this->escape($each['name']); ?>
+			                    </label>
+		                    </div>
+	                    <?php } ?>
+						<div class="checkbox_item">
+		                	<label>
+		                    	<input type="checkbox" class="methods" name="methods[]" value="<?php echo Shared_Model_Code::PRODUCT_CATEGORY_OTHER; ?>">その他
+		                    </label>
+	                    </div>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">委託方法メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="method_memo" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">当社支給品</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="supplying_memo" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+        </table>
+
+	</div><!-- clearfix -->	
+    </form>
+	
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,191 @@
+<?php
+$statusList   = Shared_Model_Code::codes('estimate_version_status');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+$(function () {
+
+    // PDFプレビュー
+    $(document).on('click', '.btn_estimate_preview', function () {   
+    	var targetVersion   = $(this).attr('target-version');
+    	var targetDisplayId = $(this).attr('target-display-id');
+    	window.open('/price-estimate/preview/<?php echo $this->escape($this->id); ?>/' + targetVersion + '/見積書_' + targetDisplayId + '.pdf', '_blank');
+    });
+    
+    // 提出完了
+    $(document).on('click', '.btn_submit', function () {    	
+    	var targetVersionId = $(this).attr('version-id');
+		jConfirm('提出完了にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data: 'id=<?php echo $this->id ?>&version_id=' + targetVersionId,
+		            success: function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('提出完了にしました', '　');
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/price-estimate/submit'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/price-estimate/version-list?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+        }
+    });
+
+    // 新規作成
+    $(document).on('click', '.btn_make_with_copy', function () {    	
+    	var targetVersionId = $(this).attr('target-version');
+		jConfirm('この見積書をコピーして新しい見積書を作成しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: 'id=<?php echo $this->id ?>&base_version_id=' + targetVersionId,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+		                    location.href = '/price-estimate/form?id=' + obj.id + '&version_id=' + obj.versionId;
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/price-estimate/create-by-copy'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>見積バージョン履歴 - <?php echo $this->escape($this->data['title']) . '&nbsp;&nbsp;(' . $this->escape($this->data['display_id']) . ')' ; ?></strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>バージョンID</p></th>
+				<th style="width:13%;"><p>更新日</p></th>
+				<th style="width:15%;"><p>ステータス</p></th>
+				<th><p>操作</p></th>
+				<th style="width:15%;"><p>コピー</p></th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['version_id']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $statusList[$each['version_status']]; ?></p>
+						</td>
+						
+						<td>
+							<div class="clearfix">	
+								<a class="btn_setting" href="/price-estimate/confirm?version_id=<?php echo $this->escape($each['id']); ?>">表示</a>
+								<?php if ($each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_REJECTED) { ?>
+									<?php if (empty($each['is_copied'])) { ?>
+										<a class="btn_setting" href="/price-estimate/copy/?id=<?php echo $this->escape($this->id); ?>&base_version_id=<?php echo $this->escape($each['version_id']); ?>">コピーして編集</a>
+									<?php } ?>
+									
+								<?php } else if ($each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_SUBMITTED) { ?>
+									<?php if ($each['template_id'] == '9') { ?>
+										<a class="btn_setting" target="_blank" href="<?php echo Shared_Model_Resource_EstimateUpload::getResourceUrl($this->data['id'], $each['id'], $each['file_name']); ?>">ダウンロード</a>
+									<?php } else { ?>
+										<a class="btn_setting btn_estimate_preview" href="javascript:void(0);" target-display-id="<?php echo $this->escape($this->data['display_id']); ?>" target-version="<?php echo $this->escape($each['id']); ?>">印刷用PDF</a>
+									<?php } ?>
+									
+								<?php } else if ($each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_APPROVED) { ?>
+									<?php if ($each['template_id'] == '9') { ?>
+										<a class="btn_setting" target="_blank" href="<?php echo Shared_Model_Resource_EstimateUpload::getResourceUrl($this->data['id'], $each['id'], $each['file_name']); ?>">ダウンロード</a>
+									<?php } else { ?>
+										<a class="btn_setting btn_estimate_preview" href="javascript:void(0);" target-display-id="<?php echo $this->escape($this->data['display_id']); ?>" target-version="<?php echo $this->escape($each['id']); ?>">印刷用PDF</a>
+									<?php } ?>
+									<a class="btn_setting btn_submit" href="javascript:void(0);" version-id="<?php echo $this->escape($each['id']); ?>">提出完了</a>
+									
+								<?php } else if ($each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_MAKING || $each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_MOD_REQUEST) { ?>	
+									<a class="btn_setting" href="/price-estimate/form?id=<?php echo $this->escape($this->id) . '&version_id=' . $this->escape($each['id']); ?>">編集</a>
+								<?php } ?>
+							</div>
+						</td>
+						
+						<td>
+							<?php if ($each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_SUBMITTED || $each['version_status'] == Shared_Model_Code::ESTIMATE_VERSION_STATUS_APPROVED) { ?>
+								<a class="btn_setting btn_make_with_copy" href="javascript:void(0);" target-version="<?php echo $this->escape($each['id']); ?>">新しい見積書を作成</a>
+							<?php } ?>
+						</td>
+
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

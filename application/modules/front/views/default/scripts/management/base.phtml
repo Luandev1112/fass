@@ -1,0 +1,258 @@
+<?php
+$payementTypeList       = Shared_Model_Code::codes('connection_payment_type');
+$payementConditionList  = Shared_Model_Code::codes('connection_payment_condition');
+?>
+
+<script type="text/javascript">
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+        
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/connection/update-staff-list?department_id=' + categoryId,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '<?php echo $this->backUrl; ?>';
+        	} else {
+            	location.href = '/connection/department?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+	// 詳細表示
+    $(document).on('click', '.show_detail', function () {
+        var targetId = $(this).attr('target-id');
+        $('tr#' + targetId + ' .more_info').slideToggle();
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/connection/department?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+    
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay:100,
+        stop:function (event, ui) {},
+        start:function (event, ui) {}
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td{background-color:#fff;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p.column_label {border-right:none;width:120px;float:left;}
+table.list_default tr td.column_value p.colon {width:20px;float:left;}
+table.list_default tr td.column_value div.multi_rows_padding {width:308px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+table.list_default tr td.column_value div.multi_rows_padding.long {width:854px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+table.list_default tr td.column_value input[type="text"] {width:240px;display:block;float:left;}
+table.list_default tr td textarea{width:620px;height:60px;}
+table.list_default tr td.td_action {width:56px;border-right:none;padding-right:5px;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+.order_btn_frame {float:left;margin:6px 0 0 14px;}
+.order_btn_frame .icon-up-dir-1 {font-size:14px;color:#000;line-height:1;display:block;}
+.order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#000;line-height:1;display:block;}
+table.list_default.connection_base tr th {background-color:#bae0ff}
+
+a.edit_staff {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:8px 0 0 3px;float:left;cursor:pointer;}
+a.show_detail {display:block;background-color:#333;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:8px 0 0 3px;float:left;cursor:pointer;}
+table.list_default tr th.edit_category,table.list_default tr th.cancel_category {width:90px;}
+a.btn_edit_category, a.btn_add_category, a.btn_cancel_category {width:90px;}
+a.btn_edit_category {border-right:1px solid #ddd;}
+span.inactive {font-weight:bold;color:#3668b3;font-size:1.3em}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>取引先 - <?php echo $this->escape($this->data['company_name']); ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>   
+    </div>
+
+    <div class="clearfix">
+
+	    <?php
+        /*  */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	            	<th class="border-left border-top border-bottom"><p class="label_text strong">納入先拠点</p></th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_add_category" id="btn_add_department" href="/connection/base-edit?id=<?php echo $this->escape($this->id); ?>"><span id="btn_edit_label_<?php echo $categoryId; ?>">拠点追加</span></a>
+	                </th>
+	            </tr>
+	        </table>
+	        
+	        <?php if (!empty($this->items)) { ?>
+	    	<?php foreach ($this->items as $eachItem) { ?>
+	        <table class="list_default connection_base" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom"><p class="label_text strong"><?php echo $this->escape($eachItem['base_name']); ?></p></th>                
+	                <th class="edit_category" id="add_category_<?php echo $categoryId; ?>" style="width:69px;">
+	                    <a class="btn_add_category" id="btn_edit_base" href="/connection/base-edit?id=<?php echo $this->escape($this->id); ?>&base_id=<?php echo $this->escape($eachItem['id']); ?>"><span id="btn_edit_label_<?php echo $categoryId; ?>">編集</span></a>
+	                </th>
+	            </tr>
+	        </table>
+   			<table class="list_default connection_base" style="margin-bottom:13px;">
+		        <tr id="<?php echo $this->escape($eachItem['id']); ?>" <?php /* if ($eachItem['status'] == Shared_Model_Code::CONNECTION_STAFF_STATUS_OLD) { echo 'class="inactive"'; } */ ?>>
+	                <td class="column_value" style="width:1044px">
+	                	<div class="clearfix" style="margin-bottom:5px;">
+							<div style="float:left;">
+								<div class="clearfix">
+									<div style="float:left;width:500px;">
+										<p class="column_label">法人名</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['company_name']); ?></div>
+					                </div>
+								</div>
+								<div class="clearfix">
+									<div style="float:left;width:500px;">
+										<p class="column_label">郵便番号</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['zipcode']); ?></div>
+					                </div>
+								</div>
+								<div class="clearfix">
+					                <p class="column_label">住所</p>
+									<p class="colon">：</p>
+									<div class="multi_rows_padding long"><?php echo $this->escape($eachItem['prefecture'] . $eachItem['address1'] . $eachItem['address2']); ?></div>
+								</div>
+								<div class="clearfix">
+									<div style="float:left;width:500px;">
+										<p class="column_label">電話番号</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['tel']); ?></div>
+					                </div>
+					                <div style="float:left;width:500px;">
+										<p class="column_label">FAX</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['fax']); ?></div>
+									</div>
+								</div>
+								<div class="clearfix">
+									<div style="float:left;width:500px;">
+										<p class="column_label">担当者 氏名</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['person_in_charge']); ?></div>
+					                </div>
+					                <div style="float:left;width:500px;">
+										<p class="column_label">担当者 氏名(カナ)</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['person_in_charge_kana']); ?></div>
+									</div>
+								</div>
+								<div class="clearfix">
+									<div style="float:left;width:500px;">
+										<p class="column_label">担当者メールアドレス</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['mail']); ?></div>
+					                </div>
+					                <div style="float:left;width:500px;">
+										<p class="column_label">担当者携帯</p>
+										<p class="colon">：</p>
+										<div class="multi_rows_padding"><?php echo $this->escape($eachItem['mobile']); ?></div>
+									</div>
+								</div>
+								<div class="clearfix">
+					                <p class="column_label">メモ</p>
+									<p class="colon">：</p>
+									<div class="multi_rows_padding long"><?php echo $this->escape($eachItem['memo']); ?></div>
+								</div>
+							</div>
+						</div>
+					</td>
+            	</tr>
+			</table>
+	        <?php } ?>
+	        <?php } ?>
+    	</form>
+	</div><!-- clearfix -->	                
+
+</div>
+</div>
+</div>
+</div>
+

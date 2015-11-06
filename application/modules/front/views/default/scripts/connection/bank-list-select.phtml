@@ -1,0 +1,104 @@
+<?php
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+
+$bankAccountType     = Shared_Model_Code::codes('bank_account_type');
+
+$bankRegisteredType  = Shared_Model_Code::codes('bank_registered_type');
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+?>
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span><strong>取引先口座選択</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<table class="list_default">
+		<tr>
+			<th style="width:11%;"><p>更新</p></th>
+			<th style="width:15%;"><p>登録種別</p></th>
+			<th style="width:14%;"><p>金融機関名/支店名</p></th>
+			<th style="width:11%;"><p>口座種別/口座番号</p></th>
+			<th style="width:15%;"><p>口座名義</p></th>
+			<th><p>備考</p></th>
+			<th style="width:8%;"><p>選択</p></th>
+		</tr>
+
+		<?php if (!empty($this->bankList)) { ?>
+			<?php foreach ($this->bankList as $each) { ?>
+
+				<tr id="<?php echo $each['id']; ?>" <?php if ($each['status'] == Shared_Model_Code::CONNECTION_STATUS_REMOVE) { echo 'class="deleted"'; } ?>>
+					<td>
+						<div class="multi_rows_padding">
+							<?php echo date('Y-m-d', strtotime($each['updated'])); ?><br>
+							<?php echo date('H:i', strtotime($each['updated'])); ?>
+						</div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $bankRegisteredType[$each['bank_registered_type']]; ?><br>
+						    <?php if (!empty($each['target_display_id'])) { echo $this->escape($each['target_display_id']); } ?>
+					    </div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding">
+						    <string><?php echo $this->escape($each['bank_code']); ?></string>　<?php echo $this->escape($each['bank_name']); ?><br>
+						    <string><?php echo $this->escape($each['branch_code']); ?></string>　<?php echo $this->escape($each['branch_name']); ?>
+						</div>
+					</td>
+					
+
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $bankAccountType[$each['account_type']]; ?><br>
+						    <?php echo $this->escape($each['account_no']); ?>
+						</div>
+					</td>
+				
+
+					<td>
+						<div class="multi_rows_padding">
+						    <?php echo $this->escape($each['account_name']); ?><br><?php echo $this->escape($each['account_name_kana']); ?>
+						</div>
+					</td>
+
+					<td>
+						<div class="multi_rows_padding" style="padding-right:0.6em;">
+						    <?php echo $this->roundText($this->escape($each['memo']), 30); ?>
+						</div>
+					</td>
+
+					<td>
+						<a class="option" href="javascript:selectConnectionBank('<?php echo $this->escape($each['id']); ?>', '<?php
+						echo $this->escape($each['bank_code']) . ' ' . 
+						$this->escape($each['bank_name']) . ' ' . 
+						$this->escape($each['branch_code']) . ' ' . 
+						$this->escape($each['branch_name']) . ' ' . 
+						$this->escape($each['account_no']) . ' ' . 
+						$this->escape($each['account_name_kana']);
+						?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="7">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding: 2.0em 0 5.0em;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

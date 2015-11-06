@@ -1,0 +1,32 @@
+2021-10-18T21:31:51+09:00 (NOTICE): Invalid controller specified (.env) %info%
+2021-10-18T21:31:51+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => .env
+    [module] => front
+    [action] => index
+)
+
+2021-10-18T21:31:54+09:00 (NOTICE): Invalid controller specified (vendor) %info%
+2021-10-18T21:31:54+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => vendor
+    [action] => .env
+    [module] => front
+)
+
+2021-10-18T21:31:55+09:00 (NOTICE): Invalid controller specified (storage) %info%
+2021-10-18T21:31:55+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => storage
+    [action] => .env
+    [module] => front
+)
+
+2021-10-18T21:31:57+09:00 (NOTICE): Invalid controller specified (public) %info%
+2021-10-18T21:31:57+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => public
+    [action] => .env
+    [module] => front
+)
+

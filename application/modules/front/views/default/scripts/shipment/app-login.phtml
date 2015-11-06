@@ -1,0 +1,97 @@
+<?php
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+    });
+    
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+		showSpinner();
+
+        var $form = $('#register_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:param,
+            success:function(res){
+            	stopSpinner();
+                console.log(obj);
+
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/api/user/login'
+		});
+	});
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%; dispaly:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:280px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>アプリログイン</strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    
+    	<form id="register_form" action="javascript:void(0);" method="post">
+	        <table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-right border-top border-bottom">
+	                    <p class="label_text strong">ログイン情報</p>
+	                </th>
+	            </tr>
+			</table>
+			<table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	                <td class="column_label"><p class="label_text">メールアドレス<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                    <input type="text" id="mail" name="mail" value="" />
+	                </td>
+	            </tr>
+	
+	            <tr>
+	                <td class="column_label"><p class="label_text">パスワード<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                    <input type="text" id="password" name="password" value="">
+	                </td>
+	            </tr>
+			</table>
+		</form>
+		
+		<div id="import_result">
+		
+		</div>
+		
+	</div><!-- clearfix -->	
+    
+                
+</div>
+</div>
+</div>
+</div>

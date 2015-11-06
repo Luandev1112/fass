@@ -1,0 +1,338 @@
+<?php
+
+?>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $(this.form).find('select option').removeAttr('selected');
+	    $(this.form).find(':checkbox').prop('checked', false);
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 取引先 リセット
+    $(document).on('click', '#reset_connection', function () {
+		$('#connection_name_display').html('');
+		$('#connection_name').val('');
+		$('#connection_id').val('');
+	});
+	
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+
+    
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/connection-record/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/connection-record/list?page=<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->current; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList(pageNo) {
+    var $form  = $('#connection_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name_display').html(name);
+	$('#connection_name').val(name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+.multi_rows_padding {padding:0 0 0 3px;float:left;line-height:1.6}
+table.list_default tr th p, table.list_default tr td p {padding:11px 0 0 3px}
+
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:60px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+a.option {
+background-color:#00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:inline-block;font-size:12px;margin:1px 3px 0 0;padding:5px 10px 3px 10px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+a.option.btn_list_delete {
+background-color:#d90034;	
+}
+#scroller table tr td {background-color:#fafafa;padding:5px 10px;height:110px;}
+
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+
+div.progress_condition_items input[type="submit"] {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;
+display:block;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="submit"]:hover,
+div.progress_condition_items input[type="submit"]:focus,
+div.progress_condition_items input[type="submit"]:active,
+div.progress_condition_items input[type="submit"].active {
+background:none repeat scroll 0 0 #165cb1;box-shadow:none;color:#fff !important;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="button"] {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;
+display:block;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="button"]:hover,
+div.progress_condition_items input[type="button"]:focus,
+div.progress_condition_items input[type="button"]:active,
+div.progress_condition_items input[type="button"].active {
+background:none repeat scroll 0 0 #165cb1;box-shadow:none;color:#fff !important;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+div.input_box_fake {width: 177px;}
+div.input_box_fake span.target_text {width: 98px;}
+div.input_box_fake a.select_popup {width:46px;}
+span.after {color:#3b5bc5}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+p.condition_title {padding-left:12px;font-size:1.5em;color:#f00;float:left;margin-right:2.0em;}
+.checkbox_item strong {color:#4b4fe8}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:210px;right:0;">
+				<a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0 10px 0 0;border:none;background-color:#000;" href="/connection-record/type-list">種別定義</a>
+				
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;" href="/connection-record/add-solo">新規登録</a>
+            </p>
+            <span><strong>議事録／資料</strong></span>
+        </div> 
+    </div>
+
+	<form id="condition_form" action="/connection-record/list" method="get">
+	<input type="hidden" id="search" name="search" value="1">
+	<input type="hidden" id="page" name="page" value="1">
+    <div class="col-xs-12">
+        <div class="clearfix" style="margin-bottom:7px;">
+        	<p style="float:left;padding-top:10px;width:75px;">取引先：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="connection_name_display"><?php echo $this->conditions['connection_name']; ?></span>
+					<a class="reset_popup" id="reset_connection" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup" id="select_connection" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="connection_name" name="connection_name" value="<?php echo $this->conditions['connection_name']; ?>" />
+				<input type="hidden" id="connection_id" name="connection_id" value="<?php echo $this->conditions['connection_id']; ?>" />
+			</div>
+        </div>  
+
+        <div class="clearfix" style="margin-bottom:0;">
+			<div class="checkbox_item relation_type_item">
+            	<strong>実績:</strong>
+            </div>
+	        <?php foreach ($this->typeList as $each) { ?>
+	        	<div class="checkbox_item relation_type_item">
+	            	<label>
+	            		<input type="checkbox" name="record_type[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (!empty($this->conditions['record_type']) && in_array($each['id'], $this->conditions['record_type'])) { echo 'checked="checked"'; } ?>><?php echo $this->escape($each['title']); ?>
+	                </label>
+	            </div>
+	        <?php } ?>
+	    </div>
+	    
+		<div class="progress_condition_items" style="text-align:center">
+			<input type="button" class="clear_form" style="display:inline-block;width:150px;margin-bottom:0;" value="リセット" />
+			<input type="submit" class="submit" style="display:inline-block;width:150px;margin-bottom:0;" value="検索" />
+			
+			<p style="float:right;margin-bottom:13px;padding-top:0.8em">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+		</div>      
+    </div>
+	</form>
+	
+    <div class="clearfix">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>対象日</p></th>
+				<th style="width:13%;"><p>種別</p></th>
+				<th style="width:20%;"><p>企業名&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th><p>タイトル&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:5%;"><p class="center">添付</p></th>
+				<th style="width:10%;"><p>最終更新者&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:5%;"><p class="center">詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['target_date']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php 
+								foreach ($this->typeList as $eachType) {
+			                		if ($eachType['id'] === $each['record_type']) {
+				                		echo $this->escape($eachType['title']);
+			                		}
+		                		}
+	                		
+								 ?></p>
+						</td>
+						
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->escape($this->roundText($each['company_name'], 15)); ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['title']); ?>">
+							<p><?php echo $this->escape($this->roundText($each['title'], 30)); ?></p>
+						</td>
+						
+						<td>
+							<?php $flieList = json_decode($each['file_list']); ?>
+							<?php if (!empty($flieList)) { ?>
+								<p class="center">●</p>
+							<?php } ?>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['user_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['user_name']), 7); ?></p>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p class="center">
+								<a href="/connection-record/edit?from=list&id=<?php echo $this->escape($each['id']); ?>">表示</a>
+							</p>
+						</td>
+
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="6">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+              
+	</div><!-- clearfix -->
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,414 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+	// ヤマト配送伝票データ出力
+    $(document).on('click', '#btn_export_yamato', function () {
+    	var userId = $('#inspection_user_id_yamato').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_yamato option:selected').text().replace(/\s+/g, '');
+
+    	$(this).attr('href', '/shipment/export-yamato/' + userId + '/B2クラウド印刷用出力_' + txt + getTimeStamp() + '.csv');
+    });
+
+	// ニッセン後払い印刷データ出力
+    $(document).on('click', '#btn_export_nissen', function () {
+    	jAlert('未リリース機能です', '　');
+    	return;
+    	var userId = $('#inspection_user_id_nissen').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_nissen option:selected').text().replace(/\s+/g, '');
+
+    	$(this).attr('href', '/shipment/export-nissen/' + userId + '/ニッセン伝票印刷用出力_' + txt + getTimeStamp() + '.csv');
+    	
+    });
+    
+    // 明細書PDF出力
+    $(document).on('click', '#btn_export_statement', function () {
+    	var userId = $('#inspection_user_id_statement').val();
+    	if (userId == '') {
+    		jAlert('対象検品者を選択してください。', '　');
+    		return;
+    	}
+    	var txt = $('#inspection_user_id_statement option:selected').text().replace(/\s+/g, '');
+    	
+    	$(this).attr('href', '/shipment/export-statement/' + userId + '/明細書印刷用_' + txt + getTimeStamp() + '.pdf');
+
+    });
+	
+	// EC-Cube用伝票番号出力
+    $(document).on('click', '#btn_export_delivery_code', function () {
+        showSpinner();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: '',
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    location.href = '/shipment/export-delivery-code/EC-Cube用伝票番号出力' + getTimeStamp() + '.csv';
+                } else {
+                    jAlert(obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/shipment/check-delivery-code',
+        });    	
+    });
+	
+	/*
+	// 発送済み実行
+    $(document).on('click', '#btn_shipped', function () {
+        jConfirm('検品済みの商品を発送済みにしますか', '　', function(r) {
+            if(r) {
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: '',
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert(obj.count + '件を発送済みにしました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('予期せぬエラーが発生しました。', 'エラー');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました。', 'エラー');
+                    },
+                    url: '/shipment/shipped'
+				});
+        
+            } else {
+                return false;
+            }
+        });
+    });
+    */  
+    
+    // ページ再読み込み
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/shipment/plan-list?pos=' + $(window).scrollTop();
+        }
+    });
+});    
+</script>
+<style type="text/css"><!--
+table.list_default tr:hover td {background: #deeeff;}
+.delivery_code {color:#04a127;}
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+    
+    
+    
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute; width:120px; right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:120px;padding:5px 0;margin:0;border:none;" href="/shipment/import">注文データ取込</a>
+            </p>
+            <?php /*
+			<p style="position:absolute; width:120px; right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:120px;padding:5px 0;margin:0;border:none;" href="/shipment/nissen-import">ニッセン与信データ取込</a>
+            </p>
+            */ ?>
+	        <span style=""><strong>未出荷リスト</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+						<input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">注文日：</p>
+                        <input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">配送方法：</p>
+						<select id="status" name="status">
+                            <option value="0">---</option>
+                            <?php foreach ($statusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['status']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">検品者：</p>
+						<select id="status" name="status">
+                            <option value="0">---</option>
+                    	</select>
+					</div>
+				</div>
+				
+				<input type="submit" value="検索" />
+			
+			</form>
+		</div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+
+			<div class="condition_items_row clearfix">
+				<div class="clearfix" style="float:left;width:150px;">
+					<p class="action_title">検品担当割当：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/assign">割当設定</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">ヤマト配送伝票データ出力：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_yamato" name="inspection_user_id_yamato" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                    		<?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_yamato" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:165px;">
+					<p class="action_title">ヤマト配送番号取込：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/b2-import">取り込み</a>
+					</div>
+				</div>
+				
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">ニッセン後払い印刷データ出力：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_nissen" name="inspection_user_id_nissen" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                    		<?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_nissen" style="float:left;padding:5px 35px 4px;margin-bottom:0;background-color:#ccc" target="_blank" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:260px;">
+					<p class="action_title">明細書PDF出力：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <select id="inspection_user_id_statement" name="inspection_user_id_statement" style="float:left;width:120px;margin-right:10px;">
+	                        <option value="">---</option>
+	                        <?php if (!empty($this->inspectionUserList)) { ?>
+		                    	<?php foreach ($this->inspectionUserList as $eachUser) { ?>
+		                            <?php if (!empty($eachUser['inspection_user_id'])) { ?>
+		                            	<option value="<?php echo $eachUser['inspection_user_id']; ?>"><?php echo $this->escape($eachUser['user_name']); ?></option>
+		                            <?php } ?>
+		                        <?php } ?>
+	                        <?php } ?>
+	                    </select>
+	                    <a class="button" id="btn_export_statement" style="float:left;padding:5px 35px 4px;margin-bottom:0;" target="_blank" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+				
+			</div><!-- condition items row -->
+			<div class="condition_items_row clearfix">	
+							
+				<div class="clearfix" style="float:left;width:200px;">
+					<p class="action_title">EC-Cube用伝票番号出力：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_export_delivery_code" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+
+				<div class="clearfix" style="float:left;width:250px;">
+					<p class="action_title">EC-Cube用ニッセン与信結果出力：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_export_nissen_credit" style="float:left;padding:5px 35px 4px;margin-bottom:0;background-color:#ccc" href="javascript:void(0);">出力</a>
+					</div>
+				</div>
+				
+				<div class="clearfix" style="float:left;width:180px;">
+					<p class="action_title">発送済み実行：</p>
+					
+					<div class="clearfix" style="padding:10px;">
+	                    <a class="button" id="btn_shipped" style="float:left;padding:5px 35px 4px;margin-bottom:0;" href="/shipment/shipped">発送済み実行</a>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+	
+	
+	
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:9%;">
+					<p>注文ID</p>
+				</th>
+
+				<th style="width:8%;">
+					<p>ステータス</p>
+				</th>
+				
+				<th style="width:10%;">
+					<p>配達希望日</p>
+				</th>
+
+				<th style="width:10%;">
+					<p>配達希望時間</p>
+				</th>
+
+				<th style="width:10%;">
+					<p>発送予定日</p>
+				</th>
+
+				<th style="width:14%;">
+					<p>支払方法</p>
+				</th>
+					
+				<th style="width:15%;">
+					<p>配送方法(伝票番号)</p>
+				</th>
+
+				<th style="width:15%;">
+					<p>検品者</p>
+				</th>
+				
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+				
+			</tr>
+			
+			<?php $today = date('Y-m-d'); ?>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['relational_order_id']; ?></p>
+						</td>
+		
+						<td>
+							<p <?php if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_NEW) { echo 'style="color:#f00;"'; } else if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { echo 'style="color:#ff8ddc;font-weight:bold;"'; } ?>><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php var_dump($each['delivery_request_date']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $each['delivery_request_time']; ?></p>
+						</td>
+											
+						<td <?php if ($today != $each['shipment_plan_date']) { echo 'style="background-color:#b3eaff;"'; } ?> >
+							<p><?php echo $this->escape($each['shipment_plan_date']); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $paymentTypeList[$each['payment_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $deliveryTypeList[$each['delivery_method']]; ?><?php if (!empty($each['delivery_code'])) { echo '&nbsp;<span class="delivery_code">●</span>'; } ?></p>
+						</td>
+						
+
+						<td>
+							<?php if (empty($each['inspection_user_name'])) { ?>
+								<p>未割当</p>
+							<?php } else { ?>
+								<p><?php echo $each['inspection_user_name']; ?></p>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<p><a href="/shipment/detail?id=<?php echo $each['id']; ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="9">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

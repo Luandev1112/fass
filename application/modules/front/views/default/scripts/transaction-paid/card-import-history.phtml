@@ -1,0 +1,114 @@
+<?php
+$statusList   = Shared_Model_Code::codes('payable_payment_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+    
+});    
+</script>
+<style type="text/css">
+.align_right{text-align:right;margin-right:12px;}
+.align_center{text-align:center;margin-right:12px;}
+.view_type_list {}
+.view_type_list a.view_type {display:block;float:left;padding:11px 20px 0;height:22px;line-height:1;text-decoration:none;background-color: #c0f7fa;text-align:center;font-size: 1.1em;margin-right:5px;}
+.view_type_list a.view_type.selected {background-color:#098d94;color:#fff;}
+div.total {border:1px solid #ccc;background-color:#fafafa;padding:10px 11px;}
+div.total p {font-size:1.2em;font-weight:bold;line-height:1.3}
+div.total p.currency {float:left;width:70px;text-align:right}
+div.total p.account_count {float:left;width:80px;text-align:right}
+div.total p.total_amount {float:left;width:170px;text-align:right}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<?php if ($this->allowEditing === true) { ?>
+			<p style="position:absolute;width:100px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;" href="/transaction-paid/card-import">新規取込</a>
+            </p>
+	        <?php } ?>
+	        <span><strong>カード利用明細／ＣＳＶ取込履歴</strong></span>
+	    </div>
+	</div>
+
+	<div class="item_title clearfix">
+    	<p class="item_name"><?php echo $this->escape($this->data['card_name']); ?></p>
+    </div>
+    
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+
+	        
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:7%;"><p>未割当あり</p></th>
+				<th style="width:16%;"><p>取込実施日時</p></th>
+				<th style="width:14%;"><p>取込キー</p></th>
+				<th style="width:12%;"><p>支払予定日</p></th>
+				<th><p>カード名</p></th>
+				<th style="width:15%;"><p>取込実行者</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php $cardHitoryItemsTable = new Shared_Model_Data_AccountCreditCardHistoryItem(); ?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr>
+						<td>
+							<?php $haveNone = $cardHitoryItemsTable->haveNoneAttach($each['id']); ?>
+							<?php if ($haveNone) { ?>
+							<p style="color:#f00;">●</p>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y-m-d H:i:s', strtotime($each['created'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['import_key']); ?></p>
+						</td>
+						
+						<td>
+							<p><strong><?php echo date('Y-m-d', strtotime($each['paying_plan_date'])); ?></strong></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['card_name']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['user_name']); ?></p>
+						</td>
+					
+						<td>
+							<p><a href="/transaction-paid/card-import-detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

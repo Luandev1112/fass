@@ -1,0 +1,118 @@
+<?php
+$statusList   = Shared_Model_Code::codes('order_form_status');
+?>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span style=""><strong><?php echo $this->escape($this->connectionData['company_name']); ?> 発注管理</strong></span>
+    </div>
+</div>
+
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<div class="condition_items clearfix">
+		<form id="order_condition_form" action="#" method="get">
+			<p class="search_condition_title">検索条件</p>
+			
+			<input type="hidden" name="connection_id" value="<?php echo $this->escape($this->conditions['connection_id']); ?>">
+			
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">XXX：</p>
+                    <select id="type" name="type">
+                        <option value="">---</option>
+                    	<?php foreach ($connectionTypeList as $key => $value) { ?>
+                            <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['type']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                        <?php } ?>
+                    </select>
+				</div>
+
+				<div class="condition_item" style="padding-top:23px;">
+					<input type="button" id="clear_form" style="display:inline-block;width:116x;" value="リセット" />
+					<input type="button" id="search_order" style="display:inline-block;width:116px;" value="検索" />
+				</div>
+				
+			</div>
+		</form>
+	</div>
+</div>	
+
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<table class="list_default">
+		<tr>
+			<th style="width:10%;"><p>発注ID</p></th>
+			<th style="width:10%;"><p>発注書発行日</p></th>
+			<th style="width:15%;"><p>ステータス</p></th>
+			<th><p>発注内容</p></th>
+			<th style="width:8%;"><p>詳細</p></th>
+		</tr>
+
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+
+				<tr id="<?php echo $each['id']; ?>">
+					<td>
+						<p><?php echo $this->escape($each['display_id']); ?></p>
+					</td>
+
+					<td>
+						<p><?php if (!empty($each['order_date'])) { echo date('Y-m-d', strtotime($each['order_date'])); } ?></p>
+					</td>
+
+					<td>
+						<p><?php echo $statusList[$each['status']]; ?></p>
+					</td>
+					
+
+					<?php
+						$text = '';
+						if ($each['order_form_type'] === (string)Shared_Model_Code::ORDER_FORM_TYPE_CREATE) {
+							$itemList = json_decode($each['item_list'], true);
+
+							if (!empty($itemList)) {
+								$textList = array();
+								foreach ($itemList as $eachItem) {
+									$exploded = explode("\n", $eachItem['item_name']);
+									if (!empty($exploded[0])) {
+										$textList[] = str_replace("\n", '', $exploded[0]);
+									}
+								}
+								
+								$text = $this->escape(implode(" / ", $textList));
+							}
+							
+						} else {
+							$text = $this->roundText($this->escape($each['title']), 80);
+						}
+					?>
+					<td>
+						<div class="multi_rows_padding">
+							<?php echo $text; ?>
+						</div>
+					</td>
+
+					<td>
+						<a class="option" href="javascript:selectOrder('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['display_id']); ?>', '<?php echo $text; ?>', '<?php echo $this->escape($each['tax']); ?>', '<?php echo $this->escape($each['total_with_tax']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="6">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

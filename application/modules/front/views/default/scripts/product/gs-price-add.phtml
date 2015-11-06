@@ -1,0 +1,229 @@
+<?php
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+	    Tipped.create('#help_branch_id', "記号は半角のハイフン・アンダーバー・シャープのみ");
+	    
+	    Tipped.create('#help_title', "（例）100個セット、10kgロット、Lサイズ、赤色。<br>注文ロット（セット）数、色違い等ごとに<br>商品登録・価格設定が可能");
+	    Tipped.create('#help_lot_unit_name', "数、重量、長さ、その他");
+	    Tipped.create('#help_stock_count', "本サイトでの個別管理をしない場合は<br>適当な多めの数量を入れてください。<br>0になると受注できません。");
+	    Tipped.create('#help_setting_shipping_id', "受託・サービスなどの場合は<br>「発送なし」を選択してください。");
+    });
+        			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = '/product/gs-price?id=<?php echo $this->escape($this->itemId); ?>&direct=<?php echo $this->escape($this->direct); ?>';
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:param,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+	                        reloadFlag = true;                         
+                            jAlert('登録しました', '　');
+                    		return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/product/update-gs-price-lot?item_id=<?php echo $this->escape($this->itemId); ?>',
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/product/gs-price?id=<?php echo $this->escape($this->itemId); ?>&direct=<?php echo $this->escape($this->direct); ?>';
+        }
+    });
+    
+    // CHECK BOX ON/OFF
+    $(document).on('change', '#stock_count_free', function () {
+    	if ($(this).prop('checked')) {
+			$('#stock_count').prop('disabled', true);
+			$('#stock_count').val('');
+		} else {
+			$('#stock_count').prop('disabled', false);
+		}
+    });
+    
+  	$('#lot_unit_name').on('input', function(e) {
+		$('#per_unit').html('&nbsp;/&nbsp;' + $('#lot_unit_name').val());
+  	}); 
+});
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;margin-right:12px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+
+a.btn_back_list {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#FFF !important;display:inline-block;float:left;
+font-size:14px;margin-bottom:10px;margin-right:4px;padding:8px 20px;text-shadow:none;transition:all 200ms ease-in 0s;margin-top:0;text-decoration:none;
+}
+
+.column_value select {width:98%;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>商品管理 - 新規登録</strong></span>
+        </div>
+    </div>
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>     	
+        
+        <table class="list_default" style="margin-bottom:0;"> 
+            <tr>
+                <td class="column_label"><p class="label_text">枝品番<span class="require">&nbsp;＊</span><span class="popup_help" id="help_branch_id">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input name="branch_id" type="text" class="short" value="<?php echo $this->escape($this->data['branch_id']); ?>" placeholder="">
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">枝品番名称<span class="require">&nbsp;＊</span><span class="popup_help" id="help_title">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input name="title" type="text" class="short" value="<?php echo $this->escape($this->data['title']); ?>" placeholder="">
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="column_label"><p class="label_text">注文ロット数（1セット内容数）<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" style="width:10em;margin-bottom:0;" name="lot" value="<?php if (!empty($this->data['lot'])) { echo $this->escape($this->data['lot']); } ?>" placeholder="">
+					<p style="padding:0.4em 0;color:#f00;font-size:0.94em">本品目の1注文ロット（1セット）の内容数量。（例）1、10、300等の数字</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">注文ロット数の単位名称<span class="require">&nbsp;＊</span><span class="popup_help" id="help_lot_unit_name">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" style="width:10em;margin-bottom:0;" name="lot_unit_name" value="<?php if (!empty($this->data['lot_unit_name'])) { echo $this->escape($this->data['lot_unit_name']); } ?>" maxlength="">
+                    <p style="padding:0.4em 0;olor:#f00;font-size:0.94em">上記の内容数量の単位。（例）商品＝個、本　原料＝kg、 ℓ、m、サービス＝回、日（期間）</p>
+                </td>
+            </tr>      
+
+            <tr>
+                <td class="column_label"><p class="label_text">上代価格(税抜)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" style="float:left;width:10em;" name="sales_price" value="<?php if (!empty($this->data['sales_price'])) { echo $this->escape($this->data['sales_price']); } ?>" maxlength="">
+                    <p style="float:left;">円</p>
+                </td>
+            </tr> 
+
+            <tr>
+                <td class="column_label"><p class="label_text">卸価格単価(税抜)<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="short" style="float:left;width:10em;" name="unit_price" value="<?php if (!empty($this->data['unit_price'])) { echo $this->escape($this->data['unit_price']); } ?>" maxlength="">
+                    <p style="float:left;">円<span id="per_unit"><?php if (!empty($this->data['lot_unit_name'])) { echo '&nbsp;/&nbsp;' . $this->escape($this->data['lot_unit_name']); } ?></span></p>
+                </td>
+            </tr> 
+
+            <tr>
+                <td class="column_label"><p class="label_text">送料設定<span class="require">&nbsp;＊</span><span class="popup_help" id="help_setting_shipping_id">&nbsp;<i class="icon-help-circled"></i></span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <select name="setting_shipping_id" class="short">
+						<option value="">---</option>
+						<option value="0" <?php if ('0' === (string)$this->data['setting_shipping_id']) { echo 'selected="selected"'; } ?>>発送なし</option>
+						<?php foreach ($this->shippingSettingList as $each) { ?>
+							<option value="<?php echo $this->escape($each['id']); ?>" <?php if ((string)$each['id'] === (string)$this->data['setting_shipping_id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($each['title']); ?></option>
+						<?php } ?>
+					</select>
+                </td>
+            </tr>
+		</table>
+		
+	</div><!-- clearfix -->	
+    </form>
+                
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;"><div class="menu_frame"><div id="data_area"></div></div></div>
+</div>
+</div>
+</div>
+
+

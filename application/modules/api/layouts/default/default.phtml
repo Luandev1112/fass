@@ -1,0 +1,92 @@
+<?php echo $this->doctype('HTML5'); ?>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<?php echo $this->headTitle(); ?>
+<link rel="index" href="/" />
+<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+<link type="text/css" rel="stylesheet" href="<?php echo $this->staticFile('/common/css/common.css'); ?>" media="all" />
+<link type="text/css" rel="stylesheet" href="<?php echo $this->staticFile('/introduction/css/layout.css?' . time()); ?>" media="all" />
+<link type="text/css" rel="stylesheet" href="<?php echo $this->staticFile('/introduction/css/module.css?' . time()); ?>" media="all" />
+<noscript>
+ご利用のブラウザで JavaScript を有効にしてください。
+<style type="text/css">
+.customScrollBox{overflow:auto !improtant;}
+.dragger_container{display:none !improtant;}
+</style>
+</noscript>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery-ui-1.8.16.custom/js/jquery-1.6.2.min.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery-ui-1.8.16.custom/js/jquery-ui-1.8.16.custom.min.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery_custom_scroller/jquery.easing.1.3.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery_custom_scroller/jquery.mousewheel.min.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery-imagesLoaded.js'); ?>"></script>
+<!--[if IE]>
+<script type="text/javascript" src="<?php echo $this->staticFile('/front/js/ie.js'); ?>"></script>
+<![endif]-->
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/flexcroll/flexcroll.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/smoothRollOver.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/front/js/util.js?' . time()); ?>"></script>
+
+</head>
+<body>
+<?php if(!empty($this->entryData)){ ?>
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/ja_JP/all.js#xfbml=1";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+<?php } ?>
+
+
+<div class="main_menu">
+	<div id="container" class="menu_container">
+    	<a href="/"><h1>rSMP</h1></a>
+        
+        <ul class="clearfix">
+            <li class="menu1"><a href="<?php echo $this->url('/about') ?>" class="home <?php if($this->menu == 'about')echo "selected"; ?>">ABOUT</a></li>
+            <li class="menu2"><a href="<?php echo $this->url('/official') ?>" class="official <?php if($this->menu == 'official')echo "selected"; ?>">OFFICIAL</a></li>
+            <li class="menu3"><a href="<?php echo $this->url('/post-video') ?>" class="postvideo <?php if($this->menu == 'post-video')echo "selected"; ?>">ビデオ投稿</a></li>  
+        </ul>
+    </div>
+</div>
+
+   
+<div class="main_area">
+    <div id="container">
+        
+            <?php echo $this->layout()->content; ?>
+        
+    </div><!-- container -->
+</div><!-- main area -->
+
+
+<div id="page_fotter">
+	<div id="container" class="clearfix">
+    	
+        <p class="copyright">Copyright &copy; 2013 Reignworks, Inc. All Rights Reserved.</p>
+            
+        <div class="footer_menu">
+            <ul>
+              <li><a href="<?php echo $this->url('/support/terms') ?>">ご利用規約</a></li>
+              <li>|</li>
+              <li><a href="<?php echo $this->url('/support/privacy') ?>">プライバシーポリシー</a></li>
+              <li>|</li>
+              <li><a href="<?php echo $this->url('/support/ads') ?>">vame広告掲載について</a></li>
+              <li>|</li>
+              <li><a href="<?php echo $this->url('/support/inquiry') ?>">お問い合わせ</a></li>
+            </ul>
+        </div><!-- menu container -->
+        
+    </div><!-- container -->
+</div><!-- main menu -->
+
+        
+<script type="text/javascript" src="<?php echo $this->staticFile('/front/js/ga.js'); ?>"></script>
+</body>
+</html>

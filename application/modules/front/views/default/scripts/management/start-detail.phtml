@@ -1,0 +1,265 @@
+<?php
+?>
+<link rel="stylesheet" href="/resource/js/switchery-0.8.0/dist/switchery.css" />
+<script src="/resource/js/switchery-0.8.0/dist/switchery.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+
+$(function() {
+    $(document).ready(function(){
+		var elems = Array.prototype.slice.call(document.querySelectorAll('.switch'));
+		                
+		elems.forEach(function(html) {
+		  var switchery = new Switchery(html, { size: 'small' });
+		});
+		
+        var result = $("#sortable_column_2").sortable("toArray");
+        $('input#hidden_contents_order_2').val(result);
+    });
+
+	<?php 
+		$confirmMessage = '登録しますか';
+		$succeedMessage = '登録しました';
+		$backmessage    = '登録せずに中止しますか';
+		if (!empty($this->id)) {
+			$confirmMessage = '保存しますか';
+			$succeedMessage = '保存しました';
+			$backmessage    = '保存せずに中止しますか';
+        }
+	?>
+			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+       jConfirm('<?php echo $backmessage; ?>', '　', function(r) {
+            if(r) {
+               location.href = '/connection-progress/start-list';
+            } else {
+                return false;
+            }
+        });
+	});
+		
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('<?php echo $confirmMessage; ?>', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if (obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('<?php echo $succeedMessage; ?>', '　'); 
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/connection-progress/start-update<?php if (!empty($this->id)) echo '?id=' . $this->id; ?>'
+                });
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/connection-progress/start-list';
+        }
+    });
+
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+    
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+    	if (categoryId == '2') {
+        	// 対象商品
+        	var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .title').attr('id', uuid + '_title').attr('name', uuid + '_title');
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+
+	        $('.column_copy_base_' + categoryId + ' .title').attr('id', '');
+		
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	    }
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+});
+--></script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+#horizontalwrap {display:inline;white-space:nowrap;}
+span.note {display:block;margin:4px 0 3px;padding:0 4px;}
+table.list_default tr td.column {border-right:none;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column p {padding-left:12px;}
+table.list_default tr td.column input {width:99%}
+table.list_default tr td.column select.short {width:200px}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>発足名称管理 - <?php if (!empty($this->id)) { echo '編集'; } else { echo '登録'; } ?></strong></span>
+        </div>
+    </div>
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+	    <?php
+        /* タグ名称 */
+        $categoryId = 1;
+        ?>
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">発足名称</p>
+                </th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column" style="width:200px;"><p class="label_text">汎用：</p></td>
+                <td class="column">
+                	<input type="checkbox" id="is_general" class="switch" name="is_general" style="display:none;" <?php if (!empty($this->data['is_general'])) echo 'checked="checked"'; ?> />
+                </td>
+            </tr>
+			
+            <tr>
+                <td class="column" style="width:200px;"><p class="label_text">発足名称：</p></td>
+                <td class="column">
+                	<input type="text" style="width:400px;" name="tag_name" value="<?php echo $this->escape($this->data['tag_name']); ?>" maxlength="" />
+                </td>
+            </tr>
+        </table>
+
+
+	    <?php
+        /* 検索ワードリスト */
+        $categoryId = 2;
+        //var_dump($this->data['serach_words_list']);
+        ?>
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">検索ワードリスト</p>
+                </th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+				<?php $itemCount = 1; ?>
+		        <?php if (!empty($this->data['search_words_list'])) { ?>
+			        <?php foreach ($this->data['search_words_list'] as $each) { ?>
+				        <tr id="<?php echo $itemCount; ?>">
+				        	<td class="column" style="width:200px;"><p class="label_text">キーワード：</p></td>
+							<td class="column_value">
+			                    <input type="text" style="width:400px;" id="<?php echo $itemCount; ?>_title" name="<?php echo $itemCount; ?>_title" value="<?php echo $this->escape($each); ?>" />
+							</td>
+				            <td class="td_action">
+				            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix">
+				            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $itemCount; ?>"><i class="icon-cancel"></i></a>
+				            	</div>
+				            </td>
+				        </tr>
+				        <?php $itemCount++; ?>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+        </table>
+		<div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #ccc;height:34px;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="item_list" value="" />
+	</div><!-- clearfix -->				
+    </form>
+
+    <!-- copy base -->
+    <table class="list_default" style="display:none;">
+        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+        	<td class="column" style="width:200px;"><p class="label_text">キーワード：</p></td>
+			<td class="column_value">
+                <input class="title" type="text" style="width:400px;" id="##_tite" name="##_tite" value="" />
+			</td>
+            <td class="td_action">
+            	<div class="delete_btn_frame">
+            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="##"><i class="icon-cancel"></i></a>
+            	</div>
+            </td>
+        </tr>
+    </table>    
+	<!-- copy base -->
+		          
+</div>
+</div>
+</div>
+</div>

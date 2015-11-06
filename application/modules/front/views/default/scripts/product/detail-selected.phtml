@@ -1,0 +1,560 @@
+<?php
+$noYesList                = Shared_Model_Code::codes('no_yes');
+$productNameTypeList      = Shared_Model_Code::codes('product_name_type');
+$statusList               = Shared_Model_Code::codes('item_status');
+$productClassList         = Shared_Model_Code::codes('product_class');
+$productCategoryList      = Shared_Model_Code::codes('product_category');
+$productMarketList        = Shared_Model_Code::codes('product_market');
+$productSalesStatusList   = Shared_Model_Code::codes('product_sales_status');
+$supplyMethodList         = Shared_Model_Code::codes('supply_method');
+$productionProcessList    = Shared_Model_Code::codes('production_process');
+$productRelationalConnectionList = Shared_Model_Code::codes('product_relational_connection');
+?>
+
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;cursor:pointer;">閉じる</a>
+        </p>
+        <?php if (empty($this->confirm)) { ?>
+		<p style="position:absolute;width:76px;right:80px;">
+            <a class="btn_setting btn_reset_selected" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#000;cursor:pointer;">選択解除</a>
+        </p>
+        <?php } ?>
+        <span style=""><strong>選択済み商品</strong></span>
+    </div>
+</div>
+
+    <?php
+    /* 基本情報 */
+    $categoryId = 1;
+    ?>
+
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">基本情報</p></th>
+        </tr>
+    </table>
+    <table class="list_default" style="margin-bottom:13px;">            
+        <tr>
+            <td class="column_label"><p class="label_text">商品ID</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo $this->data['display_id']; ?></p>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">商品名の区分</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+				<p class="display_value_<?php echo $categoryId; ?>"><?php echo $productNameTypeList[$this->data['product_name_type']]; ?></p>
+				<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+				<select class="short" id="product_name_type" name="product_name_type">
+					<option value="">---</option>
+					<?php foreach ($productNameTypeList as $key => $val) { ?>
+						<option value="<?php echo $key; ?>" <?php if ($this->data['product_name_type'] == $key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+					<?php } ?>
+            	</select>
+            	</div>
+            </td>
+        </tr>
+                 
+        <tr class="row_sales_name" <?php if ($this->data['product_name_type'] == Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) { echo 'style="display:none"'; } ?>>
+            <td class="column_label"><p class="label_text">販売商品名(日本語)</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<dov class="multi_rows_padding display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['item_name']); ?></div>
+            </td>
+        </tr>
+		
+        <tr class="row_sales_name" <?php if ($this->data['product_name_type'] == Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) { echo 'style="display:none"'; } ?>>
+            <td class="column_label"><p class="label_text">販売商品名(英語)</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="multi_rows_padding display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['item_name_en']); ?></div>
+            </td>
+        </tr>
+
+        <tr class="row_supply_name" <?php if ($this->data['product_name_type'] == Shared_Model_Code::PRODUCT_NAME_TYPE_SALES) { echo 'style="display:none"'; } ?>>
+            <td class="column_label"><p class="label_text">仕入商品名<span class="require">&nbsp;＊</span></p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="multi_rows_padding display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['buying_item_name']); ?></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">調達製造区分</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<?php
+            		$displayString = '';
+            		foreach ($productClassList as $key => $val) {
+            			if (!empty($this->data['product_classes'])) {
+	                		foreach($this->data['product_classes'] as $eachSelected) {
+	                			if ($eachSelected == $key) {
+			                		if ($key == Shared_Model_Code::PRODUCT_CLASS_OTHER) {
+				                		$displayString .= $val . '　（' . $this->data['product_class_other_text'] . '） <br>';
+				                	} else {
+				                		$displayString .= $val . '<br>';
+			                		}
+		                		}
+	                		}
+                		}
+                	}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">商品区分</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<?php
+            		$displayString = '';
+            		foreach ($productCategoryList as $key => $val) {
+            			if (!empty($this->data['product_categories'])) {
+	                		foreach($this->data['product_categories'] as $eachSelected) {
+	                			if ($eachSelected == $key) {
+			                		if ($key == Shared_Model_Code::PRODUCT_CATEGORY_OTHER) {
+				                		$displayString .= $val . '　（' . $this->data['product_category_other_text'] . '） <br>';
+				                	} else {
+				                		$displayString .= $val . '<br>';
+			                		}
+		                		}
+	                		}
+                		}
+                	}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">商品概要</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+            		<?php echo nl2br($this->escape($this->data['memo'])); ?>
+            	</div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">販売商品JANコード</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->data['jan_code']; ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">配送向け内容品表記(日本語)</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['delivery_item_name']); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">配送向け内容品表記(英語)</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['delivery_item_name_en']); ?></p>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">販売状況</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>">
+            		<?php
+                		$displayString = '';
+                		foreach ($productSalesStatusList as $key => $val) {
+                			if (!empty($this->data['product_sales_status'])) {
+		                		if ($this->data['product_sales_status'] == (string)$key) {
+		                			$displayString .= $val . '<br>';
+		                		}
+	                		}
+	                	}
+	                	echo $displayString;
+            		?>
+            	</p>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">GS商品ID</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p>---</p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">GS登録・更新日</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p>---</p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">販売可能範囲</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<?php
+            		$displayString = '';
+            		foreach ($productMarketList as $key => $val) {
+            			if (!empty($this->data['product_markets'])) {
+	                		foreach($this->data['product_markets'] as $eachSelected) {
+	                			if ($eachSelected == $key) {
+				                	$displayString .= $val . '<br>';
+		                		}
+	                		}
+                		}
+                	}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">後継品商品</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+				<?php
+					$itemName = '---';
+            		if (!empty($this->data['next_generation_item_id'])) {
+            			$itemTable = new Shared_Model_Data_Item();
+            			$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $this->data['next_generation_item_id']);
+            			
+            			$itemName = '<strong>' . $this->escape($this->data['display_id']) . '</strong>&nbsp;';
+            			
+            			if (!empty($itemData['item_name'])) {
+            				$itemName .= "<span class='product_name'>商品名</span>&nbsp;" . $this->escape($itemData['item_name']) . '&nbsp;&nbsp;';
+            			}
+            			
+            			if (!empty($itemData['buying_item_name'])) {
+            				$itemName .= "<span class='product_name'>商品名</span>&nbsp;" . $this->escape($itemData['buying_item_name'])  . '&nbsp;&nbsp;';
+            			}	
+            		}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $itemName; ?></div>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">仕入・調達方法</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<?php
+            		$displayString = '';
+            		foreach ($supplyMethodList as $key => $val) {
+            			if (!empty($this->data['supply_methods'])) {
+	                		foreach($this->data['supply_methods'] as $eachSelected) {
+	                			if ($eachSelected == $key) {
+			                		if ($key == Shared_Model_Code::SUPPLY_METHOD_OTHER) {
+				                		$displayString .= $val . '　（' . $this->data['supply_method_other_text'] . '） <br>';
+				                	} else {
+				                		$displayString .= $val . '<br>';
+			                		}
+		                		}
+	                		}
+                		}
+                	}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+            </td>
+        </tr>     
+        
+        <tr>
+            <td class="column_label"><p class="label_text">製品化の手順</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<?php
+            		$displayString = '';
+            		foreach ($productionProcessList as $key => $val) {
+            			if (!empty($this->data['production_process'])) {
+                			if ($this->data['production_process'] == $key) {
+		                		if ($key == Shared_Model_Code::PRODUCTION_PROCESS_OTHER) {
+			                		$displayString .= $val . '　（' . $this->data['production_process_other_text'] . '） <br>';
+			                	} else {
+			                		$displayString .= $val . '<br>';
+		                		}
+	                		}
+                		}
+                	}
+            	?>
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo $displayString; ?></div>
+            </td>
+        </tr>
+	</table>
+	</form>
+
+    <?php
+    /* 仕入先・製造委託先 */
+    $categoryId = 2;
+    ?>
+    <div style="margin-bottom:13px;">
+    <form id="form_category_<?php echo $categoryId; ?>">
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">仕入先・製造委託先</p></th>
+        </tr>
+    </table>
+    <?php
+    	$connectionTable = new Shared_Model_Data_Connection();
+    ?>
+    <table class="list_default" style="margin-bottom:0;">
+    	<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+	        <?php if (!empty($this->data['relational_connection_list'])) { ?>
+		        <?php foreach ($this->data['relational_connection_list'] as $each) { ?>
+					<?php
+	            		$connecionData = array('company_name' => '');
+	            		if (!empty($each['target_connection_id'])) {
+	            			$connecionData = $connectionTable->getById($this->adminProperty['management_group_id'], $each['target_connection_id']);
+	            		}
+	            	?> 
+			        <tr id="<?php echo $this->escape($each['id']); ?>">
+			            <td class="column_label">
+			            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $productRelationalConnectionList[$each['relational_connection_type']]; ?></p>
+			            	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+				            	<select name="<?php echo $this->escape($each['id']); ?>_relational_connection_type" style="padding-left:12px;width:260px">
+				            		<option value="">---</option>
+				            		<?php foreach ($productRelationalConnectionList as $key => $val) { ?>
+				            			<option value="<?php echo $key; ?>" <?php if ($key == $each['relational_connection_type']) { echo 'selected="selected"'; } ?>><?php echo $val; ?></option>
+				            		<?php } ?>
+				            	</select>
+			            	</div>
+			            </td>
+			            <td class="colon"><p class="label_text">：</p></td>
+			            <td class="column_value">
+			            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($connecionData['company_name']); ?></p>
+			            	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+			                	<p style="float:left;" id="<?php echo $this->escape($each['id']); ?>_connection_name"><?php echo $this->escape($connecionData['company_name']); ?></p>
+			                    <a style="float:right;" class="option select_connection" target-row="<?php echo $this->escape($each['id']); ?>">取引先選択</a>
+			                    <input type="hidden" id="<?php echo $this->escape($each['id']); ?>_target_connection_id" name="<?php echo $this->escape($each['id']); ?>_target_connection_id" value="<?php echo $this->escape($each['target_connection_id']); ?>" />
+			            	</div>
+			            </td>
+			            <td class="td_action">
+			            	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+			            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+			            	</div>
+			            </td>
+			        </tr>
+		        <?php } ?>
+	        <?php } ?>
+	    </tbody>
+	</table>
+	</form>
+	</div>
+	
+
+    <?php
+    /* 販売条件 */
+    $categoryId = 3;
+    ?>
+    <form id="form_category_<?php echo $categoryId; ?>">
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">販売条件</p></th>
+        </tr>
+    </table>
+    <table class="list_default" style="margin-bottom:13px;">
+        <tr>
+            <td class="column_label"><p class="label_text">当社国内小売価格</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo nl2br($this->escape('(連動)')); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">顧客向け当社販売価格制約</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>">
+            		<?php
+            			if (array_key_exists($this->data['price_restriction_for_customer'], $noYesList)) {
+            				echo $noYesList[$this->data['price_restriction_for_customer']];
+            			}
+            		?>
+            	</p>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">顧客向け当社販売方法制約<span class="popup_help" id="help_method_restriction_for_customer">&nbsp;<i class="icon-help-circled"></i></p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+            		<?php echo nl2br($this->escape($this->data['method_restriction_for_customer_text'])); ?>
+            	</div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">仕入先上代遵守ルール有無</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p class="display_value_<?php echo $categoryId; ?>">
+            		<?php
+            			if (array_key_exists($this->data['price_restriction_from_supplier'], $noYesList)) {
+            				echo $noYesList[$this->data['price_restriction_from_supplier']];
+            			}
+            			
+            			if ((string)Shared_Model_Code::CONTENT_STATUS_ACTIVE == $this->data['price_restriction_from_supplier']) {
+            				echo '　（指定小売価格：&nbsp;' . number_format($this->escape($this->data['price_restriction_from_supplier_price'])) . '&nbsp;円）';	
+            			}
+            		?>
+            	</p>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="column_label"><p class="label_text">仕入先指定販売条件</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+            		<?php echo nl2br($this->escape($this->data['method_restriction_from_supplyer_text'])); ?>
+            	</div>
+            </td>
+        </tr>
+
+        
+        <tr>
+            <td class="column_label"><p class="label_text">条件メモ</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+             <td class="column_value">
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+            		<?php echo nl2br($this->escape($this->data['sales_condition_memo'])); ?>
+            	</div>
+            </td>
+        </tr> 
+	</table>
+	</form>
+
+    <?php
+    /* 原価 */
+    $categoryId = 4;
+    ?>
+    <form id="form_category_<?php echo $categoryId; ?>">
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">原価</p></th>
+        </tr>
+    </table>
+    <table class="list_default" style="margin-bottom:13px;">
+        <tr>
+            <td class="column_label"><p class="label_text">EC小売原価</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo nl2br($this->escape('(連動)')); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">EC卸原価</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo nl2br($this->escape('(連動)')); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">国内卸輸送ロット</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo nl2br($this->escape('(連動)')); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">海外卸輸送ロット</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<p><?php echo nl2br($this->escape('(連動)')); ?></p>
+            </td>
+        </tr>
+        
+        <tr>
+            <td class="column_label"><p class="label_text">原価メモ</p></td>
+            <td class="colon"><p class="label_text">：</p></td>
+            <td class="column_value">
+            	<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+            		<?php echo nl2br($this->escape($this->data['cost_memo'])); ?>
+            	</div>
+            </td>
+        </tr>
+    </table>
+	</form>
+    
+    
+    <?php
+    /* 仕入購入条件 */
+    $categoryId = 5;
+    ?>
+    <div style="margin-bottom:13px">
+    <form id="form_category_<?php echo $categoryId; ?>">
+    <table class="list_default" style="margin-bottom:0px;">
+        <tr>
+            <th class="border-left border-top border-bottom"><p class="label_text strong">仕入購入条件</p></th>
+        </tr>
+    </table>
+    <table class="list_default" style="margin-bottom:0;">
+    	<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+	        <?php if (!empty($this->data['purchasing_list'])) { ?>
+		        <?php foreach ($this->data['purchasing_list'] as $each) { ?>
+		        <tr id="<?php echo $each['id']; ?>">
+		        	<td class="td_count">
+		        		<p><?php echo $each['id']; ?></p>
+		        	</td>
+		            <td class="column_value">
+		            	<div class="clearfix">
+			            	<div style="float:left;width:250px;">
+				            	<p class="condition_label" style="float:left">購入ロット：</p>
+				            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($each['lot_amount']); ?></p>
+				            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:160px" name="<?php echo $each['id']; ?>_lot_amount" value="<?php echo $this->escape($each['lot_amount']); ?>" />
+			            	</div>
+			            	<div style="float:left;width:250px;">
+				            	<p class="condition_label" style="float:left">ロット単位：</p>
+				            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($each['lot_unit']); ?></p>
+				            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:160px" name="<?php echo $each['id']; ?>_lot_unit" value="<?php echo $this->escape($each['lot_unit']); ?>" />
+							</div>
+							<div style="float:left;width:250px;">
+				            	<p class="condition_label" style="float:left">仕入価格：</p>
+				            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($each['purchasing_price']); ?></p>
+				            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:160px" name="<?php echo $each['id']; ?>_purchasing_price" value="<?php echo $this->escape($each['purchasing_price']); ?>" />
+							</div>
+							<div style="float:left;width:250px;">
+				            	<p class="condition_label" style="float:left">物流費：</p>
+				            	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($each['delivery_cost']); ?></p>
+				            	<input type="text" class="edit_value_<?php echo $categoryId; ?>" style="display:none;float:left;width:160px" name="<?php echo $each['id']; ?>_delivery_cost" value="<?php echo $this->escape($each['delivery_cost']); ?>" />
+		            		</div>
+		            	</div>
+		            	<div class="clearfix" style="margin-bottom:8px">
+		            		<p class="condition_label" style="width:72px;">条件メモ　:</p>
+		            		<div style="float:left;width:895px;">
+		            			<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding"><?php echo nl2br($this->escape($each['purchasing_memo'])); ?></div>
+		            			<textarea class="edit_value_<?php echo $categoryId; ?>" name="<?php echo $each['id']; ?>_purchasing_memo" style="display:none;height:50px;"></textarea>
+		            		</div>
+		            	</div>
+		            </td>
+		            <td class="td_action">
+		            	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+		            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $each['id']; ?>"><i class="icon-cancel"></i></a>
+		            	</div>
+		            </td>
+		        </tr>
+		        <?php } ?>
+	        <?php } ?>
+		</tbody>
+    </table>
+    </form>
+	</div>
+        
+

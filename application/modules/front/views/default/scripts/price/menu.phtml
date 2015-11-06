@@ -1,0 +1,5 @@
+<div class="menu_list clearfix">
+<a class="menu <?php if($this->action == 'cost-profit') echo "selected"; ?>" href="/price/cost-profit?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costId); ?>&approval_id=<?php echo $this->escape($this->approvalId);?>">販売価格／想定利益率</a>
+<a class="menu <?php if($this->action == 'cost-manufacture') echo "selected"; ?>" href="/price/cost-manufacture?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costId); ?>&approval_id=<?php echo $this->escape($this->approvalId);?>">製品原価</a>
+<a class="menu <?php if($this->action == 'cost-shipping') echo "selected"; ?>" href="/price/cost-shipping?id=<?php echo $this->escape($this->id); ?>&cost_id=<?php echo $this->escape($this->costId); ?>&approval_id=<?php echo $this->escape($this->approvalId);?>">発送費用（通販前提）</a>
+</div>

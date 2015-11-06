@@ -1,0 +1,182 @@
+<?php
+$typeList        = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+	$(document).on('change', '#month_list', function () {
+		showSpinner();
+		location.href = '/management/index?&target=' + $(this).val();
+	});  
+});    
+</script>
+<style type="text/css">
+table.list_default tr td.column {border-right:none; }
+table.list_default tr td p {height:auto;line-height:1.6;}
+table.list_default tr td p.align_right {text-align:right;padding-right:12px;}
+table.list_default tr td .multi_rows_padding {padding:5px 10px 5px 10px;}
+.safety {color:#00a2ff;font-weight: bold;}
+.minimum{color:#ff00d2;font-weight: bold;}
+.is_safety {color:#00c486;font-weight:bold;}
+.is_caution {color:#ffba00;font-weight:bold;}
+.is_warning {color:#ff0000;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="">
+            <span style=""><strong>ダッシュボード</strong></span>
+        </div>
+    </div>
+    
+    <div class="clearfix">
+        <div class="col-xs-9" style="float:left;width:360px">
+            <div class="item_header clearfix">
+                <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">本日出荷状況</span>
+            </div>
+		    <div class="clearfix" style="margin-top:5px;margin-bottom:13px;">
+		    	<div class="alert_panel">
+		    		<p>新規注文</p>
+		    		<p class="count"><?php echo $this->newOrderCount; ?></p>
+		    	</div>
+		    	<div class="alert_panel">
+		    		<p>検品済み</p>
+		    		<p class="count"><?php echo $this->inspectedCount; ?></p>
+		    	</div>
+		    	
+		    	<div class="alert_panel">
+		    		<p>保留</p>
+		    		<p class="count"><?php echo $this->holdedCount; ?></p>
+		    	</div>
+		    	
+		    	<div class="alert_panel">
+		    		<p>本日発送済み</p>
+		    		<p class="count"><?php echo $this->shippedCount; ?></p>
+		    	</div>
+		    </div>
+		    
+	        <div class="item_header clearfix">
+	            <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">出荷履歴</span>
+	        </div>
+			<table class="list_default" style="margin-bottom:13px;">
+	            <?php if (!empty($this->historyItems)) { ?>
+	                <tr>
+	                	<td class="column" style="width:60%;"><p class="label_text"><strong>日付</strong></p></td>
+	                    <td class="column"><p class="label_text"><strong>出荷数</strong></p></td>
+	                </tr>
+	                <?php foreach ($this->historyItems as $each) { ?>          
+		                <tr>
+		                	<td class="column">
+		                		<div class="multi_rows_padding"><?php echo date('Y-m-d', strtotime($each['target_date'])); ?></div>
+		                	</td>
+		                    
+		                    <td class="column">
+			                    <p class="align_right"><?php echo $this->numberFormat($each['count']); ?></p>
+		                    </td>
+		                </tr>
+	                <?php } ?>
+	                </tbody>
+				<?php } else { ?>
+	                <tr>
+	                    <td style="text-align:center;">
+	                        <p>データがありません</p>
+	                    </td>
+	                </tr>
+	            <?php } ?>
+	        </table> 
+        </div>
+        
+        <div class="col-xs-9" style="float:right;width:880px">
+            <div class="item_header clearfix">
+                <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">在庫アラート</span>
+                <?php /*
+                <select id="month_list" name="month_list" style="width:150px;margin-right:4px;margin-top:4px;display:block;float:right;height:26px;">
+                    <option value="0">全て</option>
+                    <?php foreach ($itemTypeList as $key => $each) { ?>
+                        <option value="<?php echo $key; ?>" <?php if ($this->tagetDate == $key) { echo 'selected="selected"'; } ?>><?php echo $each; ?></option>
+                    <?php } ?>
+            	</select>
+            	*/ ?>
+            </div>
+            <?php $consumptionTable  = new Shared_Model_Data_ItemStockConsumption(); ?>
+			<table class="list_default" style="margin-bottom:13px;">
+                <?php if (!empty($this->items)) { ?>
+	                <tr>
+	                	<td class="column" style="width:90px;"><p class="label_text"><strong>種別</strong></p></td>
+	                    <td class="column"><p class="label_text"><strong>在庫資材名</strong></p></td>
+	                    <td class="column" style="width:200px;"><p class="label_text" style="text-align:center;padding-left:0"><strong>警告 / 注意 </strong></p></td>
+	                    <td class="column" style="width:150px;"><p class="label_text" style="text-align:center;padding-left:0"><strong>実在庫</strong></p></td>
+	                </tr>
+                    <?php foreach ($this->items as $each) { ?>          
+		                <tr>
+		                	<td class="column">
+		                		<div class="multi_rows_padding"><?php echo $typeList[$each['stock_type']]; ?></div>
+		                	</td>
+
+							<?php
+							
+								$thisMonth = $consumptionTable->getTermCount($each['id'], $this->oneMonthAgo, $this->twoDaysAgo);
+							/*
+								$lastMonth = $consumptionTable->getTermCount($each['id'], $this->twoMonthAgo, $this->fourWeekAgo);
+								$saftyCount = round($thisMonth * $each['safety_base_month'], 1);
+								$minimumCount = round($thisMonth * $each['minimum_base_month'], 1);
+								*/
+							?>
+									
+		                    <td class="column">
+								<?php if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['item_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_product_name']); ?></div>
+								<?php } else if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['supply_fixture_name']); ?></div>
+								<?php } else { ?>
+									<div class="multi_rows_padding"><?php echo $this->escape($each['stock_name']); ?></div>
+								<?php } ?>
+		                    </td>
+		                    
+		                    <td class="column">
+			                    <div class="multi_rows_padding" style="text-align:center;padding-left:0;">
+									<span class="minimum"><?php echo $this->numberFormat($each['minimum_count']); ?></span>
+									&nbsp;/&nbsp;
+									<span class="safety"><?php echo $this->numberFormat($each['safety_count']); ?></span>
+								</div>
+		                    </td>
+
+							<td>
+								<?php
+									$class = 'is_safety';
+									if ((int)$each['stock_count'] < (int)$each['minimum_count']) { 
+										$class = 'is_warning';
+									} else if ((int)$each['stock_count'] < (int)$each['safety_count']) {
+										$class = 'is_caution';
+									}
+								?>
+							
+								<p style="font-size:1.3em;text-align:right;padding-right:12px;padding-top:0.18em;" class="<?php echo $class; ?>"><?php echo $this->numberFormat($each['stock_count']); ?><br>
+								(<?php if (!empty($thisMonth)) { echo $this->numberFormat(floor($each['stock_count'] / $thisMonth * 100) / 100) . '&nbsp;ヶ月分'; } else { echo '計算不可'; } ?>)
+								</p>
+							</td>
+		                </tr>
+                    <?php } ?>
+                    </tbody>
+				<?php } else { ?>
+                    <tr>
+                        <td style="text-align:center;">
+                            <p>データがありません</p>
+                        </td>
+                    </tr>
+                <?php } ?>
+            </table>        
+        </div>
+    </div><!-- clearfix -->
+    
+</div>
+</div>
+</div>
+</div>
+

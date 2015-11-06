@@ -1,0 +1,72 @@
+<?php
+$bankAccountType = Shared_Model_Code::codes('bank_account_type');
+?>
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>
+        <span><strong>金融機関口座選択</strong></span>
+    </div>
+</div>
+
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<form id="register_form" action="#" method="post"> 
+	<table class="list_default">
+		<tr>
+			<th style="width:18%;"><p>金融機関名</p></th>
+			<th style="width:18%;"><p>支店名</p></th>
+			<th style="width:12%;"><p>口座種別</p></th>
+			<th style="width:15%;"><p>口座番号</p></th>
+			<th><p>口座名義</p></th>
+			<th style="width:8%;">
+				<p>選択</p>
+			</th>
+		</tr>
+		<tbody class="sortable_column" id="sortable_column">
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['bank_name']); ?></div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['branch_name']); ?></div>
+					</td>
+
+					<td>
+						<div class="multi_rows_padding"><?php echo $bankAccountType[$each['account_type']]; ?></div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['account_no']); ?></div>
+					</td>
+
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['account_name']); ?></div>
+					</td>
+						
+					<td>
+						<a class="option" href="javascript:selectBank('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['bank_name']); ?>', '<?php echo $this->escape($each['branch_name']); ?>', '<?php echo $bankAccountType[$each['account_type']] ?>', '<?php echo $this->escape($each['account_no']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="5">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+		</tbody>
+	</table>
+	<input type="hidden" id="hidden_contents_order" name="item_list" value="" />
+	</form>
+	
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+

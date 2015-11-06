@@ -1,0 +1,167 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy/mm/dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        <?php if (!empty($this->condition['shipped_date'])) { ?>
+        	$("#shipped_date").datepicker("setDate", "<?php echo date('Y/m/d', strtotime($this->condition['shipped_date'])); ?>"); 
+        <?php } ?>
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+});    
+</script>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>キャンセル済みリスト</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form action="#" method="get">
+				<p class="search_condition_title">検索条件</p>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">注文ID：</p>
+						<input type="text" name="relational_order_id" value="<?php echo $this->escape($this->conditions['relational_order_id']); ?>">
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">支払方法：</p>
+						<select id="payment_method" name="payment_method">
+                            <option value="">---</option>
+                            <?php foreach ($paymentTypeList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['payment_method']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">配送方法：</p>
+						<select id="delivery_method" name="delivery_method">
+                            <option value="">---</option>
+                            <?php foreach ($deliveryTypeList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ($key == $this->conditions['delivery_method']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+					</div>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>
+
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;">
+					<p>注文ID</p>
+				</th>
+
+				<th style="width:8%;">
+					<p>ステータス</p>
+				</th>
+
+				<th style="width:9%;">
+					<p>注文日</p>
+				</th>
+
+				<th style="width:12%;">
+					<p>支払方法</p>
+				</th>
+
+				<th>
+					<p>配送方法(伝票番号)</p>
+				</th>
+				
+				<th>
+					<p>配送先</p>
+				</th>
+
+				<th style="width:5%;">
+					<p>詳細</p>
+				</th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['relational_order_id']); ?></p>
+						</td>
+		
+						<td>
+							<p><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo date('Y/m/d', strtotime($each['order_datetime'])); ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $paymentTypeList[$each['payment_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $deliveryTypeList[$each['delivery_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['delivery_name']); ?></p>
+						</td>
+
+						<td>
+							<p><a href="/shipment/detail?id=<?php echo $each['id']; ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

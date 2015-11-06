@@ -1,0 +1,267 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+    
+});    
+</script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+table.detail tr th, table.detail tr td {border:1px solid #000;padding:8px 12px}
+table.detail tr th {background-color:#3d5474;color:#fff;font-weight:normal;}
+table.detail tr p {margin-bottom:0;font-size:1.2em;}
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;margin-bottom:9px;">
+	        <span style=""><strong>原価計算 - 詳細</strong></span>
+	    </div>
+        <div class="item_title clearfix">
+        	<p class="item_name"><?php echo $this->escape($this->data['item_name']); ?></p>
+        </div>
+    	<?php
+            echo $this->partial('price/expense-menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->data['id'],
+    		));
+        ?> 
+	</div>
+
+<?php
+$this->data = array(
+'name' => 'ABC株式会社',
+'name_kana' => 'エービーシーカブシキガイシャ',
+'base' => '名古屋本社',
+'base_kana' => 'ナゴヤホンシャ',
+'country' => '国',
+'base_zipcode' => '295-8666',
+'company_established' => '昭和52年1月1日',
+);
+?>
+    <div class="clearfix">
+
+
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">販売価格／想定利益率  ※入力値は赤字</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="detail" style="margin-top:13px;margin-bottom:13px;">
+            <tr>
+                <th>
+                	<p class="display_value_<?php echo $categoryId; ?>" >国内（通販前提）</p>
+                </th>
+                <th style="width:15%">
+                	<p class="display_value_<?php echo $categoryId; ?>" >単発単品</p>
+                </th>
+                <th style="width:15%">
+                	<p class="display_value_<?php echo $categoryId; ?>" >3つセット</p>
+                </th>
+                <th style="width:15%">
+                	<p class="display_value_<?php echo $categoryId; ?>" >定期購入</p>
+                </th>
+                <th style="width:15%">
+                	<p class="display_value_<?php echo $categoryId; ?>" >法人卸</p>
+                </th>
+            </tr>
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >顧客送料負担額</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,740</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,366</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,179</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,020</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >販売価格　税込</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,740</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,366</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >3,179</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,020</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">販売価格　税別</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">3,463</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">3,117</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">2,944</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">1,870</span></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">顧客送料負担額</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >-</p>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >原価＋発送費用原価＋発送費用</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >465</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >332</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >465</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >160</p>
+                </td>
+            </tr>
+                  
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >売総利益（通販） </p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,998</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,785</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,479</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >1,710</p>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >売総利益（通販） </p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,998</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,785</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >2,479</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >1,710</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >利益率（通販）</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >87 %</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >89 %</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >84 %</p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" >91 %</p>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">値引率</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0 %</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0 %</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0 %</span></p>
+                </td>
+                <td>
+                	<p class="display_value_<?php echo $categoryId; ?>" ><span class="red">0 %</span></p>
+                </td>
+            </tr>
+            
+		</table> 
+		</form>
+
+
+
+
+
+
+</div>
+</div>
+</div>
+</div>
+

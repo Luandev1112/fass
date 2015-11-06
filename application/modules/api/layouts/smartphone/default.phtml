@@ -1,0 +1,38 @@
+<?php echo $this->doctype('HTML5'); ?>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+
+<?php if (!empty($this->og)) { ?>
+<meta property="og:title" content="<?php echo $this->og['title']; ?>" />
+<meta property="og:type" content="article" /><?php /*トップページはwebsite、個別ページはarticle*/ ?>
+<meta property="og:description" content="<?php echo $this->og['description']; ?>" />
+<meta property="og:url" content="<?php echo $this->og['url']; ?>" />
+<meta property="og:image" content="<?php echo $this->og['image_url']; ?>" />
+<meta property="og:site_name" content="vameビデオブログ" />
+<meta property="og:locale" content="ja_JP" />
+<?php } ?>
+
+<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+<?php if (!empty($this->entryData)) { ?><title><?php echo $this->roundText($this->escape($this->entryData['title']), 13); ?> - VAMEビデオブログ</title>
+<?php } else { ?><title>VAMEビデオブログ</title>
+<?php } ?>
+<link rel="index" href="/" />
+<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+<link type="text/css" rel="stylesheet" href="<?php echo $this->staticFile('/front/css/reset.css'); ?>" media="all" />
+<link type="text/css" rel="stylesheet" href="<?php echo $this->staticFile('/front/css/style.css'); ?>" media="all" />
+<script type="text/javascript" src="<?php echo $this->staticFile('/vendors/jquery-1.6.2.min.js'); ?>"></script>
+<script type="text/javascript" src="<?php echo $this->staticFile('/front/js/util.js?' . time()); ?>"></script>
+
+
+</head>
+<body style="<?php if(!empty($this->bodyStyle)){echo $this->bodyStyle;} ?>">
+
+<div style="width: 100%;">
+<?php echo $this->layout()->content; ?>
+</div>
+
+</body>
+</html>

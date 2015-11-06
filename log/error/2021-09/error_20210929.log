@@ -1,0 +1,346 @@
+2021-09-29T17:13:00+09:00 (NOTICE): Invalid controller specified (item) %info%
+2021-09-29T17:13:00+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => item
+    [action] => add
+    [module] => api
+    [id] => 1607
+    [display_id] => GS2100183
+    [supplier_id] => 72
+    [fr_in_order_id] => 0
+    [fr_in_order_id_old] => 0
+    [fresco_supplier_id] => 0
+    [status] => 9
+    [item_rating] => 0.00
+    [search_evaluation_point] => 0
+    [search_evaluation_point2] => 0
+    [is_coupon_target] => 0
+    [category_id] => 1
+    [sub_category_id] => 1
+    [third_category_id] => 1
+    [fourth_category_id] => 134
+    [fifth_category_id] => 0
+    [shop_category_id] => 0
+    [shop_sub_category_id] => 0
+    [item_name] => テスト商品334574
+    [item_name_kana] => 
+    [item_condition] => 0
+    [second_hand_condition] => 0
+    [second_hand_comment] => 
+    [price_open_condition] => 10
+    [price_default] => 1
+    [sales_unit_price_min] => 0
+    [sales_unit_price_max] => 0
+    [estimate_advisability] => 10
+    [sales_status] => 9
+    [sales_method] => 10
+    [robot_no_index] => 0
+    [show_medical_alert] => 0
+    [apply_discount] => 0
+    [discount_percentage] => 0
+    [tags] => Array
+        (
+            [0] => 1051
+            [1] => 1982
+            [2] => 1985
+            [3] => 2005
+        )
+
+    [stock_status] => 10
+    [distribution_limited] => 0
+    [shipping_overseas] => 10
+    [discount_multi_order] => 0
+    [item_oem_correspondence] => 40
+    [print_name_order] => 0
+    [image_key] => 614da2918cb0c
+    [alt_text] => あああ
+    [description_text_type] => 10
+    [description_text] => あああ
+    [catch_copy] => あああ
+    [youtube_key] => 
+    [advantage] => 0
+    [brand_id] => 0
+    [jan_code] => 
+    [jan_code_empty] => 1
+    [sales_domestic] => 0
+    [sales_price_type] => 11
+    [sales_price] => 0
+    [sales_price_tax] => 0
+    [tax_rate] => 8
+    [sample_request] => 0
+    [sample_for_test_request] => 20
+    [sample_for_test_amount] => 
+    [sample_for_test_price] => 
+    [sample_for_test_postage] => 
+    [sample_for_production_request] => 0
+    [sample_for_production_amount] => 
+    [sample_for_production_price] => 
+    [sample_for_production_postage] => 
+    [sample_explanation] => 
+    [delivery_cost_type] => 0
+    [estimate_term] => 0
+    [price_measure] => 0
+    [sales_measure] => Array
+        (
+            [0] => 2
+        )
+
+    [correspondence] => 0
+    [return_good_condition] => 0
+    [agreement_required] => 20
+    [agreement_explanation] => 
+    [agreement_form_id] => 0
+    [agreement_publish] => 0
+    [flex_16] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [flex_17] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_19] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_20] => a:2:{s:5:"value";s:1:"5";s:8:"othertxt";s:0:"";}
+    [flex_21] => 
+    [flex_22] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_23] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_37] => 
+    [flex_38] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [created_user_id] => 576
+    [last_update_user_id] => 576
+    [created] => 2021-09-24 19:04:24
+    [updated] => 2021-09-24 19:06:21
+    [shop_name] => (株)サニー
+    [company_name] => 株式会社サニー
+)
+
+2021-09-29T17:21:49+09:00 (NOTICE): Invalid controller specified (item) %info%
+2021-09-29T17:21:49+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => item
+    [action] => add
+    [module] => api
+    [id] => 1607
+    [display_id] => GS2100183
+    [supplier_id] => 72
+    [fr_in_order_id] => 0
+    [fr_in_order_id_old] => 0
+    [fresco_supplier_id] => 0
+    [status] => 9
+    [item_rating] => 0.00
+    [search_evaluation_point] => 0
+    [search_evaluation_point2] => 0
+    [is_coupon_target] => 0
+    [category_id] => 1
+    [sub_category_id] => 1
+    [third_category_id] => 1
+    [fourth_category_id] => 134
+    [fifth_category_id] => 0
+    [shop_category_id] => 0
+    [shop_sub_category_id] => 0
+    [item_name] => テスト商品334574
+    [item_name_kana] => 
+    [item_condition] => 0
+    [second_hand_condition] => 0
+    [second_hand_comment] => 
+    [price_open_condition] => 10
+    [price_default] => 1
+    [sales_unit_price_min] => 0
+    [sales_unit_price_max] => 0
+    [estimate_advisability] => 10
+    [sales_status] => 9
+    [sales_method] => 10
+    [robot_no_index] => 0
+    [show_medical_alert] => 0
+    [apply_discount] => 0
+    [discount_percentage] => 0
+    [tags] => Array
+        (
+            [0] => 1051
+            [1] => 1982
+            [2] => 1985
+            [3] => 2005
+        )
+
+    [stock_status] => 10
+    [distribution_limited] => 0
+    [shipping_overseas] => 10
+    [discount_multi_order] => 0
+    [item_oem_correspondence] => 40
+    [print_name_order] => 0
+    [image_key] => 614da2918cb0c
+    [alt_text] => あああ
+    [description_text_type] => 10
+    [description_text] => あああ
+    [catch_copy] => あああ
+    [youtube_key] => 
+    [advantage] => 0
+    [brand_id] => 0
+    [jan_code] => 
+    [jan_code_empty] => 1
+    [sales_domestic] => 0
+    [sales_price_type] => 11
+    [sales_price] => 0
+    [sales_price_tax] => 0
+    [tax_rate] => 8
+    [sample_request] => 0
+    [sample_for_test_request] => 20
+    [sample_for_test_amount] => 
+    [sample_for_test_price] => 
+    [sample_for_test_postage] => 
+    [sample_for_production_request] => 0
+    [sample_for_production_amount] => 
+    [sample_for_production_price] => 
+    [sample_for_production_postage] => 
+    [sample_explanation] => 
+    [delivery_cost_type] => 0
+    [estimate_term] => 0
+    [price_measure] => 0
+    [sales_measure] => Array
+        (
+            [0] => 2
+        )
+
+    [correspondence] => 0
+    [return_good_condition] => 0
+    [agreement_required] => 20
+    [agreement_explanation] => 
+    [agreement_form_id] => 0
+    [agreement_publish] => 0
+    [flex_16] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [flex_17] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_19] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_20] => a:2:{s:5:"value";s:1:"5";s:8:"othertxt";s:0:"";}
+    [flex_21] => 
+    [flex_22] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_23] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_37] => 
+    [flex_38] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [created_user_id] => 576
+    [last_update_user_id] => 576
+    [created] => 2021-09-24 19:04:24
+    [updated] => 2021-09-24 19:06:21
+    [shop_name] => (株)サニー
+    [company_name] => 株式会社サニー
+)
+
+2021-09-29T17:22:32+09:00 (NOTICE): Invalid controller specified (item) %info%
+2021-09-29T17:22:32+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => item
+    [action] => add
+    [module] => api
+    [id] => 1607
+    [display_id] => GS2100183
+    [supplier_id] => 72
+    [fr_in_order_id] => 0
+    [fr_in_order_id_old] => 0
+    [fresco_supplier_id] => 0
+    [status] => 9
+    [item_rating] => 0.00
+    [search_evaluation_point] => 0
+    [search_evaluation_point2] => 0
+    [is_coupon_target] => 0
+    [category_id] => 1
+    [sub_category_id] => 1
+    [third_category_id] => 1
+    [fourth_category_id] => 134
+    [fifth_category_id] => 0
+    [shop_category_id] => 0
+    [shop_sub_category_id] => 0
+    [item_name] => テスト商品334574
+    [item_name_kana] => 
+    [item_condition] => 0
+    [second_hand_condition] => 0
+    [second_hand_comment] => 
+    [price_open_condition] => 10
+    [price_default] => 1
+    [sales_unit_price_min] => 0
+    [sales_unit_price_max] => 0
+    [estimate_advisability] => 10
+    [sales_status] => 9
+    [sales_method] => 10
+    [robot_no_index] => 0
+    [show_medical_alert] => 0
+    [apply_discount] => 0
+    [discount_percentage] => 0
+    [tags] => Array
+        (
+            [0] => 1051
+            [1] => 1982
+            [2] => 1985
+            [3] => 2005
+        )
+
+    [stock_status] => 10
+    [distribution_limited] => 0
+    [shipping_overseas] => 10
+    [discount_multi_order] => 0
+    [item_oem_correspondence] => 40
+    [print_name_order] => 0
+    [image_key] => 614da2918cb0c
+    [alt_text] => あああ
+    [description_text_type] => 10
+    [description_text] => あああ
+    [catch_copy] => あああ
+    [youtube_key] => 
+    [advantage] => 0
+    [brand_id] => 0
+    [jan_code] => 
+    [jan_code_empty] => 1
+    [sales_domestic] => 0
+    [sales_price_type] => 11
+    [sales_price] => 0
+    [sales_price_tax] => 0
+    [tax_rate] => 8
+    [sample_request] => 0
+    [sample_for_test_request] => 20
+    [sample_for_test_amount] => 
+    [sample_for_test_price] => 
+    [sample_for_test_postage] => 
+    [sample_for_production_request] => 0
+    [sample_for_production_amount] => 
+    [sample_for_production_price] => 
+    [sample_for_production_postage] => 
+    [sample_explanation] => 
+    [delivery_cost_type] => 0
+    [estimate_term] => 0
+    [price_measure] => 0
+    [sales_measure] => Array
+        (
+            [0] => 2
+        )
+
+    [correspondence] => 0
+    [return_good_condition] => 0
+    [agreement_required] => 20
+    [agreement_explanation] => 
+    [agreement_form_id] => 0
+    [agreement_publish] => 0
+    [flex_16] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [flex_17] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_19] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_20] => a:2:{s:5:"value";s:1:"5";s:8:"othertxt";s:0:"";}
+    [flex_21] => 
+    [flex_22] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_23] => a:2:{s:5:"value";s:0:"";s:8:"othertxt";s:0:"";}
+    [flex_37] => 
+    [flex_38] => a:2:{s:5:"value";N;s:8:"othertxt";s:0:"";}
+    [created_user_id] => 576
+    [last_update_user_id] => 576
+    [created] => 2021-09-24 19:04:24
+    [updated] => 2021-09-24 19:06:21
+    [shop_name] => (株)サニー
+    [company_name] => 株式会社サニー
+)
+
+2021-09-29T23:07:59+09:00 (NOTICE): Invalid controller specified (site) %info%
+2021-09-29T23:07:59+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => site
+    [action] => wp-login.php
+    [module] => front
+)
+
+2021-09-29T23:45:44+09:00 (NOTICE): Invalid controller specified (test) %info%
+2021-09-29T23:45:44+09:00 (NOTICE): Request Parameters Array
+(
+    [controller] => test
+    [action] => wp-login.php
+    [module] => front
+)
+

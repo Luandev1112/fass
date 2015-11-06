@@ -1,0 +1,622 @@
+<?php
+$payableTemplateTypeList = Shared_Model_Code::codes('payable_template_type');
+$payingMethodList        = Shared_Model_Code::codes('payable_paying_method_template');
+$statusList              = Shared_Model_Code::codes('payable_template_status_search');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+	});
+	
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 会計科目 選択ポップアップ表示
+    $(document).on('click', '#select_account_title', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/office/accounting-select', null, function () {stopSpinner();});
+    });
+    
+    // 会計科目 リセット
+    $(document).on('click', '#reset_account_title', function () {
+		$('#account_title_name_display').html('');
+		$('#account_title_name').val('');
+		$('#account_title_id').val('');
+	});
+
+	// 申請者 ポップアップ表示
+    $(document).on('click', '#select_applicant_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+	});
+	
+	// 申請者 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 申請者 リセット
+    $(document).on('click', '#reset_applicant_user', function () {
+		$('#applicant_user_name_display').html('');
+		$('#applicant_user_name').val('');
+		$('#applicant_user_id').val('');
+	});
+
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 取引先 リセット
+    $(document).on('click', '#reset_connection', function () {
+		$('#connection_name_display').html('');
+		$('#connection_name').val('');
+		$('#connection_id').val('');
+	});
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+    
+    $(document).on('click', '.action_menu', function () {
+	    var targetId = $(this).attr('target-id');
+	    
+	    if ($('#action_menu_frame_' + targetId).hasClass('selected')) {
+		    $('#action_menu_frame_' + targetId).removeClass('selected');
+	    } else {
+		    $('.action_menu_frame').removeClass('selected');
+		    $('#action_menu_frame_' + targetId).addClass('selected');
+	    }
+	});
+
+
+    // 下書き
+    $(document).on('click', '.update_to_draft', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('下書きに戻しますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('下書きに戻しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-payable/template-update-to-draft'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    // 毎月支払終了
+    $(document).on('click', '.finish', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に終了にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('終了にしました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-payable/template-finished'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/transaction-payable/template-list?pos=' + $(window).scrollTop();
+    	}
+    });
+});
+
+// 会計科目 選択完了
+function selectAccountTitle(id, title) {
+	$('#account_title_name_display').html(title);
+	$('#account_title_name').val(title);
+	$('#account_title_id').val(id);
+	$('.btn_close').click();
+}
+
+// 申請者 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 申請者 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/user/list-select?page=' + pageNo,
+    });
+}
+
+// 申請者 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	$('#applicant_user_name_display').html(departmentName + '　' + name);
+	$('#applicant_user_name').val(departmentName + '　' + name);
+	$('#applicant_user_id').val(id);
+	$('.btn_close').click();
+}
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form  = $('#connection_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name_display').html(name);
+	$('#connection_name').val(name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+ 
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.gray_out td {background-color:#eee}
+table.list_default tr.gray_out:hover td {background:#eee;}
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;}
+.align_center{text-align:center;margin-right:12px;}
+
+table.list_default tr td {overflow:inherit;}
+.action_menu_frame {left:90px;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+		    <?php if ($this->allowEditing === true) { ?>
+				<p style="position:absolute;width:76px;right:0;">
+	                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/transaction-payable/template-add">新規登録</a>
+	            </p>
+            <?php } ?>
+	        <span style=""><strong>毎月支払管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/transaction-payable/template-list" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1" />
+				<input type="hidden" id="page" name="page" value="1" />
+
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">会計科目：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="account_title_name_display"><?php echo $this->conditions['account_title_name']; ?></span>
+							<a class="reset_popup" id="reset_account_title" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_account_title" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="account_title_name" name="account_title_name" value="<?php echo $this->conditions['account_title_name']; ?>">
+						<input type="hidden" id="account_title_id" name="account_title_id" value="<?php echo $this->conditions['account_title_id']; ?>">
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">ステータス：</p>
+                        <select id="status" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">支払種別：</p>
+                        <select id="template_type" name="template_type">
+                            <option value="">---</option>
+                        	<?php foreach ($payableTemplateTypeList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['template_type']) echo 'selected="selected"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">通貨単位：</p>
+                        <select id="currency_id" name="currency_id">
+                            <option value="">---</option>
+                        	<?php foreach ($this->currencyList as $each) { ?>
+                                <option value="<?php echo $each['id']; ?>" <?php if ((string)$each['id'] === $this->conditions['currency_id']) echo 'selected="selected"';?>><?php echo $each['name']; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">支払先：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="connection_name_display"><?php echo $this->conditions['connection_name']; ?></span>
+							<a class="reset_popup" id="reset_connection" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_connection" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="connection_name" name="connection_name" value="<?php echo $this->conditions['connection_name']; ?>" />
+						<input type="hidden" id="connection_id" name="connection_id" value="<?php echo $this->conditions['connection_id']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">内容：</p>
+                        <input type="text" id="description" name="description" value="<?php echo $this->conditions['description']; ?>" />
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">申請者：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="applicant_user_name_display"><?php echo $this->conditions['applicant_user_name']; ?></span>
+							<a class="reset_popup" id="reset_applicant_user" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_applicant_user" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="applicant_user_name" name="applicant_user_name" value="<?php echo $this->conditions['applicant_user_name']; ?>" />
+						<input type="hidden" id="applicant_user_id" name="applicant_user_id" value="<?php echo $this->conditions['applicant_user_id']; ?>" />
+					</div>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>
+
+
+    
+    <?php $payableTable = new Shared_Model_Data_AccountPayable(); ?>
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<p style="color:#3a4cf7;font-size:1.3em;margin-bottom:0.6em;"><strong>アクティブ</strong></p>
+		<table class="list_default" style="margin-bottom:2em;">
+			<tr>
+				<th style="width:10%;"><p>会計科目&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:8%;"><p>最終履歴</p></th>
+				<th><p>内容&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:11%;"><p>支払先&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:8%;"><p>ステータス</p></th>
+				<th style="width:6%;"><p>支払種別</p></th>
+				<th style="width:8%;"><p>支払方法</p></th>
+				
+				<th style="width:6%;"><p>通貨単位</p></th>	
+				<th style="width:10%;"><p>金額</p></th>
+				<th style="width:8%;"><p>登録者&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:4.5%;"><p>詳細</p></th>
+				<th style="width:7%;"><p>履歴</p></th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<?php
+						$grayOut = '';
+						if ($each['status'] === (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) {
+							$grayOut = 'class="gray_out"';
+						}
+					?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php echo $grayOut; ?>>
+						<td class="desc" all-content="<?php echo $this->escape($this->accountTitleList[$each['account_title_id']]['title']); ?>">
+							<p><?php echo $this->roundText($this->escape($this->accountTitleList[$each['account_title_id']]['title']), 8); ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$latest = $payableTable->getLastestByTemplateId($each['id']);
+								if (!empty($latest)) {
+							?>
+								<p><?php if (!empty($latest['paying_plan_date'])) { echo date('Y-m-d', strtotime($latest['paying_plan_date'])); } else { echo '---'; } ?></p>
+							<?php
+								}
+							?>
+						</td>
+							
+						<td class="desc" all-content="<?php echo $this->escape($each['description']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['description']), 12); ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 9); ?></p>
+						</td>
+						
+						<td>
+							<p>
+							<?php if ($each['status'] == (string)Shared_Model_Code::PAYABLE_STATUS_APPROVED || $each['status'] == (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) { ?>
+								<strong><?php echo $statusList[$each['status']]; ?></strong>
+							<?php } else { ?>
+								<?php echo $statusList[$each['status']]; ?>
+							<?php } ?>
+							</p>
+						</td>
+						
+						<td>
+							<p><?php echo $payableTemplateTypeList[$each['template_type']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $payingMethodList[$each['paying_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p class="align_center"><?php if (!empty($each['currency_id'])) { echo $this->escape($this->currencyList[$each['currency_id']]['name']); } ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$totaltext = '';
+								if (!empty($each['total_amount'])) {
+									$totaltext = $this->escape(number_format($each['total_amount']));
+								}	
+							?>
+							<p class="align_right"><?php echo $totaltext; ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['user_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['user_name']), 5); ?></p>
+						</td>
+
+						<td>
+							<p><a href="/transaction-payable/template-detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<div class="action_menu_frame" id="action_menu_frame_<?php echo $this->escape($each['id']); ?>">
+									<a class="action_menu" target-id="<?php echo $this->escape($each['id']); ?>"><i class="icon-pencil"></i><i class="icon-down-dir-1"></i></a>
+								    <ul>
+									    <li><a class="update_to_draft" target-id="<?php echo $this->escape($each['id']); ?>">下書きに戻す</a></li>
+								    	<li><a class="finish" target-id="<?php echo $this->escape($each['id']); ?>">毎月支払終了</a></li>
+								    </ul>
+								</div>
+							<?php } ?>
+							
+							<?php if ($each['status'] == (string)Shared_Model_Code::PAYABLE_STATUS_APPROVED || $each['status'] == (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) { ?>
+								<a class="btn_setting" href="/transaction-payable/template-history?id=<?php echo $this->escape($each['id']); ?>">支払履歴</a>
+							<?php } ?>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="12">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+		<p style="color:#3a4cf7;font-size:1.3em;margin-bottom:0.6em;"><strong>毎月支払い終了</strong></p>
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>会計科目&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:8%;"><p>最終履歴</p></th>
+				<th><p>内容&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:11%;"><p>支払先&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:8%;"><p>ステータス</p></th>
+				<th style="width:6%;"><p>支払種別</p></th>
+				<th style="width:8%;"><p>支払方法</p></th>
+				
+				<th style="width:6%;"><p>通貨単位</p></th>	
+				<th style="width:10%;"><p>金額</p></th>
+				<th style="width:8%;"><p>登録者&nbsp;<i class="icon-info-circle"></i></p></th>
+				<th style="width:4.5%;"><p>詳細</p></th>
+				<th style="width:7%;"><p>履歴</p></th>
+			</tr>
+
+			<?php if (!empty($this->itemsFinished)) { ?>
+				<?php foreach ($this->itemsFinished as $each) { ?>
+					<?php
+						$grayOut = '';
+						if ($each['status'] === (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) {
+							$grayOut = 'class="gray_out"';
+						}
+					?>
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php echo $grayOut; ?>>
+						<td class="desc" all-content="<?php echo $this->escape($this->accountTitleList[$each['account_title_id']]['title']); ?>">
+							<p><?php echo $this->roundText($this->escape($this->accountTitleList[$each['account_title_id']]['title']), 8); ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$latest = $payableTable->getLastestByTemplateId($each['id']);
+								if (!empty($latest)) {
+							?>
+								<p><?php if (!empty($latest['paying_plan_date'])) { echo date('Y-m-d', strtotime($latest['paying_plan_date'])); } else { echo '---'; } ?></p>
+							<?php
+								}
+							?>
+						</td>
+							
+						<td class="desc" all-content="<?php echo $this->escape($each['description']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['description']), 12); ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 9); ?></p>
+						</td>
+						
+						<td>
+							<p>
+							<?php if ($each['status'] == (string)Shared_Model_Code::PAYABLE_STATUS_APPROVED || $each['status'] == (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) { ?>
+								<strong><?php echo $statusList[$each['status']]; ?></strong>
+							<?php } else { ?>
+								<?php echo $statusList[$each['status']]; ?>
+							<?php } ?>
+							</p>
+						</td>
+						
+						<td>
+							<p><?php echo $payableTemplateTypeList[$each['template_type']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $payingMethodList[$each['paying_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p class="align_center"><?php if (!empty($each['currency_id'])) { echo $this->escape($this->currencyList[$each['currency_id']]['name']); } ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$totaltext = '';
+								if (!empty($each['total_amount'])) {
+									$totaltext = $this->escape(number_format($each['total_amount']));
+								}	
+							?>
+							<p class="align_right"><?php echo $totaltext; ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['user_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['user_name']), 5); ?></p>
+						</td>
+
+						<td>
+							<p><a href="/transaction-payable/template-detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+						
+						<td style="position:relative;">
+							<?php if ($each['status'] == (string)Shared_Model_Code::PAYABLE_STATUS_APPROVED || $each['status'] == (string)Shared_Model_Code::PAYABLE_TEMPLATE_STATUS_FINISHED) { ?>
+								<a class="btn_setting" href="/transaction-payable/template-history?id=<?php echo $this->escape($each['id']); ?>">支払履歴</a>
+							<?php } ?>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="12">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>        
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

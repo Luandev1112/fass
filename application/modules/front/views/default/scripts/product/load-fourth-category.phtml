@@ -1,0 +1,8 @@
+<?php if (!empty($this->fourthCategoryList)) { ?>
+<select id="fourth_category_id" name="fourth_category_id" class="category">
+	<option value="">---</option>
+	<?php foreach ($this->fourthCategoryList as $each) { ?>
+		<option value="<?php echo $this->escape($each['id']) ?>"><?php echo $this->escape($each['fourth_category_name']); ?></option>
+	<?php } ?>
+</select>
+<?php } ?>

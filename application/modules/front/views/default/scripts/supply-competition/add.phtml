@@ -1,0 +1,215 @@
+<?php
+
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']); 		
+    });
+
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/supply-competition";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+		showSpinner();
+
+        var $form = $('#register_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                    
+                } else if(obj.result == 'OK') {
+                    location.href = '/supply-competition/detail?id=' + obj.id;
+                    return;
+                    
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/supply-competition/add-post'
+		});
+	});
+
+    // 本件管理担当者ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select');
+    });
+    
+	// 本件管理担当者条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 本件管理担当者 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 本件管理担当者 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/user/list-select?page=' + pageNo,
+    });
+}
+
+// 本件管理担当者 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	$('#management_user_name').html(departmentName + '　' + name);
+	$('#management_user_id').val(id);
+	$('.btn_close').click();
+}
+
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+table.list_default tr td.column_value input.datepicker[type="text"] {width:180px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;font-weight:bold;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>コンペ - 新規登録</strong></span>
+        </div>
+    </div>
+
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">    
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">コンペ・企画件名<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="title" value="" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">本件管理担当者<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="management_user_name">---</p>
+                    <a class="option" id="select_user">担当者選択</a>
+                    <input type="hidden" id="management_user_id" name="management_user_id" value="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">コンペ開始日</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<input class="datepicker" type="text" name="competiion_started_date" value="" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">本件概要<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<textarea name="description" style="height:100px;margin-bottom:6px;"></textarea>
+                </td>
+            </tr>
+		</table>
+	</div>
+	</form>
+	
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;"><div class="menu_frame"><div id="data_area"></div></div></div>
+</div>
+</div>
+</div>

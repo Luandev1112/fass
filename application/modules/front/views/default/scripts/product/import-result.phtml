@@ -1,0 +1,48 @@
+<table class="list_default">
+	<tr>
+		<th style="width:9%;">
+			<p>CSV行</p>
+		</th>
+		<th style="width:9%;">
+			<p>取引先ID</p>
+		</th>
+		<th style="width:9%;">
+			<p>結果</p>
+		</th>
+		<th>
+			<p>エラーメッセージ</p>
+		</th>	
+	</tr>
+	
+	<?php if (!empty($this->items)) { ?>
+		<?php foreach ($this->items as $each) { ?>
+
+			<tr id="<?php echo $each['id']; ?>">
+				<td>
+					<p><?php echo $each['csv_row']; ?></p>
+				</td>
+				<td>
+					<p><?php echo $each['order_id']; ?></p>
+				</td>
+
+				<td>
+					<?php if(!empty($each['result'])){ ?>
+						<p style="color:#04a127;">OK</p>
+					<?php } else { ?>
+						<p style="color:#f00;">NG</p>
+					<?php } ?>
+				</td>
+
+				<td>
+					<p><?php if (!empty($each['message'])) { echo $each['message']; } ?></p>
+				</td>
+			</tr>
+		<?php } ?>
+	<?php } else { ?>
+		<tr>
+			<td colspan="4">
+				<p style="text-align:center;">データがありません</p>
+			</td>
+		</tr>
+	<?php } ?>
+</table>

@@ -1,0 +1,987 @@
+<?php
+$startTypeList        = Shared_Model_Code::codes('progress_start_type');
+$startTypeShortList   = Shared_Model_Code::codes('progress_start_type_short');
+$importanceList       = Shared_Model_Code::codes('progress_importance');
+
+$importanceShortList  = Shared_Model_Code::codes('progress_importance_short');
+$possibilityList      = Shared_Model_Code::codes('progress_possibility');
+$possibilityShortList = Shared_Model_Code::codes('progress_possibility_short');
+
+?>
+
+<script type="text/javascript"><!--
+var reloadFlag = false;
+var pos = 0;
+var targetItemRow = '';
+var targetIndustryRow = '';
+
+$(function() {
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $(this.form).find('select option').removeAttr('selected');
+	    $(this.form).find(':checkbox').prop('checked', false);
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        Tipped.create('#help_start_type', "A 創造　　　⇒　自らゼロから開拓した新規顧客の営業案件<br>B1クロス　　⇒　既存顧客に新しく取引実績のないものを営業するクロスセス案件<br>B2 受け新規　⇒　最初のきっかけが受動的だった新規顧客の営業案件<br>C 既存取引　　⇒　リピート購入・再販案件や過去受注経験のある既存取引案件");
+    });
+    
+    /*
+	$(document).on('click', '.show_detail', function () {
+		location.href = '/connection-progress/detail?id=' + $(this).attr('target-id') + '&index_pos=' + $(window).scrollTop();
+	});
+	*/
+
+    // 自社担当 ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 自社担当 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 自社担当 リセット
+    $(document).on('click', '#reset_user', function () {
+		$('#user_name_display').html('');
+		$('#user_name').val('');
+		$('#user_id').val('');
+	});
+	
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 取引先 リセット
+    $(document).on('click', '#reset_connection', function () {
+		$('#connection_name_display').html('');
+		$('#connection_name').val('');
+		$('#connection_id').val('');
+	});
+
+    // 営業エリア 選択ポップアップ表示
+    $(document).on('click', '#select_area', function () {
+	    showSpinner();
+	    pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection-progress/area-list-select', null, function () {stopSpinner();});
+    });
+    
+	// 営業エリア 条件検索
+    $(document).on('click', '#search_area', function () {
+		updateConnectionList(1);
+    });
+
+    // 営業エリア リセット
+    $(document).on('click', '#reset_area', function () {
+		$('#area_name_display').html('');
+		$('#area_name').val('');
+		$('#area_id').val('');
+	});
+	
+    // 発足名称 選択ポップアップ表示
+    $(document).on('click', '#select_start', function () {
+	    showSpinner();
+	    pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection-progress/start-list-select', null, function () {stopSpinner();});
+    });
+    
+	// 発足名称 条件検索
+    $(document).on('click', '#search_tag', function () {
+		updateTagList(1);
+    });
+
+    // 発足名称 リセット
+    $(document).on('click', '#reset_start', function () {
+		$('#tag_name_display').html('');
+		$('#tag_name').val('');
+		$('#tag_id').val('');
+	});
+	
+    // 商品 選択 ポップアップ表示
+    $(document).on('click', '.select_item', function () {
+    	targetItemRow = $(this).attr('target-item');
+
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+
+		$('#data_area').load('/product/list-select', null, function () {stopSpinner();});
+    });
+    
+    // 商品 選択 条件検索
+    $(document).on('click', '#search_product', function () {
+		updateProductList(1);
+    });
+
+    // 商品 リセット
+    $(document).on('click', '.reset_item', function () {
+	    targetItemRow = $(this).attr('target-item');
+		$('#item' + targetItemRow + '_name_display').html('');
+		$('#item' + targetItemRow + '_name').val('');
+		$('#item' + targetItemRow + '_id').val('');
+	});
+
+    // 業種 選択 ポップアップ表示
+    $(document).on('click', '.select_industry', function () {
+    	targetIndustryRow = $(this).attr('target-item');
+
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+
+		$('#data_area').load('/connection/industry-select', null, function () {stopSpinner();});
+    });
+
+    // 業種 リセット
+    $(document).on('click', '.reset_industry', function () {
+	    targetIndustryRow = $(this).attr('target-item');
+		$('#industry' + targetIndustryRow + '_name_display').html('');
+		$('#industry' + targetIndustryRow + '_name').val('');
+		$('#industry' + targetIndustryRow + '_id').val('');
+	});
+	
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+    
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success: function(res){
+		            	stopSpinner();
+		                jAlert('削除しました', '　');
+		                $('tr#' + targetId).remove();
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/connection-progress/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+});
+
+// 自社担当 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 自社担当 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:param,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/user/list-select?page=' + pageNo,
+    });
+}
+
+// 自社担当 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	$('#user_name_display').html(name);
+	$('#user_name').val(name);
+	$('#user_id').val(id);
+	$('.btn_close').click();
+}
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:param,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name_display').html(name);
+	$('#connection_name').val(name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 営業エリア 一覧ページ切り替え
+function pageArea(pageNo) {
+	updateAreaList(pageNo)
+}
+// 営業エリア 一覧更新
+function updateAreaList (pageNo) {
+    var $form = $('#area_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection-progress/area-list-select?page=' + pageNo,
+    });
+}
+
+// 営業エリア 選択
+function selectArea(id, name) {
+	$('#area_name_display').html(name);
+	$('#area_name').val(name);
+	$('#area_id').val(id);
+	$('.btn_close').click();
+}
+
+// 発足名称 一覧ページ切り替え
+function pageTag(pageNo) {
+	updateTagList(pageNo)
+}
+
+// 発足名称 一覧更新
+function updateTagList (pageNo) {
+    var $form  = $('#tag_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection-progress/start-list-select?page=' + pageNo,
+    });
+}
+
+// 発足名称 選択完了
+function selectTag(id, name) {
+	$('#start_tag_name_display').html(name);
+	$('#start_tag_name').val(name);
+	$('#start_tag_id').val(id);
+	$('.btn_close').click();
+}
+
+// 商品 一覧ページ切り替え
+function pageProduct(pageNo) {
+	updateProductList(pageNo)
+}
+
+// 商品 一覧更新
+function updateProductList (pageNo) {
+    var $form  = $('#product_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/product/list-select?page=' + pageNo,
+    });
+}
+
+// 商品 選択完了
+function selectProduct(id, itemId, name, buyingName) {
+	$('#item' + targetItemRow + '_name_display').html(name);
+	$('#item' + targetItemRow + '_name').val(name);
+	$('#item' + targetItemRow + '_id').val(id);
+	$('.btn_close').click();
+}
+
+// 業種 選択完了
+function selectIndustry(id, name) {
+	$('#industry' + targetIndustryRow + '_name_display').html(name);
+	$('#industry' + targetIndustryRow + '_name').val(name);
+	$('#industry' + targetIndustryRow + '_id').val(id);
+	$('.btn_close').click();
+}
+
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+.multi_rows_padding {padding:0 0 0 3px;float:left;line-height:1.6}
+table.list_default tr th p, table.list_default tr td p {padding:11px 0 0 3px}
+
+a.option {
+background-color:#00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:inline-block;font-size:12px;margin:1px 3px 0 0;padding:5px 10px 3px 10px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+a.option.btn_list_delete {
+background-color:#d90034;	
+}
+#scroller table tr td {background-color:#fafafa;padding:5px 10px;height:110px;}
+
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+
+div.progress_condition_items input[type="submit"] {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;
+display:block;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="submit"]:hover,
+div.progress_condition_items input[type="submit"]:focus,
+div.progress_condition_items input[type="submit"]:active,
+div.progress_condition_items input[type="submit"].active {
+background:none repeat scroll 0 0 #165cb1;box-shadow:none;color:#fff !important;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="button"] {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#fff !important;
+display:block;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+div.progress_condition_items input[type="button"]:hover,
+div.progress_condition_items input[type="button"]:focus,
+div.progress_condition_items input[type="button"]:active,
+div.progress_condition_items input[type="button"].active {
+background:none repeat scroll 0 0 #165cb1;box-shadow:none;color:#fff !important;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+div.input_box_fake {width: 177px;}
+div.input_box_fake span.target_text {width: 98px;}
+div.input_box_fake a.select_popup {width:46px;}
+span.after {color:#3b5bc5}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+p.condition_title {padding-left:12px;font-size:1.5em;color:#f00;float:left;margin-right:2.0em;}
+.checkbox_item strong {color:#4b4fe8}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div>
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:630px;right:0;">
+				<a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;background-color:#000;" href="/connection-progress/sheet-list">シート管理</a>
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;background-color:#000;" href="/connection-progress/area-list">エリア定義</a>
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;background-color:#000;" href="/connection-progress/progress-list">実績定義</a>
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;background-color:#000;" href="/connection-progress/after-list">見積後ヒア定義</a>
+                
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;" href="/connection-progress/start-list?type=general">発足名称管理</a>
+                
+                <a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;" href="/connection-progress/add">新規案件登録</a>
+            </p>
+	        <span style=""><strong>営業案件管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-xs-12 clearfix">
+	    <p class="condition_title">シート：<?php if (!empty($this->conditions['sheet_id'])) { echo $this->sheetList[$this->conditions['sheet_id']]['sheet_name']; } else { echo '---'; } ?></p>
+	    <p class="condition_title">担当者：<?php if (!empty($this->userData)) { echo $this->userData['user_name']; } else { echo '---'; } ?></p>
+	    </div>
+	</div>
+	
+	
+	<form id="condition_form" action="/connection-progress" method="get">
+	<input type="hidden" id="search" name="search" value="1">
+	<input type="hidden" id="page" name="page" value="1">
+    <div class="col-xs-12">
+        <div class="clearfix" style="margin-bottom:7px;">
+            <p style="float:left;padding-top:10px;width:75px;">シート：</p>
+            <select name="sheet_id" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+                <option value="">---</option>
+                <?php foreach ($this->sheetList as $eachSheet) { ?>           
+                    <option value="<?php echo $this->escape($eachSheet['id']); ?>" <?php if ($eachSheet['id'] === $this->conditions['sheet_id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachSheet['sheet_name']); ?></option>
+                <?php } ?>
+            </select>
+
+            <p style="float:left;padding-top:10px;width:75px;">部署：</p>
+            <select name="user_department_id" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="">---</option>
+                <?php foreach ($this->deparmentList as $eachDepartment) { ?>           
+                    <option value="<?php echo $this->escape($eachDepartment['id']); ?>" <?php if ((string)$eachDepartment['id'] === $this->conditions['user_department_id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachDepartment['department_name']); ?></option>
+                <?php } ?>
+            </select>
+			
+			 <p style="float:left;padding-top:10px;width:75px;">自社担当：</p>
+			 <div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="user_name_display"><?php echo $this->conditions['user_name']; ?></span>
+					<a class="reset_popup" id="reset_user" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup" id="select_user" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="user_name" name="user_name" value="<?php echo $this->conditions['user_name']; ?>" />
+				<input type="hidden" id="user_id" name="user_id" value="<?php echo $this->conditions['user_id']; ?>" />
+			</div>
+
+            <p style="float:left;padding-top:10px;width:75px;">エリア：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="area_name_display"><?php echo $this->conditions['area_name']; ?></span>
+					<a class="reset_popup" id="reset_area" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup" id="select_area" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="area_name" name="area_name" value="<?php echo $this->conditions['area_name']; ?>" />
+				<input type="hidden" id="area_id" name="area_id" value="<?php echo $this->conditions['area_id']; ?>" />
+			</div>
+
+        </div>
+        <div class="clearfix" style="margin-bottom:7px;">
+        	<p style="float:left;padding-top:10px;width:75px;">取引先：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="connection_name_display"><?php echo $this->conditions['connection_name']; ?></span>
+					<a class="reset_popup" id="reset_connection" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup" id="select_connection" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="connection_name" name="connection_name" value="<?php echo $this->conditions['connection_name']; ?>" />
+				<input type="hidden" id="connection_id" name="connection_id" value="<?php echo $this->conditions['connection_id']; ?>" />
+			</div>
+
+            <p style="float:left;padding-top:10px;width:75px;">発足区分<span class="popup_help" id="help_start_type">&nbsp;<i class="icon-help-circled"></i></span></p>
+            <select name="start_type" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="">---</option>
+                <?php foreach ($startTypeList as $key => $val) { ?>           
+                    <option value="<?php echo $this->escape($key); ?>" <?php if ((string)$key === $this->conditions['start_type']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+                <?php } ?>
+            </select>
+            
+            <p style="float:left;padding-top:10px;width:75px;">発足名称：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="start_name_display"><?php echo $this->conditions['start_tag_name']; ?></span>
+					<a class="reset_popup" id="reset_start" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup" id="select_start" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="start_tag_name" name="start_tag_name" value="<?php echo $this->conditions['start_tag_name']; ?>" />
+				<input type="hidden" id="start_tag_id" name="start_tag_id" value="<?php echo $this->conditions['start_tag_id']; ?>" />
+			</div>
+
+            <p style="float:left;padding-top:10px;width:75px;">宿題：</p>
+            <select name="task" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="">---</option>
+				<option value="0" <?php if ($this->conditions['task'] === '0') { ?>selected="selected"<?php } ?>>なし</option>
+				<option value="1" <?php if ($this->conditions['task'] === '1') { ?>selected="selected"<?php } ?>>あり</option>
+            </select>
+        </div>
+        <div class="clearfix" style="margin-bottom:7px;">
+            <p style="float:left;padding-top:10px;width:75px;">重要度：</p>
+            <select name="importance" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="">---</option>
+                <?php foreach ($importanceList as $key => $val) { ?>           
+                    <option value="<?php echo $this->escape($key); ?>" <?php if ((string)$key === $this->conditions['importance']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+                <?php } ?>
+            </select>
+            
+<?php
+/*
+①可能性　＞　重要度
+
+②重要度（顧客＞協業先＞仕入先＞その他）　＞　可能性
+
+③重要度（協業先＞顧客＞仕入先＞その他）　＞　可能性
+
+④重要度（仕入先＞顧客＞協業先＞その他）　＞　可能性
+
+⑤重要度（その他＞顧客＞協業先＞仕入先）　＞　可能性
+
+⑥重要度（C1＞C2＞P1＞S1＞Z1＞C3＞P2＞S2＞Z2）　＞　可能性　（※これが実際チェックした順番です）
+
+⑦可能性　＞重要度（C1＞C2＞P1＞S1＞Z1＞C3＞P2＞S2＞Z2）
+
+⑧エリア　＞可能性　＞　重要度　（※エリアを近い地域毎に並べています。）
+*/ ?>
+
+            <p style="float:left;padding-top:10px;width:75px;">並び順：</p>
+            <select name="list_order" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="1" <?php if (!empty($this->conditions['list_order']) && '1' === $this->conditions['list_order']) { echo 'selected="selected"'; } ?>>可能性＞更新日</option>
+	            <option value="2" <?php if (!empty($this->conditions['list_order']) && '2' === $this->conditions['list_order']) { echo 'selected="selected"'; } ?>>可能性＞重要度</option>
+	            <option value="3" <?php if (!empty($this->conditions['list_order']) && '3' === $this->conditions['list_order']) { echo 'selected="selected"'; } ?>>重要度＞可能性</option>
+	            <option value="4" <?php if (!empty($this->conditions['list_order']) && '4' === $this->conditions['list_order']) { echo 'selected="selected"'; } ?>>エリア＞可能性＞重要度</option>
+				
+            </select>
+        </div>
+        <div class="clearfix" style="margin-bottom:7px;">
+	    	<p style="float:left;padding-top:10px;width:75px;">商品：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item1_name_display"><?php echo $this->conditions['item1_name']; ?></span>
+					<a class="reset_popup reset_item" target-item="1" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_item" target-item="1" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item1_name" name="item1_name" value="<?php echo $this->conditions['item1_name']; ?>" />
+				<input type="hidden" id="item1_id" name="item1_id" value="<?php echo $this->conditions['item1_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item2_name_display"><?php echo $this->conditions['item2_name']; ?></span>
+					<a class="reset_popup reset_item" target-item="2" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_item" target-item="2" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item2_name" name="item2_name" value="<?php echo $this->conditions['item2_name']; ?>" />
+				<input type="hidden" id="item2_id" name="item2_id" value="<?php echo $this->conditions['item2_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item3_name_display"><?php echo $this->conditions['item3_name']; ?></span>
+					<a class="reset_popup reset_item" target-item="3" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_item" target-item="3" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item3_name" name="item3_name" value="<?php echo $this->conditions['item3_name']; ?>" />
+				<input type="hidden" id="item3_id" name="item3_id" value="<?php echo $this->conditions['item3_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item4_name_display"><?php echo $this->conditions['item4_name']; ?></span>
+					<a class="reset_popup reset_item" target-item="4" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_item" target-item="4" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item4_name" name="item4_name" value="<?php echo $this->conditions['item4_name']; ?>" />
+				<input type="hidden" id="item4_id" name="item4_id" value="<?php echo $this->conditions['item4_id']; ?>" />
+			</div>		
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item5_name_display"><?php echo $this->conditions['item5_name']; ?></span>
+					<a class="reset_popup reset_item" target-item="4" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_item" target-item="4" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item5_name" name="item5_name" value="<?php echo $this->conditions['item5_name']; ?>" />
+				<input type="hidden" id="item5_id" name="item5_id" value="<?php echo $this->conditions['item5_id']; ?>" />
+			</div>
+        </div>
+        
+        <div class="clearfix" style="margin-bottom:7px;">
+	    	<p style="float:left;padding-top:10px;width:75px;">業種：</p>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="industry1_name_display"><?php echo $this->conditions['industry1_name']; ?></span>
+					<a class="reset_popup reset_industry" target-item="1" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_industry" target-item="1" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="industry1_name" name="industry1_name" value="<?php echo $this->conditions['industry1_name']; ?>" />
+				<input type="hidden" id="industry1_id" name="industry1_id" value="<?php echo $this->conditions['industry1_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="industry2_name_display"><?php echo $this->conditions['industry2_name']; ?></span>
+					<a class="reset_popup reset_industry" target-item="2" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_industry" target-item="2" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="industry2_name" name="industry2_name" value="<?php echo $this->conditions['industry2_name']; ?>" />
+				<input type="hidden" id="industry2_id" name="industry2_id" value="<?php echo $this->conditions['industry2_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item3_name_display"><?php echo $this->conditions['industry3_name']; ?></span>
+					<a class="reset_popup reset_industry" target-item="3" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_industry" target-item="3" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="item3_name" name="industry3_name" value="<?php echo $this->conditions['industry3_name']; ?>" />
+				<input type="hidden" id="item3_id" name="industry3_id" value="<?php echo $this->conditions['industry3_id']; ?>" />
+			</div>
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="industry4_name_display"><?php echo $this->conditions['industry4_name']; ?></span>
+					<a class="reset_popup reset_industry" target-item="4" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_industry" target-item="4" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="industry4_name" name="industry4_name" value="<?php echo $this->conditions['industry4_name']; ?>" />
+				<input type="hidden" id="industry4_id" name="industry4_id" value="<?php echo $this->conditions['industry4_id']; ?>" />
+			</div>		
+			<div style="float:left;width:180px;margin-top:0;margin-right:15px;">
+				<div class="input_box_fake">
+					<span class="target_text" id="item5_name_display"><?php echo $this->conditions['industry5_name']; ?></span>
+					<a class="reset_popup reset_industry" target-item="4" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+					<a class="select_popup select_industry" target-item="4" href="javascript:void(0);"><span>選択</span></a>
+				</div>
+				<input type="hidden" id="industry5_name" name="industry5_name" value="<?php echo $this->conditions['industry5_name']; ?>" />
+				<input type="hidden" id="industry5_id" name="industry5_id" value="<?php echo $this->conditions['industry5_id']; ?>" />
+			</div>
+        </div>
+        
+        <?php /*
+            <p style="float:left;padding-top:10px;width:75px;">可能性：</p>
+            <select name="possibility" style="float:left;width:180px;margin-top:0;margin-right:15px;">
+	            <option value="">---</option>
+                <?php foreach ($possibilityList as $key => $val) { ?>           
+                    <option value="<?php echo $this->escape($key); ?>" <?php if ((string)$key === $this->conditions['possibility']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+                <?php } ?>
+            </select>
+        */ ?>
+        
+        <div class="clearfix" style="margin-bottom:0;">
+			<div class="checkbox_item relation_type_item">
+            	<strong>可能性:</strong>
+            </div>
+	        <?php foreach ($possibilityList as $key => $val) { ?>
+	        	<div class="checkbox_item relation_type_item">
+	            	<label>
+	            		<input type="checkbox" name="possibility[]" value="<?php echo $this->escape($key); ?>" <?php if (!empty($this->conditions['possibility']) && in_array((string)$key, $this->conditions['possibility'])) { echo 'checked="checked"'; } ?>><?php echo $this->escape($val); ?>
+	                </label>
+	            </div>
+	        <?php } ?>
+	    </div>
+	    
+        <div class="clearfix" style="margin-bottom:0;">
+			<div class="checkbox_item relation_type_item">
+            	<strong>実績:</strong>
+            </div>
+	        <?php foreach ($this->progressActiveList as $each) { ?>
+	        	<div class="checkbox_item relation_type_item">
+	            	<label>
+	            		<input type="checkbox" name="progress[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (!empty($this->conditions['progress']) && in_array($each['id'], $this->conditions['progress'])) { echo 'checked="checked"'; } ?>><?php echo $this->escape($each['title']); ?>
+	                </label>
+	            </div>
+	        <?php } ?>
+	    </div>
+	    
+	    <div class="clearfix">
+			<div class="checkbox_item relation_type_item">
+            	<strong>ヒア:</strong>
+            </div>
+	        <?php foreach ($this->afterList as $each) { ?>
+	        	<div class="checkbox_item relation_type_item">
+	            	<label>
+	            		<input type="checkbox" name="after[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (!empty($this->conditions['after']) && in_array($each['id'], $this->conditions['after'])) { echo 'checked="checked"'; } ?>><?php echo $this->escape($each['title']); ?>
+	                </label>
+	            </div>
+	        <?php } ?> 
+	    </div>
+	    
+		<div class="progress_condition_items" style="text-align:center">
+			<input type="button" class="clear_form" style="display:inline-block;width:150px;margin-bottom:0;" value="リセット" />
+			<input type="submit" class="submit" style="display:inline-block;width:150px;margin-bottom:0;" value="検索" />
+			
+			<p style="float:right;margin-bottom:13px;padding-top:0.8em">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+		</div>      
+    </div>
+	</form>
+
+	<div class="clearfix">
+		
+    </div>
+    
+	<?php
+	$userTable = new Shared_Model_Data_User();
+	$itemTable = new Shared_Model_Data_Item();
+	$recordTable = new Shared_Model_Data_ConnectionRecord();
+	?>
+	<table class="list_default">
+		<tr>
+			<th style="width:10%;"><p>シート/業種&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:10%;"><p>ID/更新/担当&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:9%;"><p>取引先</p></th>
+			
+			<th style="width:12%;"><p>案件対象商品&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:10%;"><p>発足区分&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:6%;"><p>重要度&nbsp;<i class="icon-info-circle"></i></p></th>	
+			<th style="width:6%;"><p>可能性&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th style="width:10%;"><p>実績&nbsp;<i class="icon-info-circle"></i></p></th>
+			<th><p>宿題&nbsp;<i class="icon-info-circle"></i></p></th>
+		</tr>
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+		    	<tr id="<?php echo $this->escape($each['id']); ?>">
+                	<?php
+                		$selectedItems = array();
+                		$industryTypes = unserialize($each['industry_types']);
+						
+                		if (!empty($industryTypes)) {
+	                		foreach ($this->industryList as $eachIndustry) {
+		                		foreach($industryTypes as $eachSelected) {
+			                		if ($eachSelected == $eachIndustry['id']) {
+			                			$selectedItems[] = $this->escape($eachIndustry['name']);
+			                		}
+		                		}
+		                	}
+	                	}
+	                ?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $selectedItems); ?>">
+				    	<div class="multi_rows_padding">
+							<span class="after"><?php echo $this->sheetList[$each['sheet_id']]['sheet_name']; ?></span><br>
+			                <?php	
+			                	echo $this->roundText(implode('&nbsp;/&nbsp;', $selectedItems), 50);
+		                	?>
+				    	</div>
+			    	</td>
+			    	
+			    	
+				    <td>
+					    <div class="multi_rows_padding">
+						<?php echo $this->escape($each['display_id']); ?><br>
+					    <?php echo date('Y-m-d', strtotime($each['updated'])); ?><br>
+		                <?php
+			                $userData = $userTable->getById($each['user_id']);
+			                if (!empty($userData)) {
+			                	echo $this->escape($this->roundText($userData['user_name'] . '(' . $userData['department_name'] . ')', 8));
+			                }
+		                ?>
+					    <a class="option show_detail" href="/connection-progress/detail?id=<?php echo $this->escape($each['id']); ?>&direct=1" target="_blank" style="margin-bottom:5px;" target-id="<?php echo $this->escape($each['id']); ?>">詳細</a>
+					    
+					    <?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+					    <a class="option btn_list_delete" style="margin-bottom:5px;" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+					    <?php } ?>
+					    </div>
+				    </td>
+				    <td>
+					    <div class="multi_rows_padding">
+				    	<?php echo $this->escape($each['company_name']); ?><br>
+				    	<?php if (!empty($each['area_name'])) { echo '(' . $this->escape($each['area_name']) . ')<br>'; } ?>
+				    	
+				    	<?php
+					    	$recordData = $recordTable->getLatestByProgressItemId($this->adminProperty['management_group_id'], $each['id']);
+							if (!empty($recordData)) {
+								echo '議事' . date('ymd', strtotime($recordData['target_date']));
+							}
+				    	?>
+					    </div>
+			    	</td>
+					
+					<?php
+						$itemIds  = unserialize($each['item_ids']);
+						$itemNameList      = array();
+						$itemNameListShort = array();
+						if (!empty($itemIds)) {
+							$count = 1;
+							foreach ($itemIds  as $eachId) {
+								$itemData = $itemTable->getById($this->adminProperty['management_group_id'], $eachId);
+								$itemNameList[] = $this->escape($itemData['item_name']);
+								
+								if ($count <= 5) {
+									$itemNameListShort[] = $this->escape($this->roundText($itemData['item_name'], 8));
+								}
+								
+								$count++;
+							}
+						}
+					?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $itemNameList); ?>">
+				    	<div class="multi_rows_padding">
+							<?php echo implode('<br>', $itemNameListShort); ?>
+				    	</div>
+			    	</td>
+			    		    	
+			    	<td>
+				    	<div class="multi_rows_padding">
+				    	<?php echo $startTypeList[$each['start_type']]; ?><br>
+				    	<?php echo $this->escape($each['tag_name']); ?>
+				    	</div>
+			    	</td>
+			    	
+			    	<td class="desc" all-content="<?php echo $importanceList[$each['importance']]; ?>">
+				    	<p><?php echo $importanceShortList[$each['importance']]; ?></p>
+			    	</td>
+			    	
+			    	<td class="desc">
+			    		<?php if (!empty($each['possibility'])) { ?>
+				    		<p><?php echo $possibilityShortList[$each['possibility']]; ?></p>
+				    	<?php } ?>
+			    	</td>
+
+            		<?php
+	            		$progressItems = array();
+	            		$progressItemsShort = array();
+	            		$lineCount = 0;
+	            		
+	            		$after = unserialize($each['after']);
+            			if (!empty($after)) {
+                			foreach ($this->afterList as $eachAfter) {
+		                		foreach($after as $eachSelected) {
+			                		if ($eachSelected == $eachAfter['id']) {
+			                			$progressItems[] = $this->escape($eachAfter['title']);
+			                			
+			                			if ($lineCount < 5) {
+				                			$progressItemsShort[] = '<span class="after">' . $this->escape($this->roundText($eachAfter['title'], 7)) . '</span>';
+			                			}
+			                			
+			                			$lineCount++;
+			                		}
+		                		}
+	                		}
+	                	}
+	                	
+	            		$progress = unserialize($each['progress']);
+            			if (!empty($progress)) {
+                			foreach ($this->progressList as $eachProgress) {
+		                		foreach($progress as $eachSelected) {
+			                		if ($eachSelected == $eachProgress['id']) {
+			                			$progressItems[] = $this->escape($eachProgress['title']);
+			                			
+			                			if ($lineCount < 5) {
+			                				$progressItemsShort[] = $this->escape($this->roundText($eachProgress['title'], 7));
+			                			}
+			                			$lineCount++;
+			                		}
+		                		}
+	                		}
+	                	}
+	                	
+            		?>
+			    	<td class="desc" all-content="<?php echo implode('<br>', $progressItems); ?>">
+				    	<div class="multi_rows_padding">
+							<?php echo implode('<br>', $progressItemsShort); ?>
+						</div>
+					</td>
+					
+					<td class="desc" all-content="<?php echo nl2br($this->escape($each['task'])); ?>">
+						<div class="multi_rows_padding">
+							<?php
+								if (!empty($each['has_no_task'])) {
+									echo '宿題なし';
+								} else {
+									$exploded = explode("\n", $each['task']);
+									
+									for ($i = 0; $i < 5; $i++) {
+										if (!empty($exploded[$i])) {
+											echo $this->roundText($exploded[$i], 22) . '<br>';
+										}
+									}
+								}
+							?>
+						</div>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="9">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

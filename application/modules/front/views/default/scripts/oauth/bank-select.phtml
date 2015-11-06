@@ -1,0 +1,167 @@
+<?php
+$yearList          = Shared_Model_Code::getYearListFromRelease();
+$monthList         = Shared_Model_Code::getMonthList();
+$statusList        = Shared_Model_Code::codes('payable_payment_status_search');
+$payingMethodList  = Shared_Model_Code::codes('payable_paying_method_list');
+$payingTypeList    = Shared_Model_Code::codes('payable_paying_type');
+
+$bankAccountType   = Shared_Model_Code::codes('bank_account_type');
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+    });
+    
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+    	console.log($('input.bank_select[type="radio"]:checked').val());
+    	
+		if (!$('input.bank_select[type="radio"]:checked').val()) {
+			jAlert('振込元口座を選択してください', 'エラー');
+			return;
+		}
+
+        var $form  = $('#register_form');
+        var query  = $form.serialize();
+        var params = $form.serializeArray();
+
+		jQuery.alerts.yesButton = 'はい';
+		jQuery.alerts.cancelButton = 'もう一度確認'; 
+		
+        jConfirm('チェックした項目を振込予約しますか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+                var $form = $('#register_form');
+                var params = $form.serializeArray();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('振込予約を申請しました。メールを確認し、振込予約を承認してください', '　');return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/oauth/transfer-bulk-post'  /*'/oauth/transfer-post'*/
+				});
+            } else {
+                return false;
+            }
+        });
+
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	<?php if ($this->payingType === (string)Shared_Model_Code::PAYABLE_PAYING_TYPE_INVOICE) { ?>
+        		location.href = '/transaction-paid/invoice-list';
+        	<?php } else { ?>
+        		location.href = '/transaction-paid/site-list';
+        	<?php } ?>
+        }
+    });
+    
+	$(document).on('change', 'input.bank_select[type="radio"]', function () {
+		showSpinner();
+		$('.items_frame').load('/oauth/get-plan-items?paying_type=<?php echo $this->escape($this->payingType); ?>&bank_id=' + $('.bank_select:checked').val() + '&target_date=' + $('.datepicker').val(), null, function () {stopSpinner();});
+		
+	});
+	
+	$(document).on('change', 'input.datepicker', function () {
+		showSpinner();
+		$('.items_frame').load('/oauth/get-plan-items?paying_type=<?php echo $this->escape($this->payingType); ?>&bank_id=' + $('.bank_select:checked').val() + '&target_date=' + $('.datepicker').val(), null, function () {stopSpinner();});
+		
+	});
+});
+</script>
+<style type="text/css">
+label {margin-left:0.8em;}
+input[type=checkbox] {margin:0.8em 0.6em 0;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong><?php if ($this->payingType === (string)Shared_Model_Code::PAYABLE_PAYING_TYPE_INVOICE) { ?>支払完了確認<?php } else { ?>サイト連動支払<?php } ?> GMO振込予約 - 対象項目確認・口座選択</strong></span>
+        </div>
+    </div>
+
+	<form id="register_form" action="javascript:void(0);" method="post">
+    <div class="clearfix">
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+        	    <th class="border-left border-top border-bottom border-right">
+                    <p class="label_text strong">振込元口座選択</p>
+                </th>
+            </tr>
+		</table>
+		
+        <div style="margin-bottom:2em;">
+	        <?php foreach ($this->bankList as $each) { ?>
+		        <label>
+	    		    <input type="radio" class="bank_select" name="bank_select" value="<?php echo $this->escape($each['id']); ?>">
+	    		    <span class="title"><?php echo $this->escape($each['account_name']); ?></span>　　
+	    		    <span class="contents"><?php echo $this->escape($each['branch_name']); ?>(<?php echo $this->escape($each['branch_code']); ?>)　　
+	    		    <?php echo $bankAccountType[$each['account_type']]; ?> <?php echo $this->escape($each['account_no']); ?></span>
+	            </label><br>
+			<?php } ?>
+		</div>
+
+		<p style="font-size:1.3em;margin-bottom:0.6em;padding-left:0.6em;"><strong class="red">GMO振込予約は、振込予定日ごとに予約できます。</strong></p>
+		
+		<div class="condition_items clearfix" style="margin-bottom:0.8em;">
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">振込予定日：</p>
+                   	<input type="text" class="datepicker" name="target_date" value="" autocomplete="off">
+				</div>
+			</div>
+		</div>
+					
+
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+        	    <th class="border-left border-top border-bottom border-right">
+                    <p class="label_text strong">対象項目</p>
+                </th>
+            </tr>
+		</table>
+		<div class="items_frame">
+			
+		</div>	
+
+	</div>
+    </form>
+    
+</div>
+</div>
+</div>
+</div>
+

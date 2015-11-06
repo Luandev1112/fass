@@ -1,0 +1,357 @@
+<?php
+	$isActiveList = Shared_Model_Code::codes('is_active');
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->escape($this->posTop); ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form  = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/organization/update?id=<?php echo $this->escape($this->id); ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:apiUrl,
+        });
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/organization/detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+        }
+    });
+    
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/organization/detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+    });
+
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+table.list_default tr td.column_value input.zip {width:130px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>組織 - <?php echo $this->escape($this->data['organization_name']); ?></strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 管理情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">管理情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">ステータス</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $isActiveList[$this->data['status']]; ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="status" name="status">
+                            <?php foreach ($isActiveList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->data['status']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+                            <?php } ?>
+                    	</select>
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新日時</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo date('Y-m-d H:i:s', strtotime($this->data['updated'])); ?></p>
+                </td>
+            </tr>
+            
+            <?php /*
+            <tr>
+                <td class="column_label"><p class="label_text">最終更新者</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->lastUpdatedUser['user_name']); ?></p>
+                </td>
+            </tr>
+			*/ ?>
+			
+            <tr>
+                <td class="column_label"><p class="label_text">組織ID<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['display_id']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="display_id" value="<?php echo $this->escape($this->data['display_id']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">組織名<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['organization_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="organization_name" value="<?php echo $this->escape($this->data['organization_name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">ヘッダーカラー<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">#<?php echo $this->escape($this->data['group_header_color']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						#<input type="text" name="group_header_color" value="<?php echo $this->escape($this->data['group_header_color']); ?>" maxlength="6" style="width:10em;display:inline-block;">
+                	</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">国</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>">
+                		<?php
+	                		$displayString = '';
+	                		foreach ($this->countryList as $each) {
+	                			if (!empty($this->data['country'])) {
+			                		if ($this->data['country'] == $each['id']) {
+			                			$displayString .= $each['name'] . '<br>';
+			                		}
+		                		}
+		                	}
+		                	echo $displayString;
+                		?>
+                	</p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<select class="short" id="country" name="country">
+                            <option value="">---</option>
+                            <?php foreach ($this->countryList as $each) { ?>
+                                <option value="<?php echo $this->escape($each['id']); ?>" <?php if ($each['id'] == $this->data['country']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']); ?></option>
+                            <?php } ?>
+                    	</select>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">郵便番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['postal_code']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" class="zip" name="postal_code" value="<?php echo $this->escape($this->data['postal_code']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">都道府県</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['prefecture']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="prefecture" value="<?php echo $this->escape($this->data['prefecture']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">市区町村</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['city']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="city" value="<?php echo $this->escape($this->data['city']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">丁番地</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['address']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="address" value="<?php echo $this->escape($this->data['address']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">建物名・階／号室</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['building']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="building" value="<?php echo $this->escape($this->data['building']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>  
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">代表者名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['representative_name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                    	<input type="text" name="representative_name" class="short" value="<?php echo $this->escape($this->data['representative_name']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">代表者名カナ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['representative_name_kana']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;"> 
+                    	<input type="text" name="representative_name_kana" class="short" value="<?php echo $this->escape($this->data['representative_name_kana']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">代表電話番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['tel']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;"> 
+                    	<input type="text" name="tel" class="short" value="<?php echo $this->escape($this->data['tel']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">FAX番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['fax']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;"> 
+                    	<input type="text" name="fax" class="short" value="<?php echo $this->escape($this->data['fax']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">企業URL</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['web_url']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;"> 
+                    	<input type="text" name="web_url" class="short" value="<?php echo $this->escape($this->data['web_url']); ?>" maxlength="" />
+                    </div>
+                </td>
+            </tr>
+                                
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">GMOアカウント</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+                		<div class="display_value_<?php echo $categoryId; ?> multi_rows_padding">
+                			<?php if (array_key_exists($this->data['gmo_account_id'], $this->gmoAccountList)) { echo $this->escape($this->gmoAccountList[$this->data['gmo_account_id']]['name']); } else { echo '---'; } ?>
+                		</div>
+                		<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+    						<select class="short" id="gmo_account_id" name="gmo_account_id">
+                                <option value="0">---</option>
+                                <?php foreach ($this->gmoAccountList as $each) { ?>
+                                    <option value="<?php echo $this->escape($each['id']); ?>" <?php if ($each['id'] == $this->data['gmo_account_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']); ?></option>
+                                <?php } ?>
+                        	</select>
+						</div>
+					</div>
+                </td>
+            </tr>
+		</table>
+		</form>
+        
+	</div><!-- clearfix -->	                
+
+</div>
+</div>
+</div>
+</div>
+

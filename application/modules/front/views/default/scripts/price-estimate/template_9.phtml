@@ -1,0 +1,100 @@
+	<div class="clearfix">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">管理情報</p>
+                </th>
+            </tr>
+		</table>
+         
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積もり管理番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="connection_name"><?php echo $this->escape($this->data['display_id']); ?></p>
+                </td>
+            </tr>
+        
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">宛先<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<input type="text" id="connection_name" name="to_name" style="width:99%;" value="<?php echo $this->escape($this->versionData['to_name']); ?>" />
+                    <a class="option" id="select_connection">提出先選択</a>
+                    <input type="hidden" id="target_connection_id" name="target_connection_id" value="<?php echo $this->escape($this->versionData['target_connection_id']); ?>" />                    
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<p style="padding-top:5px;" id="creater_user_name">
+						<?php
+	                		if (!empty($this->createdUser)) {
+	                			echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+	                		} else {
+	                			echo '---';
+	                		}
+						?>
+					</p>
+					<input type="hidden" id="created_user_id" name="created_user_id" value="<?php echo $this->escape($this->versionData['created_user_id']); ?>" />
+					<a class="option" id="select_user">選択</a>                  
+                </td>
+            </tr>
+            
+
+				
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積書発行日<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input class="datepicker" type="text" name="estimate_date" id="estimate_date" maxlength="" autocomplete="off" />
+                </td>
+            </tr>
+                  
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">表題<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="title" value="<?php echo $this->escape($this->versionData['title']); ?>" style="width:99%" maxlength="" />
+                </td>
+            </tr>
+            
+        	<tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積書ファイルデータ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p style="margin-bottom:18px;">（ファイル名）　<span id="file_name_text"><?php echo $this->escape($this->versionData['file_name']); ?></span></p>
+                	<input type="hidden" id="file_name" name="file_name" value="" />   
+					<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)" style="margin-bottom:13px;">
+						<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&ドロップしてください
+					</div>
+                </td>
+			</tr>
+        </table>      
+		
+	</div><!-- clearfix -->	
+	
+
+<div style="display:none;">
+	<input type="hidden" name="label_count" value="0">
+
+	<?php if (!empty($this->versionData['item_list'])) { ?>
+	<?php foreach ($this->versionData['item_list'] as $each) {?>
+        <input type="hidden" id="<?php echo $this->escape($each['id']); ?>_item_id" name="<?php echo $this->escape($each['id']); ?>_item_id" value="<?php echo $this->escape($each['item_id']); ?>" />
+        <input type="hidden" class="item_name" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_item_name" value="<?php echo $this->escape($each['item_name']); ?>" />
+        <input type="hidden" class="unit" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_unit" value="<?php echo $this->escape($each['unit']); ?>" />
+        <input type="hidden" class="unit_price" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_unit_price" value="<?php echo $this->escape($each['unit_price']); ?>" />
+        <input type="hidden" class="price_per_month" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_price_per_month" value="<?php echo $this->escape($each['price_per_month']); ?>" />
+        
+        <input type="hidden" class="standard_price" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_standard_price" value="<?php echo $this->escape($each['standard_price']); ?>" />
+        <input type="hidden" class="standard_price_tax" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_standard_price_tax" value="<?php echo $this->escape($each['standard_price_tax']); ?>" />
+		<input type="hidden" class="wholesale_rate" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_wholesale_rate" value="<?php echo $this->escape($each['wholesale_rate']); ?>" />
+	<?php } ?>
+	<?php } ?>
+
+	
+	<input type="hidden" id="hidden_contents_order" name="estimate_item_list" value="" />
+</div>

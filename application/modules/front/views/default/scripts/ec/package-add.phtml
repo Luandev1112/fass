@@ -1,0 +1,399 @@
+<?php
+	$packageTypeList = Shared_Model_Code::codes('package_type');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/select2-4.0.5/dist/css/select2.css" />
+<script type="text/javascript" src="/resource/js/select2-4.0.5/dist/js/select2.min.js"></script>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){		
+	});
+
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました。', 'エラー');
+                    },
+                    url: '/ec/package-add-post'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/ec/package-list';
+        }
+    });
+    
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+		
+		if (categoryId == 4) {
+	        var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .product_item_id').attr('id', uuid + '_product_item_id').attr('name', uuid + '_product_item_id');
+	        $('.column_copy_base_' + categoryId + ' .product_item_amount').attr('id', uuid + '_product_item_amount').attr('name', uuid + '_product_item_amount');
+	        $('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .product_item_id').attr('id', '');
+	        $("#" + uuid + "_product_item_id").select2();
+
+	        $('.column_copy_base td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+		} else if (categoryId == 5) {
+	        var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .bundle_item_id').attr('id', uuid + '_bundle_item_id').attr('name', uuid + '_bundle_item_id');
+	        $('.column_copy_base_' + categoryId + ' .bundle_item_amount').attr('id', uuid + '_bundle_item_amount').attr('name', uuid + '_bundle_item_amount');
+	        $('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .bundle_item_id').attr('id', '');
+	        
+	        $("#" + uuid + "_bundle_item_id").select2();
+	        
+	        $('.column_copy_base td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+	
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+        }
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:170px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+
+table.list_default tr td p.product_item_label {float:left;margin-right:10px;}
+table.list_default tr td.td_product_item_name {width:630px;border-right:none;}
+table.list_default tr td.td_product_item_name select.product_item_id {width:530px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;}
+table.list_default tr td.td_product_item_amount {border-right:none;}
+table.list_default tr td.td_product_item_amount input.product_item_amount {width:100px;}
+
+table.list_default tr td p.bundle_item_label {float:left; margin-right: 10px;}
+table.list_default tr td.td_bundle_item_name {width:630px;border-right:none;}
+table.list_default tr td.td_bundle_item_name select.bundle_item_id {width:530px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;}
+table.list_default tr td.td_bundle_item_amount {border-right:none;}
+table.list_default tr td.td_bundle_item_amount input.bundle_item_amount {width:100px;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+
+input.including_item_amount {width:100px;}
+select.including_item_unique {width:180px;margin-left:0px;margin-top:5px;display:block;float:left;margin-right:10px;}
+.select2-container {margin-top:5px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>EC商品パッケージ管理 - 新規登録</strong></span>
+        </div>
+    </div>
+
+    <div class="col-xs-12">
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="register_form" action="#" method="post">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border:1px solid #ddd;"><p class="label_text strong">基本情報</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">                        
+            <tr>
+                <td class="column_label"><p class="label_text">商品コード</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<input class="short" type="text" name="product_code" value="" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">パッケージ種別</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<select class="basic" id="package_type" name="package_type" >
+                    	<option value="1">単体商品</option>
+                    	<option value="2">セット商品</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">単発/定期</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<select class="basic" id="is_subscription" name="is_subscription">
+                    	<option value="0">単発</option>
+                    	<option value="1">定期</option>
+                    </select>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">販売場所</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p style="height:auto;padding-top:7px;margin-bottom:7px;line-height:1.8">
+                		<label><input type="checkbox" name="store_own_domestic">自社ECサイト(国内)</label><br>
+                		<label><input type="checkbox" name="store_own_overseas">自社ECサイト(海外)</label><br>
+                		<label><input type="checkbox" name="store_own_rakuten">楽天市場</label><br>
+                		<label><input type="checkbox" name="store_own_yahoo_co_jp">Yahoo!ショッピング</label><br>
+                		<label><input type="checkbox" name="store_own_amazon_co_jp">Amazon.co.jp</label>
+                	</p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">パッケージ名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<input type="text" name="package_name_domestic" value="" maxlength="" />
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">販売価格</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix" >
+						<input type="text" class="short" name="price_domestic" value="" maxlength="" style="float:left;" />
+						<p style="float:left;">&nbsp;円</p>
+                	</div>
+                </td>
+            </tr>
+
+        </table>
+
+
+	    <?php
+        /* 構成商品 */
+        $categoryId = 4;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border:1px solid #ddd;"><p class="label_text strong">構成商品</p></th>
+            </tr>
+        </table>
+        
+        <div style="margin-bottom:13px;">
+	        <table class="list_default" style="margin-bottom:0;">
+	        	<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+	            </tbody>
+	        </table>
+	        <div style="border-bottom:1px solid #dfdfdf;height:34px;">
+	            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+	        </div>
+	        
+        	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="package_product_id_list" value="" />
+    	</div>
+        
+	    <?php
+        /* 付属品 */
+        $categoryId = 5;
+        ?>
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border:1px solid #ddd;"><p class="label_text strong">付属品</p></th>
+            </tr>
+        </table>
+        <div style="margin-bottom:13px;">
+	        <table class="list_default" style="margin-bottom:0;">
+	        	<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+	            </tbody>
+	        </table>
+	        <div style="border-bottom:1px solid #dfdfdf;height:34px;">
+	            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+	        </div>
+	        
+        	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="package_bundle_id_list" value="" />
+    	</div> 
+        </form>
+        
+
+
+
+
+	    <?php
+        /* 構成商品 追加用 */
+        $categoryId = 4;
+        ?>
+        <table class="list_default" style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row td_product_item_name">
+                	<p class="product_item_label">商品名：</p>
+                	<select class="product_item_id" name="product_item_id_###">
+                    	<option value="">---</option>
+                    	<?php foreach ($this->productItems as $each) { ?>
+		        			<?php
+			        		$itemName = '';
+			        		if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+								$itemName = $each['item_name'];
+							} else if ($eachProduct['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+								$itemName = $each['supply_product_name'];
+							} else if ($eachProduct['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+								$itemName = $each['supply_fixture_name'];
+							} else {
+								$itemName = $eachProduct['stock_name'];
+							}
+							?>
+                            <option value="<?php echo $each['id']; ?>"><?php echo $each['item_name']; ?></option>
+                        <?php } ?>
+                    </select>
+                </td>
+                <td class="added_row td_product_item_amount">
+                	<p class="product_item_label">数量：</p>
+                	<input type="text" class="product_item_amount" name="" value="" />
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $eachBUndle['id']; ?>"><i class="icon-cancel"></i></a>
+                	</div>
+                </td>
+            </tr>
+        </table>
+        
+	    <?php
+        /* 付属品 追加用 */
+        $categoryId = 5;
+        ?>
+        <table class="list_default" style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row td_bundle_item_name">
+                	<p class="bundle_item_label">付属品：</p>
+                	<select class="bundle_item_id" name="bundle_item_id_###">
+                    	<option value="">---</option>
+                    	<?php foreach ($this->bundleItems as $each) { ?>
+		        			<?php
+			        		$itemName = '';
+			        		if ($each['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) {
+								$itemName = $each['item_name'];
+							} else if ($eachProduct['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) {
+								$itemName = $each['supply_product_name'];
+							} else if ($eachProduct['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) {
+								$itemName = $each['supply_fixture_name'];
+							} else {
+								$itemName = $eachProduct['stock_name'];
+							}
+							?>
+                            <option value="<?php echo $each['id']; ?>"><?php echo $each['item_name']; ?></option>
+                        <?php } ?>
+                    </select>
+                </td>
+                <td class="added_row td_bundle_item_amount">
+                	<p class="bundle_item_label">数量：</p>
+                	<input type="text" class="bundle_item_amount" name="" value="" />
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+                	</div>
+                </td>
+            </tr>
+        </table>
+        
+	 </div>
+</div>
+</div>
+</div>
+</div>
+

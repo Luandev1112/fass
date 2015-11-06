@@ -1,0 +1,206 @@
+<?php
+$statusList   = Shared_Model_Code::codes('supply_status');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+    
+    });
+    			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/supply-subcontracting";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            location.href = '/supply-subcontracting/detail?id=' + obj.id;
+                            //jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/supply-subcontracting/add-post'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/supply-subcontracting';
+        }
+    });
+});
+
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>業務委託 - 新規登録</strong></span>
+        </div>
+    </div>
+    
+    
+    <form id="register_form" action="#" method="post"> 
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">概要</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">    
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">業務委託名<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="title" value="" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">業務委託内容</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="description" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">目的<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+                		<?php foreach ($this->puposeList as $each) { ?>
+		                	<div class="checkbox_item relation_type_item">
+			                	<label>
+			                    	<input type="checkbox" name="purposes[]" value="<?php echo $this->escape($each['id']); ?>"><?php echo $this->escape($each['name']); ?>
+			                    </label>
+		                    </div>
+	                    <?php } ?>
+					</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">目的メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="purpose_memo" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">調達方法・注意点等メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="other_memo" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+             
+            <tr>
+                <td class="column_label"><p class="label_text">ステータス<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+	                <div class="clearfix">
+						<select class="short" id="status" name="status">
+							<option value="">---</option>
+                            <?php foreach ($statusList as $key => $val) { ?>
+                                <option value="<?php echo $key; ?>"><?php echo $this->escape($val); ?></option>
+                            <?php } ?>
+                    	</select>
+	            	</div>
+	            </td>
+	        </tr>
+		</table>
+
+	</div><!-- clearfix -->	
+    </form>
+	
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

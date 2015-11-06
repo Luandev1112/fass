@@ -1,0 +1,131 @@
+<?php
+$bankConfirmedStatusList  = Shared_Model_Code::codes('bank_confirm_status');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+        Tipped.create('#help_gs', "goosa サプライヤー");
+        Tipped.create('#help_gb', "goosa バイヤー");
+        Tipped.create('#help_gcs', "GOOSCA サプライヤー");
+    });
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+		$('#condition_form').submit();
+	});
+});    
+</script>
+<style type="text/css">
+table.list_default tr th{position:relative;}
+table.list_default tr th i{position:absolute;right:10px;margin-left:5px;font-size:1.2em}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.deleted td {background:#ccc}
+table.list_default tr.deleted:hover td {background:#bbb;}
+table.list_default tr td p {height:auto;}
+table.list_default tr td p.imported {color:#f00;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style=""><strong>振込先確認</strong></span>
+	    </div>
+	</div>
+				
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:12%;"><p>振込先口座確認状況</p></th>
+				<th style="width:8%;"><p>確認日</p></th>
+				<th style="width:12%;"><p>確認者</p></th>
+				<th style="width:9%;"><p>取引先ID</p></th>
+				<th><p>企業・機関名<i class="icon-info-circle"></i></p></th>
+				<th style="width:5%"><p>卸S<span class="popup_help" id="help_gs">&nbsp;<i class="icon-help-circled"></i></span></p></th>
+				<th style="width:5%"><p>卸B<span class="popup_help" id="help_gb">&nbsp;<i class="icon-help-circled"></i></span></p></th>
+				<th style="width:7%"><p>小売S<span class="popup_help" id="help_gcs">&nbsp;<i class="icon-help-circled"></i></span></p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $this->escape($each['id']); ?>" <?php if ($each['status'] == Shared_Model_Code::CONNECTION_STATUS_REMOVE) { echo 'class="deleted"'; } ?>>
+						<td>
+							<?php if ($each['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_CONFIRMED) { ?>
+								<p><strong><?php echo $bankConfirmedStatusList[$each['gs_bank_confirmed']]; ?></strong></p>
+							<?php } else if ($each['gs_bank_confirmed'] === (string)Shared_Model_Code::BANK_CONFIRM_STATUS_NONE) { ?>
+								<p><strong class="red"><?php echo $bankConfirmedStatusList[$each['gs_bank_confirmed']]; ?></strong></p>
+							<?php } else { ?>
+								<p><?php echo $bankConfirmedStatusList[$each['gs_bank_confirmed']]; ?></p>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<?php if (!empty($each['gs_bank_confirmed_date_time'])) { ?>
+								<p><?php echo date('Y-m-d', strtotime($each['gs_bank_confirmed_date_time'])); ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+						</td>			
+
+						<td>
+							<p><?php echo $this->escape($each['confirmed_user_name']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 25); ?></p>
+						</td>
+						
+						<td>
+							<p><?php if (!empty($each['gs_supplier_id'])) { echo '●'; } ?></p>
+						</td>
+						
+						<td class="desc" all-content="<?php echo implode(' / ', $selected); ?>">
+							<p><?php if (!empty($each['gs_buyer_id'])) { echo '●'; } ?></p>
+						</td>
+						
+						<td>
+							<p><?php if (!empty($each['gcs_supplier_id'])) { echo '●'; } ?></p>
+						</td>
+							
+						<td>
+							<p><a href="/transaction-paid/account-check-confirm?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+					
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="9">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+
+

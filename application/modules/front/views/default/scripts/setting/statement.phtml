@@ -1,0 +1,273 @@
+<?php
+
+?>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(e) {
+	$('#add_image_box').removeClass('over');
+	
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('画像は一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    if (!files[0] || files[0].type.indexOf('image/') < 0) {
+  		jAlert('画像をドロップしてください。', 'エラー');
+ 	 	return;
+    }
+    
+    // アップロード処理へ
+    fileUpload(files[0]);
+}
+
+function fileUpload(fd) {
+    var formData = new FormData(); formData.append('image', fd);
+
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url: '/setting/logo-upload',
+      data: formData,
+      dataType :'json'
+    }).done(function(res){
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;
+            
+        } else if(obj.result == true) {
+        	$('#logo_image').attr({'src':obj.file_url});
+        }
+    });
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+
+        // ファイルのドロップ時エフェクト
+		var targetE = document.getElementById('add_image_box');
+		var innerFlag = false;
+		
+		targetE.addEventListener('dragenter', function () {
+		    innerFlag = true;
+		}, false);
+		
+		targetE.addEventListener('dragover', function () {
+		    innerFlag = false;
+		    targetE.className = 'over';
+		}, false);
+		
+		targetE.addEventListener('dragleave', function () {
+		    if (innerFlag) {
+		        innerFlag = false;
+		    } else {
+		        targetE.className = '';
+		    }
+		}, false);
+		
+    });
+	
+	$('img').mousedown(
+	    function(e){
+	        e.preventDefault();
+	    }
+	);
+	
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/setting/logo-update';
+		} else if (categoryId == '2') {
+			apiUrl = '/setting/statement-update';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/setting/statement?pos=' + $(window).scrollTop();
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        location.href = '/setting/statement?pos=' + $(window).scrollTop();
+    }); 
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:340px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+        <div style="float:left;width:15%;">
+        	<?php
+	            echo $this->partial('setting/menu.phtml', array(
+        			'action'       => $this->action,
+        			'id'           => $this->data['id'],
+        			'templateType' => 0,
+        		));
+	        ?>   		
+        </div>
+        <div class="col-xs-9" style="float:right;width:83%;">
+		    <div class="col-xs-12">
+		        <div class="page_title">
+		            <span><strong>明細書表示</strong></span>
+		        </div>
+		    </div>
+
+
+	        <table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #ddd;"><p class="label_text strong">PDFサンプル</p></th>
+	            </tr>
+	        </table>
+			<table class="list_default" style="margin-bottom:13px;"> 
+	            <tr>
+	                <td class="column_value" >
+	                	<div class="clearfix" style="margin-bottom:5px;">
+	                		<p style="height:auto;float:left;text-align:center;width:150px;"><a href="/setting/statement-pdf/standard.pdf" target="_blank"><i class="icon-newspaper" style="font-size:2.3em;"></i><br />一般顧客向け</a></p>
+	                		<p style="height:auto;float:left;text-align:center;width:150px;"><a href="/setting/statement-pdf/subscription.pdf" target="_blank"><i class="icon-newspaper" style="font-size:2.3em;"></i><br />定期顧客向け</a></p>
+	                	</div>
+	                </td>
+	            </tr>
+	        </table> 
+	            
+		    <?php
+	        /* ロゴ */
+	        $categoryId = 1;
+	        ?>
+			<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #ddd;"><p class="label_text strong">ロゴ</p></th>
+	            </tr>
+	        </table>
+
+	        
+			<div id="add_image_box" ondragover="dragover(event)" ondrop="drop(event)" style="margin-bottom:13px;">
+				<img id="logo_image" src="<?php echo Shared_Model_Resource_Logo::getResourceUrl($this->data['logo_file_name']); ?>" />
+			</div>
+				
+			</form>
+			
+		    <?php
+	        /* 明細書表示 */
+	        $categoryId = 2;
+	        ?>
+			<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">ショップ情報</p></th>
+	                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                    <span>×</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+	                </th>
+	            </tr>
+	        </table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	        	<tr>
+	                <td class="column_label"><p class="label_text">ショップ情報</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+                    <td class="column_value" style="height:auto;">
+                    	<p class="display_value_<?php echo $categoryId; ?>" style="height:auto;margin-bottom:10px;line-height:1.6;padding-top:8px;">
+                        	<?php
+                        	if (!empty($this->data['statement_shop_info'])) {
+                        		echo nl2br($this->escape($this->data['statement_shop_info']));
+                        	} else {
+                        		echo '---';
+                        	}
+                        	?>
+                    	</p>
+                    	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                        	<textarea name="statement_shop_info" style="width: 99%;height:200px;margin-bottom:5px;"><?php echo $this->escape($this->data['statement_shop_info']); ?></textarea>
+                        </div>
+                    </td>
+			</table>
+			</form>
+			
+		</div><!-- right -->
+					
+	</div><!-- clearfix -->
+	             
+</div>
+</div>
+</div>
+</div>
+

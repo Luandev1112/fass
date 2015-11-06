@@ -1,0 +1,964 @@
+<?php
+$payingMethodList        = Shared_Model_Code::codes('payable_paying_method_purchase');
+?>
+<script type="text/javascript">
+var pos = 0;
+var reloadFlag = false;
+var rowCount = 0;
+var targetItemRow = '';
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(id, e) {
+	$('#' + id + '_add_image_box').removeClass('over');
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('ファイルは一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(id, files[0]);
+}
+
+function fileUpload(id, fd) {
+    var formData = new FormData();
+    formData.append('file', fd);
+	
+	showSpinner();
+	
+    $.ajax({
+      async:true,
+      type:'POST',
+      contentType:false,
+      processData:false,
+      url:'/transaction-order/upload',
+      data:formData,
+      dataType:'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;            
+        } else if(obj.result == true) {
+        	$('#' + id + '_file_name_text').html(obj.file_name);
+        	$('#' + id + '_file_name').val(obj.file_name);
+        	$('#' + id + '_temp_file_name').val(obj.temp_file_name);
+        } else {
+        	jAlert('予期せぬエラーが発生しました', 'エラー');
+        }
+    });
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+    });
+    			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/transaction-order/online-list";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+		jConfirm('登録しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+		        var $form  = $('#register_form');
+		        var query  = $form.serialize();
+		        var params = $form.serializeArray();
+		
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:params,
+		            success:function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            location.href = '/transaction-order/online-detail?id=' + obj.id;
+                            return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/transaction-order/online-add-post'
+				});
+            } else {
+                return false;
+            }
+        });
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/transaction-order/online-list';
+        }
+    });
+    
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+            var result = $("#sortable_column").sortable("toArray");
+            $('input#hidden_contents_order').val(result);
+        },
+        handle:'.order_btn_frame',
+        delay:100,
+        stop:function (event, ui) {},
+        start:function (event, ui) {}
+    });
+
+    // 行追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+		if (categoryId == '2') {
+	        var uuid = guid();
+	        rowCount++;
+	        $('.column_copy_base_' + categoryId + ' .td_count p').html(rowCount);
+	        
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', uuid + '_item_name').attr('name', uuid + '_item_name');
+	        $('.column_copy_base_' + categoryId + ' .including_count').attr('id', uuid + '_including_count').attr('name', uuid + '_including_count'); 
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', uuid + '_item_id').attr('name', uuid + '_item_id');
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', uuid + '_unit_price').attr('name', uuid + '_unit_price');
+	        $('.column_copy_base_' + categoryId + ' .amount').attr('id', uuid + '_amount').attr('name', uuid + '_amount');
+	        $('.column_copy_base_' + categoryId + ' .help_lot_unit').attr('id', uuid + '_help_lot_unit')
+	        $('.column_copy_base_' + categoryId + ' .amount_unit').attr('id', uuid + '_amount_unit').attr('name', uuid + '_amount_unit');
+	        $('.column_copy_base_' + categoryId + ' .price').attr('id', uuid + '_price').attr('name', uuid + '_price');
+	        
+	        $('.column_copy_base_' + categoryId + ' .reference_title').attr('id', uuid + '_reference_title');
+	        $('.column_copy_base_' + categoryId + ' .reference_type').attr('id', uuid + '_reference_type').attr('name', uuid + '_reference_type');
+	        $('.column_copy_base_' + categoryId + ' .reference_target_id').attr('id', uuid + '_reference_target_id').attr('name', uuid + '_reference_target_id');
+	        $('.column_copy_base_' + categoryId + ' .select_reference').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .clear_reference_item').attr('target-row', uuid);
+	        
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .including_count').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .help_lot_unit').attr('id', '')
+	        $('.column_copy_base_' + categoryId + ' .amount').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .amount_unit').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .price').attr('id', '');
+			
+			$('.column_copy_base_' + categoryId + ' .reference_title').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .reference_type').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .reference_target_id').attr('id', '');
+			
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+		
+		} else if (categoryId == '4') {
+	        var uuid = guid();
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', uuid + '_file_name_text').attr('name', uuid + '_file_name_text');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', uuid + '_file_name').attr('name', uuid + '_file_name');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', uuid + '_temp_file_name').attr('name', uuid + '_temp_file_name');
+	        $('.column_copy_base_' + categoryId + ' .summary').attr('id', uuid + '_summary').attr('name', uuid + '_summary');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', uuid + '_add_image_box').attr('ondrop', "drop('" + uuid + "',event)");
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .summary').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', '');
+	        
+	        // ファイルのドロップ時エフェクト
+			var targetE = document.getElementById(uuid + '_add_image_box');
+			var innerFlag = false;
+			
+			targetE.addEventListener('dragenter', function () {
+			    innerFlag = true;
+			}, false);
+			
+			targetE.addEventListener('dragover', function () {
+			    innerFlag = false;
+			    targetE.className = 'add_image_box over';
+			}, false);
+			
+			targetE.addEventListener('dragleave', function () {
+			    if (innerFlag) {
+			        innerFlag = false;
+			    } else {
+			        targetE.className = 'add_image_box';
+			    }
+			}, false);
+		
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	    }
+    });
+    
+    // 行削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+        
+        if (categoryId == '2') {
+	        // 番号振り直し
+	        var countUp = 0;
+	    	$('#sortable_column_' + categoryId + ' tr').each(function(){
+	    		countUp++;
+	    		$('#sortable_column_' + categoryId + ' tr#' + $(this).attr('id') + ' .td_count p').html(countUp);
+	    	});
+		    	
+	        rowCount = countUp;
+        }
+    });
+    
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top':0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+
+    // 会計科目 選択ポップアップ表示
+    $(document).on('click', '#select_account_title', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top':0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/office/accounting-select', null, function () {stopSpinner();});
+    });
+    
+    // 調達管理 ポップアップ
+	$(document).on('click', '.select_reference', function () {
+    	pos = $(window).scrollTop();
+    	targetItemRow = $(this).attr('target-row');
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/supply-competition/select-type');
+	});
+	
+	// 調達管理 種別選択
+	$(document).on('click', '.select_type', function () {
+    	$('#data_area').html('');
+    	showSpinner();
+    	
+    	var targetType = $(this).attr('target-type');
+
+		if (targetType == 'product') {
+			$('#data_area').load('/product/list-select', null, function () {stopSpinner();});
+		} else if (targetType == 'supply-product') {
+			$('#data_area').load('/supply-product/list-select?connection_id=' + $('#target_connection_id').val(), null, function () {stopSpinner();});
+			
+		} else if (targetType == 'supply-production') {
+			$('#data_area').load('/supply-production/list-select?connection_id=' + $('#target_connection_id').val(), null, function () {stopSpinner();});
+					
+		} else if (targetType == 'supply-subcontracting') {
+			$('#data_area').load('/supply-subcontracting/list-select?connection_id=' + $('#target_connection_id').val(), null, function () {stopSpinner();});
+			
+		} else if (targetType == 'supply-fixture') {
+			$('#data_area').load('/supply-fixture/list-select?connection_id=' + $('#target_connection_id').val(), null, function () {stopSpinner();});
+
+		}
+	});
+
+	// 調達管理・原料製品 条件検索
+    $(document).on('click', '#search_supply_product', function () {
+		updateSupplyProductList(1);
+    });
+	// 調達管理・製造加工 条件検索
+    $(document).on('click', '#search_supply_production', function () {
+		updateSupplyProductionList(1);
+    });
+	// 調達管理・業務委託 条件検索
+    $(document).on('click', '#search_supply_subcontracting', function () {
+		updateSupplySubcontractingList(1);
+    });
+	// 調達管理・備品資材 条件検索
+    $(document).on('click', '#search_supply_fixture', function () {
+		updateSupplyFixtureList(1);
+    });
+
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+	
+	// 通貨選択
+    $('#currency_id').change(function() {
+		var targetRow = $(this).attr('target-row');
+		$('p.currency_unit').html($('#currency_id option:selected').text());
+    });
+    
+    // 支払方法
+    $(document).on('change', '#paying_method', function () {
+    	$('.paying_method_option').hide();
+    	
+		if ($(this).val() == '<?php echo Shared_Model_Code::PAYABLE_PAYING_METHOD_BANK; ?>' || $(this).val() == '<?php echo Shared_Model_Code::PAYABLE_PAYING_METHOD_AUTO; ?>') {
+			$('.paying_method_option_bank').show();
+			
+		} else if ($(this).val() == '<?php echo Shared_Model_Code::PAYABLE_PAYING_METHOD_PAYMENT_FORM; ?>') {
+			$('.paying_method_option_payment_form').show();
+			
+		} else if ($(this).val() == '<?php echo Shared_Model_Code::PAYABLE_PAYING_METHOD_CREDIT; ?>') {
+			$('.paying_method_option_card').show();
+			
+		}
+    });
+
+    // 銀行口座 選択ポップアップ表示
+    $(document).on('click', '#select_bank', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial/bank-list-select', null, function () {stopSpinner();});
+    });
+    
+    // クレジットカード 選択ポップアップ表示
+    $(document).on('click', '#select_card', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top':0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial/card-list-select', null, function () {stopSpinner();});
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form  = $('#connection_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name').html('<strong>' + displayId + '</strong>　' + name);
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 会計科目 選択完了
+function selectAccountTitle(id, title) {
+	$('#account_title_name').html(title);
+	$('#account_title_id').val(id);
+	$('.btn_close').click();
+}
+
+// -------------------------------------------------------------------
+// 調達管理・原料製品 ページ切り替え
+function pageSupplyProduct(pageNo) {
+	updateSupplyProductList(pageNo)
+}
+// 調達管理・原料製品 一覧更新
+function updateSupplyProductList (pageNo) {
+    var $form  = $('#supply_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/supply-product/list-select?connection_id=' + $('#target_connection_id').val() + '&page=' + pageNo,
+    });
+}
+// 調達管理・原料製品 選択完了
+function selectSupplyProduct(id, itemId, name) {
+	$('#' + targetItemRow + '_reference_title').html('<strong>原料製品 ' + itemId + '</strong>　' + name);
+	$('#' + targetItemRow + '_reference_type').val('supply-product');
+	$('#' + targetItemRow + '_reference_target_id').val(id);
+	$('.btn_close').click();
+}
+// -------------------------------------------------------------------
+// 調達管理・製造加工 ページ切り替え
+function pageSupplyProduction(pageNo) {
+	updateSupplyProductionList(pageNo)
+}
+
+// 調達管理・製造加工 一覧更新
+function updateSupplyProductionList (pageNo) {
+    var $form  = $('#supply_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/supply-production/list-select?connection_id=' + $('#target_connection_id').val() + '&page=' + pageNo,
+    });
+}
+// 調達管理・製造加工委託 選択完了
+function selectSupplyProduction(id, itemId, name) {
+	$('#' + targetItemRow + '_reference_title').html('<strong>製造加工委託 ' + itemId + '</strong>　' + name);
+	$('#' + targetItemRow + '_reference_type').val('supply-production');
+	$('#' + targetItemRow + '_reference_target_id').val(id);
+	$('.btn_close').click();
+}
+// -------------------------------------------------------------------
+// 調達管理・業務委託 ページ切り替え
+function pageSupplySubcontracting(pageNo) {
+	updateSupplySubcontractingList(pageNo)
+}
+// 調達管理・業務委託 一覧更新
+function updateSupplySubcontractingList (pageNo) {
+    var $form  = $('#supply_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/supply-subcontracting/list-select?connection_id=' + $('#target_connection_id').val() + '&page=' + pageNo,
+    });
+}
+// 調達管理・業務委託 選択完了
+function selectSupplySubcontracting(id, itemId, name) {
+	$('#' + targetItemRow + '_reference_title').html('<strong>業務委託 ' + itemId + '</strong>　' + name);
+	$('#' + targetItemRow + '_reference_type').val('supply-subcontracting');
+	$('#' + targetItemRow + '_reference_target_id').val(id);
+	$('.btn_close').click();
+}
+// -------------------------------------------------------------------
+// 調達管理・備品資材 ページ切り替え
+function pageSupplyFixture(pageNo) {
+	updateSupplyFixtureList(pageNo)
+}
+// 調達管理・備品資材 一覧更新
+function updateSupplyFixtureList (pageNo) {
+    var $form  = $('#supply_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/supply-fixture/list-select?connection_id=' + $('#target_connection_id').val() + '&page=' + pageNo,
+    });
+}
+// 調達管理・備品資材 選択完了
+function selectSupplyFixture(id, itemId, name) {
+	$('#' + targetItemRow + '_reference_title').html('<strong>備品資材 ' + itemId + '</strong>　' + name);
+	$('#' + targetItemRow + '_reference_type').val('supply-fixture');
+	$('#' + targetItemRow + '_reference_target_id').val(id);
+	$('.btn_close').click();
+}
+// -------------------------------------------------------------------
+// 銀行口座 選択完了
+function selectBank(id, bankName, branchName, accountType, accountNo) {
+	$('#paying_bank_name').html(bankName + ' ' + branchName + ' ' + accountType + ' ' + accountNo);
+	$('#paying_bank_id').val(id);
+	$('.btn_close').click();
+}
+
+// クレジットカード 選択完了
+function selectCard(id, cardName, last4) {
+	$('#paying_card_name').html(cardName + ' 下4ケタ: ' + last4);
+	$('#paying_card_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+.multi_rows_padding {padding: 5px 6px 5px 6px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.datepicker[type="text"]{width:150px;}
+table.list_default tr td.column_value select.short {width:300px;}
+table.list_default tr td.column_value select.monthly {width:60px;float:left;}
+table.list_default tr td.column_value p.currency_unit {float:left;margin-left:5px}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;}
+.relation_type_item {margin-right:12px}
+.payment_select {padding-top:6px;padding-left:1px;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+table.list_default tr td.td_count {border-right:none;background-color:#bae0ff;width:30px;}
+table.list_default tr td.td_item_info {border-right:none;}
+
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+a.btn_setting#btn_copy {padding:1px 8px 0px;float:left;margin-left:20px;margin-top:5px;margin-bottom:0}
+table.list_default tr td p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+
+a.btn_back_list {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;color:#FFF !important;display:inline-block;float:left;
+font-size:14px;margin-bottom:10px;margin-right:4px;padding:8px 20px;text-shadow:none;transition:all 200ms ease-in 0s;margin-top:0;text-decoration:none;
+}
+.quote {margin:10px;padding:10px;background-color:#e3f2ff}
+table.list_default tr td .quote p {padding:6px 0 8px 12px;height:auto;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;font-weight:bold;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+.product_name {background-color:#ed8c14;color:#fff;padding:3px 0.2em 1px 0.2em}
+.import_name {background-color:#008cff;color:#fff;padding:3px 0.2em 1px 0.2em}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>ネット購入委託管理 - 新規登録</strong></span>
+        </div>
+    </div>
+
+    <form id="register_form" action="javascript:void(0);" method="post">
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>   
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">注文先取引先<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="connection_name">---</p>
+                    <a class="option" id="select_connection">取引先選択</a>
+                    <input type="hidden" id="target_connection_id" name="target_connection_id" value="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">注文日<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" class="datepicker" name="order_plan_date" value="" maxlength="" autocomplete="off" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">注文金額(税抜)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                	<input type="text" name="subtotal" value="" maxlength="" style="float:left;text-align:right;width:150px;" />
+						<p class="currency_unit"></p>
+	                </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">税額</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                	<input type="text" name="tax" value="" maxlength="" style="float:left;text-align:right;width:150px;" />
+	                	<p class="currency_unit"></p>
+	                </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">注文合計金額(税込)<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                	<input type="text" name="total_with_tax" value="" maxlength="" style="float:left;text-align:right;width:150px;" />
+	                	<select style="float:left;width:90px;margin-left:5px;" id="currency_id" name="currency_id">
+	                        <option value="">(通貨単位)</option>
+	                    	<?php foreach ($this->currencyList as $eachCurrency) { ?>
+	                            <option value="<?php echo $eachCurrency['id']; ?>" <?php if ($this->data['currency_id'] == $eachCurrency['id']) { echo 'selected="selected"'; } ?>><?php echo $this->escape($eachCurrency['name']); ?></option>
+	                        <?php } ?>
+	                    </select>
+	                </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">備考</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <textarea name="memo" style="height:100px;margin-bottom:6px;"><?php echo $this->escape($this->data['memo']); ?></textarea>
+                </td>
+            </tr>
+		</table>
+
+	    <?php
+	    /* 注文内容 */
+	    $categoryId = 2;
+	    ?>
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">注文内容<span class="require">&nbsp;＊</span></p>
+                </th>
+            </tr>
+		</table>	
+        <table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			</tbody>
+        </table>
+        <div style="border-bottom:1px solid #ccc;height:34px;margin-bottom:13px;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="item_list" value="" />
+    	
+
+	    <?php
+	    /* 支払情報 */
+	    $categoryId = 3;
+	    ?>
+ 		<div>
+	 		<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th class="border-left border-right border-top border-bottom">
+	                    <p class="label_text strong">支払情報</p>
+	                </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:13px;">
+            
+	            <tr>
+	                <td class="column_label"><p class="label_text">支払方法<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+		            	<select id="paying_method" name="paying_method" style="width:300px;">
+		                    <option value="">---</option>
+		                	<?php foreach ($payingMethodList as $key => $value) { ?>
+		                        <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->data['paying_method']) echo 'selected="selected"'; ?>><?php echo $value; ?></option>
+		                    <?php } ?>
+		                </select>
+	                </td>
+	            </tr>
+	            
+	            <tr class="paying_method_option paying_method_option_bank" style="display:none">
+	                <td class="column_label"><p class="label_text">支払元銀行口座<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p id="paying_bank_name">---</p>
+	                	<div class="clearfix" >
+	                    	<a class="option" id="select_bank">金融機関選択</a>
+	                    	<input type="hidden" id="paying_bank_id" name="paying_bank_id" value="" />
+	                    </div>
+	                </td>
+	            </tr>
+	             
+	            <tr class="paying_method_option paying_method_option_card" style="display:none">
+	                <td class="column_label"><p class="label_text">支払用クレジットカード<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p id="paying_card_name">---</p>
+	                	<div class="clearfix">
+	                    	<a class="option" id="select_card">カード選択</a>
+	                    	<input type="hidden" id="paying_card_id" name="paying_card_id" value="" />
+	                    </div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">支払方法メモ</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                    <textarea name="paying_method_memo" style="height:100px;margin-bottom:6px;"></textarea>
+	                </td>
+	            </tr>
+	            
+			</table>
+		</div>
+
+	    <?php
+	    /* 添付資料 */
+	    $categoryId = 4;
+	    ?>
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-right border-top border-bottom">
+                    <p class="label_text strong">添付資料</p>
+                </th>
+            </tr>
+		</table>	
+        <table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+			</tbody>
+        </table>
+        <div style="border-bottom:1px solid #ccc;height:34px;margin-bottom:13px;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="file_list" value="" />
+
+	</div><!-- clearfix -->	
+    </form>
+    
+    
+    
+    <?php
+    /* 注文内容 */
+    $categoryId = 2;
+    ?>
+    <!-- copy base -->
+    <table class="list_default" style="display:none;">
+        <tr class="column_copy_base_<?php echo $categoryId; ?>">
+        	<td class="td_count">
+        		<p>##</p>
+        	</td>
+            <td class="td_item_info">
+            	<div class="clearfix">
+	            	<div style="float:left;width:720px">
+	            		<p style="float:left;width:70px;">商品名<span class="require">&nbsp;＊</span>：</p>
+	            		<input type="text" class="item_name" id="##_item_name" name="##_item_name" value="" style="width:620px;float:left;" />
+	            		<input type="hidden" class="item_id" id="##_item_id" name="##_item_id" value="" />
+	            	</div>
+	            	<div style="float:left;width:280px">
+	            		<p style="float:left;">セット数<span class="require">&nbsp;＊</span>　：</p>
+	            		<input type="text" class="including_count" id="##_including_count" name="##_including_count" value="" style="width:100px;float:left;" />
+	            	</div>
+	            </div>	
+	            <div class="clearfix">	
+	            	<div style="float:left;width:230px">
+	            		<p style="float:left;width:70px;">単価<span class="require">&nbsp;＊</span>　：</p>
+	            		<input type="text" class="unit_price" id="##_unit_price" name="##_unit_price" value="" style="width:100px;float:left;" />
+	            		<p class="currency_unit"></p>
+	            	</div>
+	            	<div style="float:left;width:180px">
+	            		<p style="float:left">数量<span class="require">&nbsp;＊</span>：</p>
+	            		<input type="text" class="amount" id="##_amount" name="##_amount" value="" style="width:90px;float:left;" />
+	            	</div>
+	            	<div style="float:left;width:220px">
+	            		<p style="float:left">数量単位<span class="require">&nbsp;＊</span><span class="help_lot_unit">&nbsp;<i class="icon-help-circled"></i></span>：</p>
+	            		<input type="text" class="amount_unit" id="##_amount_unit" name="##_amount_unit" value="" style="width:90px;float:left;" />
+	            	</div>
+	            	<div style="float:left;width:240px">
+	            		<p style="float:left">小計<span class="require">&nbsp;＊</span>：</p>
+	            		<input type="text" class="price" id="##_price" name="##_price" value="" style="width:120px;float:left;" />
+	            		<p class="currency_unit"></p>
+	            	</div>
+            	</div>
+            	
+            	<div class="quote">
+					<div class="clearfix">
+						<p>調達管理引用<span class="require">&nbsp;＊</span>：<span class="reference_title"></span></p>
+						<input type="hidden" class="reference_type" id="##_reference_type" name="##_reference_type" value="" />
+						<input type="hidden" class="reference_target_id" id="##_reference_target_id" name="##_reference_target_id" value="" />
+					</div>
+					<div class="clearfix">
+						<a class="option select_reference" target-row="##" style="margin-left:12px;margin-right:6px;">引用選択</a>
+						<a class="option clear_reference_item" target-row="##">引用解除</a>
+					</div>
+				</div>
+            </td>
+            <td class="td_action">
+            	<div class="delete_btn_frame">
+            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="##"><i class="icon-cancel"></i></a>
+            	</div>
+            </td>
+        </tr>
+    </table>
+	<!-- copy base -->
+
+
+    <?php
+    /* 添付資料 */
+    $categoryId = 4;
+    ?>
+    <!-- copy base -->
+    <table class="list_default" style="display:none;">
+        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+			<td class="column_value">
+				<div class="clearfix">
+					<div style="float:left;width:360px;">
+						<div class="clearfix" style="margin-bottom:5px">
+							<div style="float:left;width:50px;padding:15px 0 0 10px;">
+								<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+							</div>
+							<div style="float:left;width:300px;">
+								<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="##_file_name_text">(ファイル名)</span></div>
+								<input type="hidden" class="file_name" id="##_file_name" name="##_file_name" value="" />
+								<input type="hidden" class="temp_file_name" id="##_temp_file_name" name="##_temp_file_name" value="" />  
+							</div>
+						</div>
+						
+						<div class="add_image_box" id="##_add_image_box" ondragover="dragover(event)" ondrop="drop(##,event)" style="margin-bottom:13px;">
+							<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&amp;ドロップしてください
+						</div>
+					</div>
+					<div style="float:left;margin-left:10px;width:670px;">
+						<p>概要:</p>
+						<textarea class="summary" name="##_summary" style="margin-top:9px;height:142px;margin-bottom:6px;"><?php echo $this->escape($this->documentData['summary']); ?></textarea>
+					</div>
+				</div>
+			</td>
+            <td class="td_action">
+            	<div class="delete_btn_frame">
+            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+            	</div>
+            </td>
+        </tr>
+    </table>    
+	<!-- copy base -->
+	         
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

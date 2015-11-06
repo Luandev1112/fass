@@ -1,0 +1,162 @@
+<?php
+$inventoryTypeList = Shared_Model_Code::codes('inventory_type');
+$statusList        = Shared_Model_Code::codes('inventory_status');
+$typeList          = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+    
+    $(document).on('click', '.action_menu', function () {
+	    var targetId = $(this).attr('target-id');
+	    
+	    if ($('#action_menu_frame_' + targetId).hasClass('selected')) {
+		    $('#action_menu_frame_' + targetId).removeClass('selected');
+	    } else {
+		    $('.action_menu_frame').removeClass('selected');
+		    $('#action_menu_frame_' + targetId).addClass('selected');
+	    }
+	});
+	
+    // 削除
+    $(document).on('click', '.delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/stock-inventory/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/stock-inventory/history?pos=' + $(window).scrollTop();
+    	}
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+.delivery_code {color:#04a127;}
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;}
+
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:60px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+		    <?php if ($this->allowEditing === true) { ?>
+				<p style="position:absolute;width:90px;right:0;">
+	                <a class="btn_setting" id="btn_create_new" style="display:block;float:left;width:90px;padding:5px 0;margin:0;border:none;" href="/stock-inventory/create">新規棚卸実施</a>
+	            </p>
+            <?php } ?>
+	        <span><strong>棚卸実績</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:16%;"><p>実施日</p></th>
+				<th style="width:10%;"><p>種別</p></th>
+				<th style="width:12%;"><p>ステータス</p></th>
+				<th style="width:18%;"><p>在庫資材種別</p></th>
+				<th><p>担当者</p></th>
+				<th style="width:18%;"><p>下書き削除 / 結果CSV</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<p><?php echo $this->escape($each['target_date']); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $inventoryTypeList[$each['inventory_type']]; ?></p>
+						</td>
+						
+						
+						<td>
+							<?php if ($each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_APPROVED) { ?>
+								<p><strong><?php echo $statusList[$each['status']]; ?></strong></p>
+							<?php } else { ?>
+								<p><?php echo $statusList[$each['status']]; ?></p>
+							<?php } ?>
+						</td>
+
+						<td>
+							<p><?php echo $typeList[$each['stock_type']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['user_name']); ?></p>
+						</td>
+
+						<td>
+							<?php if ($each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_DRAFT || $each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_MOD_REQUEST) { ?>
+								<a class="btn_setting delete" style="background-color:#f00;" href="javascript:void(0);" target-id="<?php echo $this->escape($each['id']); ?>">下書き削除</a>
+							<?php } else if ($each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_APPROVED) { ?>
+								<a class="btn_setting" href="/stock-inventory/export-csv/<?php echo $this->escape($each['id']); ?>/棚卸_<?php echo $typeList[$each['stock_type']] . '_' . $each['target_date'] . '.csv'; ?>">ダウンロード</a>
+							<?php } ?>
+						</td>
+
+						<td >
+							
+							<?php if ($each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_DRAFT || $each['status'] === (string)Shared_Model_Code::INVENTORY_STATUS_MOD_REQUEST) { ?>
+								<?php if ($this->allowEditing === true) { ?>
+									<p><a href="/stock-inventory/form?id=<?php echo $this->escape($each['id']); ?>">編集</a></p>
+								<?php } ?>
+							<?php } else { ?>
+								<p><a href="/stock-inventory/detail?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+							<?php } ?>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

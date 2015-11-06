@@ -1,0 +1,269 @@
+<?php
+$confidentialityList = Shared_Model_Code::codes('manual_confidentiality');
+?>
+<script type="text/javascript">
+$(function () {
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 自社担当 ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 自社担当 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+    
+    // 自社担当 リセット
+    $(document).on('click', '#reset_user', function () {
+		$('#user_name_display').html('');
+		$('#user_name').val('');
+		$('#user_id').val('');
+	});
+	
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });  
+});
+
+// 自社担当 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 自社担当 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/user/list-select?page=' + pageNo,
+    });
+}
+
+// 自社担当 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	$('#user_name_display').html(name);
+	$('#user_name').val(name);
+	$('#user_id').val(id);
+	$('.btn_close').click();
+}   
+</script>
+<style type="text/css">
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+.multi_rows_padding {padding:5px 5px 5px 5px}
+
+a.option {
+background-color:#00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:inline-block;font-size:12px;margin:1px 3px 0 0;padding:5px 10px 3px 10px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1;}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default.base tr:hover td {background:#fff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+p.industory_category {background-color:#bae0ff;padding:11px 0 9px 12px}
+p.condition_title {padding-left:12px;font-size:1.5em;color:#f00;float:left;margin-right:2.0em;}
+.checkbox_item strong {color:#4b4fe8}
+
+.manual_name {font-size:1.1em;font-weight:bold;}
+table.list_default tr td p.block_title {font-size:1.1em;font-weight:bold;background-color:#d6eeff;padding:0.3em 0.6em 0.2em;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:181px;right:0;">
+				<a class="btn_setting" style="display:block;float:left;width:100px;padding:5px 0;margin:0;border:none;margin-right:5px;background-color:#000;" href="/office-manual/category-list">区分定義</a>
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/office-manual/add">新規登録</a>
+            </p>
+	        <span><strong>マニュアル</strong></span>
+	    </div>
+		<div class="menu_list clearfix">
+		<a class="menu <?php if($this->action == 'index') echo "selected"; ?>" href="/office-manual/index">一覧</a>
+		<a class="menu <?php if($this->action == 'search') echo "selected"; ?>" href="/office-manual/search">検索</a>
+		</div>
+	</div>
+
+
+	<div class="condition_items clearfix" style="margin-bottom:13px;">
+		<form action="#" method="get">
+			<p class="search_condition_title">検索条件</p>
+
+			<input type="hidden" id="search" name="search" value="1">
+			<input type="hidden" id="page" name="page" value="1">
+				
+			<div class="condition_items_row clearfix">
+				<div class="condition_item">
+					<p class="condition_label">ブロック最新更新者：</p>
+					<div class="input_box_fake">
+						<span class="target_text" id="user_name_display"><?php echo $this->conditions['user_name']; ?></span>
+						<a class="reset_popup" id="reset_user" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+						<a class="select_popup" id="select_user" href="javascript:void(0);"><span>選択</span></a>
+					</div>
+					<input type="hidden" id="user_name" name="user_name" value="<?php echo $this->conditions['user_name']; ?>">
+					<input type="hidden" id="user_id" name="user_id" value="<?php echo $this->conditions['user_id']; ?>">
+				</div>
+				
+				<div class="condition_item">
+					<p class="condition_label">キーワード：</p>
+	                <input type="text" name="keyword" value="<?php echo $this->conditions['keyword']; ?>">
+				</div>
+				
+				<div class="condition_item" style="width:400px;padding-top:23px;">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+				
+			</div>
+		</form>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:23%;"><p>タイトル/チャプター</p></th>
+				<th><p>該当ブロック</p></th>
+				<th style="width:11%"><p>最終更新者</p></th>
+				<th style="width:5%;"><p>詳細</p></th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<div class="multi_rows_padding">
+								<span class="manual_name"><?php echo $this->escape($each['manual_title']); ?></span><br>
+								<?php echo $this->escape($each['chapter_name']); ?>
+							</div>
+						</td>
+
+						<td>
+							<p class="block_title" style="font-size:1.6em;padding:0.5em 0.6em 0.8em;"><?php echo $this->escape($each['title']); ?></p>
+							<div class="multi_rows_padding">
+								<?php if ($each['content_type'] === (string)Shared_Model_Code::MANUAL_CONTENT_TYPE_TEXT) { ?>
+									<?php
+										$content = str_replace('[*', '<span style="font-size:1.2em">', str_replace('*]', '</span>', $each['content']));
+										$content = str_replace('[[', '<strong>', str_replace(']]', '</strong>', $content));
+										$content = str_replace('{{', '<span class="red">', str_replace('}}', '</span>', $content));
+										echo nl2br($content);
+									?>
+								<?php } else { ?>
+									<?php
+										$fileList = json_decode($each['content'], true);
+	    								
+										if (!empty($fileList)) {
+											foreach ($fileList as $eachFile) {
+									?>
+										<div class="clearfix">
+											<div style="float:left;width:260px;">
+												<?php if ($each['content_type'] === (string)Shared_Model_Code::MANUAL_CONTENT_TYPE_IMAGE) { ?>
+													<img src="<?php echo Shared_Model_Resource_Manual::getResourceUrl($each['manual_id'], $each['id'], $eachFile['file_name']); ?>" style="width:100%;display:block;margin-bottom:0.2em;border:1px solid #ccc;">
+												<?php } else { ?>
+													<div style="float:left;width:50px;padding:15px 0 0 10px;">
+														<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+													</div>
+													<div class="multi_rows_padding" style="padding-left:18px;">
+														<span class="file_name_text"><?php echo $this->escape($eachFile['file_name']); ?></span>
+													</div>
+													<a class="btn_setting" style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_Manual::getResourceUrl($each['manual_id'], $each['id'], $eachFile['file_name']); ?>">ダウンロード</a>
+												<?php } ?>
+												<p style="padding-left:18px;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Manual::getFileSize($each['manual_id'], $each['id'], $eachFile['file_name']), 2); ?></p>
+											</div>
+											<div style="float:left;margin-left:10px;width:500px;">
+												<?php
+													$summary = str_replace('[*', '<span style="font-size:1.2em">', str_replace('*]', '</span>', $eachFile['summary']));
+													$summary = str_replace('[[', '<strong>', str_replace(']]', '</strong>', $summary));
+													$summary = str_replace('{{', '<span class="red">', str_replace('}}', '</span>', $summary));
+													echo nl2br($summary);
+												?>
+											</div>
+										</div>
+									<?php 
+											}
+										} 
+									?>
+								<?php } ?>
+							</div>
+						</td>			
+						
+						<td>
+							<p><?php echo $this->escape($each['user_name']); ?></p>
+						</td>
+						
+						<td>
+							<p><a href="/office-manual/top?id=<?php echo $this->escape($each['manual_id']); ?>&chapter_id=<?php echo $this->escape($each['chapter_id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

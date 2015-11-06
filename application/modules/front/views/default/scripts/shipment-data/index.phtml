@@ -1,0 +1,170 @@
+<?php
+$monthList    = Shared_Model_Code::getMonthListFromRelease();
+?>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td p.align_right {padding-right:10px;text-align:right;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+    <div class="clearfix">
+
+        <div class="item_header clearfix">
+            <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">出荷数/出荷金額</span>
+            <select id="month_list" name="month_list" style="width:150px;margin-right:4px;margin-top:4px;display:block;float:right;height:26px;">
+                <?php foreach ($monthList as $key => $each) { ?>
+                    <option value="<?php echo $this->escape($key); ?>" <?php if (substr($this->startDate, 0, 7) === $key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($each); ?></option>
+                <?php } ?>
+        	</select>
+        </div>
+        
+		<table class="list_default">
+			<tr>
+				<td><p>月間注文数</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->monthlyOrderCount); ?></p></td>
+				<td><p>月間注文商品点数</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->monthlyOrderItemCount); ?></p></td>
+				<td><p>月間出荷金額</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->monthlyOrderPrice); ?></p></td>
+			</tr>
+			<tr>
+				<td><p>１日注文数(<?php echo $this->escape($this->dayCount); ?>日間平均)</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->dailyOrderCount); ?></p></td>
+				<td><p>１日注文商品点数(<?php echo $this->escape($this->dayCount); ?>日間平均)</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->dailyOrderItemCount); ?></p></td>
+				<td><p>１日出荷金額(<?php echo $this->escape($this->dayCount); ?>日間平均)</p></td>
+				<td><p class="align_right"><?php echo $this->numberFormat($this->dailyOrderPrice); ?></p></td>
+			</tr>
+		</table>
+
+	
+	    <div style="padding: 0 12px 20px 27px; position:relative;">
+	        <div style="margin:3px;">
+	            <canvas id="canvas" height="240" width="694"></canvas>  
+	        </div>
+	        <p style="position:absolute;top:196px;left:-40px;text-align:center;width:10em;font-size:0.92em;transform:rotate(270deg); ">販売金額</p>
+	        <p style="position:absolute;bottom:5px;left:auto;text-align:center;width:100%;font-size:0.92em;">（日）</p>
+	    </div>
+								
+
+	</div><!-- clearfix -->	 
+	
+	
+<link rel="stylesheet" type="text/css" href="/resource/js/Chart.js-2.9.3/dist/Chart.min.css">
+<script src="/resource/js/Chart.js-2.9.3/dist/Chart.bundle.js"></script>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(function(){
+	});
+	$('#month_list').change(function() {
+		showSpinner();
+		location.href = '/shipment-data?target=' + $(this).val();
+		
+	});
+});
+
+var chartData = {
+    type   : 'bar',
+    labels : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['day'] . "',";
+            }
+            ?>],
+    //scaleShowGridLines : false,
+    
+    datasets : [
+	{
+	    yAxisID: "y-axis-2",
+    	type: 'line',
+    	label: '出荷件数(件)',
+    	backgroundColor: 'rgba(255, 255, 255, 0)',
+        borderColor: 'rgb(255, 191, 0)',
+        lineTension:0,
+        data : [<?php 
+        foreach($this->dataList as $eachDate) {
+            echo "'" . $eachDate['count'] . "',";
+        }
+        ?>]
+    },
+    {
+	    yAxisID: "y-axis-1",
+    	type: 'bar',
+    	label: '売上(円・税込)',
+    	backgroundColor: 'rgb(0, 166, 255)',
+        borderColor: 'rgb(0, 166, 255)',
+        data : [<?php 
+            foreach($this->dataList as $eachDate) {
+                echo "'" . $eachDate['total'] . "',";
+            }
+        ?>]
+    }]
+};
+
+var complexChartOption = {
+    responsive: true,
+    scales: {
+        yAxes: [{
+            id: "y-axis-1",   // Y軸のID
+            type: "linear",   // linear固定 
+            position: "right", // どちら側に表示される軸か？
+            ticks: {          // スケール
+                max: 1000000,
+                min: 0,
+                stepSize: 10000,
+			    userCallback: function(value, index, values) {
+			        value = value.toString();
+			        value = value.split(/(?=(?:...)*$)/);
+			        value = value.join(',');
+			        return value;
+			    }
+            },
+        }, {
+	        gridLines: {drawOnChartArea:false},
+            id: "y-axis-2",
+            type: "linear", 
+            position: "left",
+            ticks: {
+                max: 300,
+                min: 0,
+                stepSize: 0,
+                userCallback: function(value, index, values) {
+			        value = value.toString();
+			        value = value.split(/(?=(?:...)*$)/);
+			        value = value.join(',');
+			        return value;
+			    }
+            },
+        }],
+    }
+};
+
+window.onload = function(){
+    var ctx = document.getElementById("canvas");
+    var myChart = new Chart(ctx, {
+	    type:'bar',
+        //responsive:true,
+        data:chartData,
+        //tooltipTemplate:"<%= addCommas(value) %>円",
+        options: complexChartOption,
+    });    
+}
+function addCommas(nStr)
+{
+    nStr += '';
+    x = nStr.split('.');
+    x1 = x[0];
+    x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+}
+</script>
+               
+</div>
+</div>
+</div>
+</div>

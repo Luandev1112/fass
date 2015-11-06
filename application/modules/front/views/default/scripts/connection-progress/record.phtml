@@ -1,0 +1,147 @@
+<?php
+	
+?>
+<script type="text/javascript"><!--
+var reloadFlag = false;
+var editing = false;
+var pos = 0;
+var targetItemRow = '';
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+});
+
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td {border-bottom:none;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default.main tr td {border-right:none}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+div.main_content {float:left;width:100%}
+div.main_content .title_area {background-color:#d6eeff;}
+div.main_content .title_area h2{padding-top:10px;padding-left:10px;font-size:1.0em;font-weight:normal;}
+div.main_content .title_area h2 strong{font-size:1.2em;font-weight:bold;}
+div.main_content p.title {background-color:#f1f1f1;font-size:1.2em;padding:0.6em 0.8em;}
+div.main_content .inner {padding:10px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="margin-bottom:9px;">
+            <span><strong>営業案件管理 - 案件詳細</strong></span>
+        </div>
+    	<?php
+            echo $this->partial('connection-progress/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>
+    </div>
+
+    <div class="clearfix">
+		<table class="list_default" style="margin-bottom:1.0em;">
+            <tr>
+                <th class="border-left border-top border-bottom">
+                    <p class="label_text strong">議事録／資料</p>
+                </th>
+	            <th class="edit_category">
+	                <a class="btn_edit_category" href="/connection-record/add?from=progress&connection_id=<?php echo $this->escape($this->data['connection_id']); ?>&progress_item_id=<?php echo $this->escape($this->id); ?>">
+	                	<span>新規登録</span>
+					</a>
+	            </th>
+            </tr>
+
+		</table>
+		
+		<div class="clearfix">
+			<div class="main_content">
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+						<div style="border:1px solid #ccc;margin-bottom:1.0em;">	
+							<div class="title_area clearfix">
+								<h2 style="float:left;"><strong><?php echo date('Y-m-d', strtotime($each['target_date'])); ?></strong>
+								　登録者：<?php echo $this->escape($each['department_name'] . '　'. $each['user_name']);?>
+								　更新：<?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></h2>
+								<a class="btn_edit_category" style="float:right;text-align:center" id="btn_edit" href="/connection-record/edit?from=progress&id=<?php echo $this->escape($each['id']); ?>">
+								<span id="btn_edit_label">編集</span></a>
+							</div>
+							<p class="title"><?php echo $this->escape($each['title']); ?></p>
+							<div class="inner">
+								<?php echo nl2br($this->escape($each['content'])); ?>
+							</div>
+							<?php $fileList = json_decode($each['file_list'], true); ?>
+							<?php if (!empty($fileList)) { ?>
+						        <table class="list_default" style="margin-bottom:0;">
+							        <?php foreach ($fileList as $eachFile) { ?>
+								        <tr style="border-top:1px dotted #ccc;">
+											<td class="column_value">
+												<div class="clearfix">
+													<div style="float:left;width:360px;">
+														<div class="clearfix" style="margin-bottom:5px">
+															<div style="float:left;width:50px;padding:15px 0 0 10px;">
+																<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+															</div>
+															<div style="float:left;width:300px;">
+																<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text"><?php echo $this->escape($eachFile['file_name']); ?></span></div>
+																<p style="padding-left:18px;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Record::getFileSize($each['id'], $eachFile['id'], $eachFile['file_name']), 2); ?></p>
+															</div>
+														</div>
+														<div>
+															<a class="btn_setting" style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_Record::getResourceUrl($each['id'], $eachFile['id'], $eachFile['file_name']); ?>">ダウンロード</a>
+														</div>
+													</div>
+													<div style="float:left;margin-left:10px;width:670px;">
+														<p>メモ:</p>
+									                	<div class="multi_rows_padding"><?php echo nl2br($this->escape($eachFile['summary'])); ?></div>
+													</div>
+												</div>
+											</td>
+								        </tr>
+							        <?php } ?>
+								</table>
+							<?php } ?>
+						</div>
+					<?php } ?>
+				<?php } ?>
+			</div> 
+		</div><!-- clearfix -->
+	</div><!-- clearfix -->
+
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+        
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

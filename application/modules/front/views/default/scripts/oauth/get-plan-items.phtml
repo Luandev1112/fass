@@ -1,0 +1,158 @@
+<?php
+$yearList          = Shared_Model_Code::getYearListFromRelease();
+$monthList         = Shared_Model_Code::getMonthList();
+$statusList        = Shared_Model_Code::codes('payable_payment_status_search');
+$payingMethodList  = Shared_Model_Code::codes('payable_paying_method_list');
+$bankAccountType   = Shared_Model_Code::codes('bank_account_type');
+
+$bankAccountType = Shared_Model_Code::codes('bank_account_type');
+$basicbankList       = Shared_Model_Code::codes('basic_bank');
+$bankCodeList        = Shared_Model_Code::codes('basic_bank_code');
+$bankAccountTypeList = Shared_Model_Code::codes('shop_fee_bank_account_type');
+$bankRegisteredType  = Shared_Model_Code::codes('bank_registered_type');
+?>
+
+<?php if (empty($this->bankId) || empty($this->targetDate)) { ?>
+ 	<?php if (empty($this->bankId)) { ?>
+ 		振込元口座を選択してください
+ 	<?php } else if (empty($this->targetDate)) { ?>
+ 		振込予定日を選択してください
+ 	<?php } ?>
+<?php } else { ?>
+	<p style="font-size:1.3em;margin-bottom:0.6em;padding-left:0.6em;"><strong class="red">予約しない支払があれば、チェックを外してください。</strong></p>
+	
+	<table class="list_default">
+		<tr>
+		    <th style="width:3%;"><p style="padding-left:0.3em;">選択</p></th>
+			<th style="width:8%;"><p class="align_center">発生日</p></th>
+			<th style="width:8%;"><p class="align_center">支払予定日</p></th>
+	
+			<th style="width:6%;"><p class="align_center">通貨単位</p></th>	
+			<th style="width:9%;"><p class="align_center">金額</p></th>
+			<th style="width:12%;"><p class="align_center">取引先</p></th>
+			<th style="width:8%;"><p class="align_center">振込先区分</p></th>
+			<th><p class="align_center">支払先</p></th>
+		</tr>
+		<?php
+		    $idList = array();
+		    $connectionBankTable = new Shared_Model_Data_ConnectionBank();
+		?>
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<?php
+					$grayOut = '';
+					if ($each['payment_status'] === (string)Shared_Model_Code::PAYABLE_PAYMENT_STATUS_CANCELED) {
+						$grayOut = 'class="gray_out"';
+					}
+				?>
+				<tr id="<?php echo $each['id']; ?>" <?php echo $grayOut; ?>>
+				    <td>
+			        <input type="checkbox" name="target[]" value="<?php echo $this->escape($each['id']); ?>" <?php if (!empty($each['transfer_to_bank_code']) || !empty($each['transfer_to_connection_bank_id'])) { ?>checked="checked"<?php } ?>>
+				    </td>
+					<td>
+						<p><?php
+							if (!empty($each['purchased_date'])) {
+								echo date('Y-m-d', strtotime($each['purchased_date']));
+							} else {
+								echo '---';
+							}
+						 ?></p>
+					</td>
+					
+					<td>
+						<p><?php if (!empty($each['paying_plan_date'])) { echo date('Y-m-d', strtotime($each['paying_plan_date'])); } else { echo '---'; } ?></p>
+					</td>
+					
+					<?php
+						$payingText = '';
+	        			if (!empty($each['paying_method'])) {
+	        				$payingText = $payingMethodList[$each['paying_method']];
+	        			}
+	            		if (!empty($each['bank_name'])) {
+	            			$payingText .= ' ' . $this->escape($each['bank_name'] . ' ' . $each['branch_name'] . ' ' . $bankAccountType[$each['account_type']] . ' ' . $each['account_no']);
+	            		}
+	        		?>
+	
+					<td>
+						<p class="align_center"><?php if (!empty($each['currency_id'])) { echo $this->escape($this->currencyList[$each['currency_id']]['name']); } ?></p>
+					</td>
+					
+					<td>
+						<?php
+							$totaltext = '';
+							if (!empty($each['total_amount'])) {
+								$totaltext = $this->escape(number_format($each['total_amount']));
+							}	
+						?>
+						<p class="align_right"><?php echo $totaltext; ?></p>
+					</td>
+	
+					<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+						<p><?php echo $this->roundText($this->escape($each['company_name']), 9); ?></p>
+					</td>
+	
+					<td>
+						<?php if (!empty($each['transfer_to_bank_code'])) { ?>
+							<p>個別</p>
+						<?php } else { ?>
+							<p><?php
+							if (!empty($each['bank_registered_type'])) {
+								echo $bankRegisteredType[$each['bank_registered_type']];
+							} else {
+								echo '(旧データ)';
+							} ?></p>
+						<?php } ?>
+					</td>
+
+				    <?php if (!empty($each['transfer_to_bank_code'])) { ?>
+				        <?php /* 個別 */ ?>
+	 					<td>
+				            <div class="multi_rows_padding">
+								<?php
+									echo $each['transfer_to_bank_name'] . '(' . $each['transfer_to_bank_code'] . ')';
+								?>
+							    <?php echo $this->escape($each['transfer_to_branch_name'])  . '(' . $each['transfer_to_branch_code'] . ')'; ?>
+
+					        	<?php echo $bankAccountTypeList[$each['transfer_to_account_type']]; ?> <?php echo $this->escape($each['transfer_to_account_no']); ?>
+
+					        	<?php echo $this->escape(mb_convert_kana($each['transfer_to_account_name'], "k", "UTF-8")); ?>
+							</div>
+						</td>
+					<?php } else { ?>
+					    <?php if (!empty($each['transfer_to_connection_bank_id'])) { ?>
+					    	<?php $connectionBankData = $connectionBankTable->getById($each['transfer_to_connection_bank_id']); ?>
+							<td>
+					            <div class="multi_rows_padding">
+	    							<?php
+				                		if (!empty($connectionBankData)) {
+				                			echo $this->escape($connectionBankData['bank_code']) . ' ' . 
+											$this->escape($connectionBankData['bank_name']) . ' ' . 
+											$this->escape($connectionBankData['branch_code']) . ' ' . 
+											$this->escape($connectionBankData['branch_name']) . ' ' . 
+											$this->escape($connectionBankData['account_no']) . ' ' . 
+											$this->escape($connectionBankData['account_name_kana']);
+				                		} else {
+				                			echo '---';
+				                		}
+	    							?>
+	    						</div>
+							</td>
+						<?php } else { ?>
+						    <td>
+					            <div class="multi_rows_padding">
+						        	<strong class="red">振込先未登録</strong>
+	    						</div>
+							</td>
+						<?php } ?>
+			        <?php } ?>
+			    </tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="15">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+	</table>
+<?php } ?>

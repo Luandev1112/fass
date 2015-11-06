@@ -1,0 +1,40 @@
+<?php
+/**
+ * Pager
+ */
+?>
+<?php $pages = $this->paginator->getPages(); ?>
+<div class="pager clearfix">
+    <?php if (isset($pages->previous)) { ?>
+    	<?php if (strpos($this->url,'javascript:') !== false) { ?>
+    		<a style="text-decoration:none;" href="<?php echo str_replace('$page', $pages->previous, $this->url); ?>">&lt;</a>
+        <?php } else { ?>
+        	<a style="text-decoration:none;" href="<?php echo $this->baseUrl($this->url . $pages->previous); ?>">&lt;</a>
+        <?php } ?>
+    <?php  } else { ?>
+        <span>&lt;</span>
+    <?php } ?>
+    
+    <?php foreach ($pages->pagesInRange as $page): ?>
+        <?php if ($page != $pages->current): ?>
+        	<?php if (strpos($this->url,'javascript:') !== false) { ?>
+    			<a style="text-decoration:none;" href="<?php echo str_replace('$page', $page, $this->url); ?>"><?php echo $page; ?></a>
+        	<?php } else { ?>
+            	<a style="text-decoration:none;" href="<?php echo $this->baseUrl($this->url . $page); ?>"><?php echo $page; ?></a>
+            <?php } ?>
+        <?php else: ?>
+            <span class="current"><?php echo $page; ?></span>
+        <?php endif; ?>
+        <?php /* if ($pages->lastPageInRange != $page) { echo '|'; } */ ?>
+    <?php endforeach; ?>
+
+    <?php if (isset($pages->next)) { ?>
+    	<?php if (strpos($this->url,'javascript:') !== false) { ?>
+			<a style="text-decoration:none;" href="<?php echo str_replace('$page', $pages->next, $this->url); ?>">&gt;</a>
+    	<?php } else { ?>
+       		<a style="text-decoration:none;" href="<?php echo $this->baseUrl($this->url . $pages->next); ?>" >&gt;</a>
+       	<?php } ?>
+    <?php  } else { ?>
+        <span>&gt;</span>
+    <?php } ?>    
+</div>

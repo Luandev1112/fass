@@ -1,0 +1,132 @@
+<div style="border:1px solid #000;margin:0 120px;">
+	<div class="clearfix" style="padding:50px 50px 40px 50px;">
+		<div class="clearfix" style="float:left;width:400px;">
+			<p style="float:left;font-size:1.5em;width:100%;"><?php echo nl2br($this->escape($this->versionData['to_name'])); ?></p>
+		</div>
+
+		<?php 
+			$companyName = $this->groupData['organization_name'];
+			$address     = '〒' . $this->groupData['postal_code'] . ' ' . $this->groupData['prefecture'] . $this->groupData['city'] . $this->groupData['address'];
+			$tel = $this->groupData['tel'];
+			$fax = $this->groupData['fax'];
+			
+			/*
+			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+				$companyName = $this->groupData['organization_name_en'];
+				$address = $this->groupData['address_en'] . ' ' . $this->groupData['city_en'] . ", " . $this->groupData['prefecture_en'] . ' JAPAN'. ' (Zip: ' . $this->groupData['postal_code'] . ')';
+    			$tel = $this->groupData['tel_int'];
+    			$fax = $this->groupData['fax_int'];
+			}
+			*/
+		?>
+		    		
+		<div class="from" style="float:right;">
+			<div class="clearfix" style="margin:0 auto 10px;text-align:right;">
+				<p style="margin-bottom:0;"><?php echo date('Y年m月d日', strtotime($this->data['estimate_date'])); ?></p>
+			</div>
+			<img id="from_logo" src="/resource/logo_group/logo.png" style="margin-bottom:10px;" />
+
+			<div class="clearfix">
+				<p class="company_name"><?php echo $this->escape($companyName); ?></p>
+			</div>
+			<div class="clearfix">
+				<p><?php echo $this->escape($address); ?></p>
+			</div>
+			<div class="clearfix">
+				<p>TEL <?php echo $this->escape($tel); ?>　　FAX <?php echo $this->escape($fax); ?></p>
+			</div>
+			
+			<div class="clearfix" style="padding-top:2px;">
+				<p style="float:left;padding-top:5px;" id="creater_user_name">
+					<?php
+                		if (!empty($this->createdUser)) {
+                			echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+                		} else {
+                			echo '';
+                		}
+					?>
+				</p>
+			</div>
+			<div class="clearfix" style="margin-top:10px">
+				<table class="stamp">
+					<tr>
+						<td>作成</td>
+						<td>承認</td>
+					</tr>
+					<tr>
+						<td style="height:60px;">&nbsp;</td>
+						<td>&nbsp;</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	
+	
+	<div style="margin:0 auto 10px;width: 650px;">
+		<div style="border-bottom:3px solid #000;">
+			<p class="estimate_title" style="text-align:center;margin:0 auto 10px;font-size:1.8em;"><?php echo $this->escape($this->data['title']); ?></p>		
+		</div>
+		<div class="clearfix" style="padding:0 0 60px;">
+			<div style="float:right;text-align:right;padding-right:5px">
+				見積もり管理番号：<?php echo $this->escape($this->data['display_id']); ?>
+			</div>
+		</div>
+	</div>
+
+	
+	<div style="padding:50px 0 20px 0;">
+		<div class="clearfix" style="margin-left:50px;margin-right:50px;border-bottom:2px solid #000;">
+			&nbsp;
+		</div>
+		
+		<table class="estimate_form" style="margin:0;">
+			<thead>
+				<tr>
+					<td class="td_item_action">&nbsp;</td>
+					<td style="width:50px;"><div class="multi_rows_padding"><?php echo nl2br($this->versionData['labels']['label_1']); ?></div></td>
+					<td><div class="multi_rows_padding"><?php echo nl2br($this->versionData['labels']['label_2']); ?></div></td>
+					<td style="width:100px;"><div class="multi_rows_padding align_center"><?php echo nl2br($this->versionData['labels']['label_3']); ?></div></td>
+					<td style="width:160px;"><div class="multi_rows_padding align_center"><?php echo nl2br($this->versionData['labels']['label_4']); ?></div></td>
+					<td style="width:160px;"><div class="multi_rows_padding align_center"><?php echo nl2br($this->versionData['labels']['label_5']); ?></div></td>
+					<td class="td_action">&nbsp;</td>
+				</tr>
+			</thead>
+			<tbody class="sortable_column" id="sortable_column">
+				<?php if (!empty($this->versionData['item_list'])) { ?>
+				<?php foreach ($this->versionData['item_list'] as $each) {?>
+				<tr id="<?php echo $this->escape($each['id']); ?>" <?php if (!empty($this->selectedRow) && $this->selectedRow == $each['id']) { echo 'class="selected_row"'; } ?>>
+					<td class="td_item_action">
+						<?php if (!empty($this->isPopup)) { ?>
+							<?php
+								$exploded = explode("\n", $each['item_name']); 
+							
+							?>
+							<p><a class="option select_estimate_item" item-id="<?php echo $this->escape($each['item_id']); ?>" estimate-id="<?php echo $this->escape($this->data['display_id']); ?>" target-id="<?php echo $this->escape($this->versionData['id']); ?>" target-row="<?php echo $this->escape($each['id']); ?>" item-name="<?php echo $exploded[0]; ?>" href="javascript:void(0);">選択</a></p>
+						<?php } else { ?>
+							<div class="item_btn_frame">
+								<a id="<?php echo $this->escape($each['id']); ?>_select_product" class="select_product <?php if (!empty($each['item_id'])) { echo 'active'; } ?>" href="javascript:void(0);" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-th-large"></i></a>
+								<input type="hidden" id="<?php echo $this->escape($each['id']); ?>_item_id" name="<?php echo $this->escape($each['id']); ?>_item_id" value="<?php echo $this->escape($each['item_id']); ?>" />
+							</div>
+						<?php } ?>
+					</td>
+					<td class="cell"><div class="multi_rows_padding align_right"><?php echo $this->escape($each['id']); ?></div></td>
+					<td class="cell"><div class="multi_rows_padding"><?php echo nl2br($this->escape($each['item_name'])); ?></div></td>
+					<td class="cell"><div class="multi_rows_padding align_right"><?php echo nl2br($this->escape($each['unit'])); ?></div></td>
+					<td class="cell"><div class="multi_rows_padding align_right"><?php echo nl2br($this->escape($each['unit_price'])); ?></div></td>
+					<td class="cell"><div class="multi_rows_padding align_right"><?php echo nl2br($this->escape($each['price_per_month'])); ?></div></td>
+		            <td class="td_action">&nbsp;</td>
+				</tr>
+				<?php } ?>
+				<?php } ?>
+			</tbody>
+		</table>
+        <div class="add_row_button_frame" style="border-top:2px solid #000;">
+        	&nbsp;
+        </div>
+	</div>
+	
+	<div style="padding:0 50px 50px 50px;">
+		<div><?php echo nl2br($this->escape($this->versionData['memo'])); ?></div>
+	</div>
+</div>

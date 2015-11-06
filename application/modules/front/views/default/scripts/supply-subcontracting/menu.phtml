@@ -1,0 +1,39 @@
+<?php
+$supplierStatusList   = Shared_Model_Code::codes('supplier_status');
+?>
+<style type="text/css">
+.page_title {background-color:#cbe5fa;padding:0.8em 0.6em;}
+.main_name {color:#243ebf;}
+.define_menu_frame {padding:0.4em;background-color:#cbe5fa;}
+.define_menu_frame p {padding:0.6em 0 0.6em 15px;}
+.define_menu_frame a.block {display:block;font-size:1.1em;background-color:#c0f7fa;padding:5px 15px;margin-bottom:5px;text-decoration:none;}
+.define_menu_frame a.block:hover{background-color:#d7f8fa;}
+.define_menu_frame a.block.selected {background-color:#098d94;color:#fff;}
+.define_menu_frame a.add_supplier {display:inline-block;text-align:center;font-size:1.1em;background-color:#00469b;color:#fff;padding:5px 15px;margin-bottom:5px;text-decoration:none;}
+</style>
+<div class="define_menu_frame clearfix">
+	<div style="margin-bottom:2.0em;">
+		<a class="block <?php if ($this->action === 'detail') { echo 'selected'; } ?>" href="/supply-subcontracting/detail?id=<?php echo $this->escape($this->data['id']); ?>">
+			<span class="title">概要</span><br>
+		</a>
+		
+		<a class="block <?php if ($this->action === 'price-list') { echo 'selected'; } ?>" href="/supply-subcontracting/price-list?id=<?php echo $this->escape($this->data['id']); ?>">
+			<span class="title">価格表</span><br>
+		</a>
+	</div>
+	
+	<p>調達先</p>
+	
+	<?php if (!empty($this->supplierList)) { ?>
+		<?php foreach ($this->supplierList as $each) { ?>
+			<a class="block <?php if (in_array($this->action, array('supplier-detail', 'supplier-price-list', 'supplier-file-list')) && $this->supplierDetail['id'] === $each['id']) { echo 'selected'; } ?>" href="/supply-subcontracting/supplier-detail?id=<?php echo $this->escape($each['id']); ?>">
+				<span class="title"><?php echo $this->escape($this->roundText($each['company_name'], 14)); ?>(<?php echo $supplierStatusList[$each['status']]; ?>)<br>
+				<small><?php if (!empty($each['individual_name'])) { echo $this->escape($each['individual_name']); } else { echo '---'; } ?></small></span>
+			</a>    
+	    <?php } ?>
+    <?php } ?>
+    
+    <div style="text-align:center;">
+    	<a class="add_supplier" href="/supply-subcontracting/supplier-add?project_id=<?php echo $this->escape($this->data['id']); ?>"><i class="icon-plus-1"></i>&nbsp;調達先追加</a>
+    </div>  
+</div>

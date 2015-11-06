@@ -1,0 +1,855 @@
+<?php
+$payableStatusList = Shared_Model_Code::codes('payable_status');
+?>
+<script type="text/javascript">
+var estimateId = 0;
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+function guid() {
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+	}
+	return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // PDFプレビュー
+    $('.btn_preview, .btn_estimate_preview').click( function(){
+    	window.open('/transaction-order/preview/<?php echo $this->escape($this->id); ?>/発注書プレビュー_' + getTimeStamp() + '.pdf', '_blank');
+    });
+    
+    $('.btn_payable_complete').click( function(){
+        jConfirm('支払申請完了にしますか？', '　', function(r) {
+            if(r) {
+				showSpinner();
+		
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+                
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: param,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('支払申請完了しました', '　');
+		                    return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/transaction-order/complete-payable?id=<?php echo $this->escape($this->id); ?>'
+				});
+            } else {
+                return false;
+            }
+        });
+    });
+    
+        
+    <?php if (!empty($this->approvalId)) { ?>
+	    // 修正依頼
+	    $('.btn_mod_request').click( function(){
+	        jConfirm('修正依頼しますか？', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			
+	                var $form = $('#register_form');
+	                var query = $form.serialize();
+	                var param = $form.serializeArray();
+	                
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: param,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                    
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('修正依頼しました', '　');
+			                    return;
+			                    
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/transaction-order/mod-request?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });
+	    });
+	    
+	    //
+	    // 承認
+	    //
+	    $('.btn_save').click( function(){
+	        jConfirm('この内容で承認しますか', '　', function(r) {
+	            if(r) {
+					showSpinner();
+			
+	                var $form = $('#register_form');
+	                var query = $form.serialize();
+	                var param = $form.serializeArray();
+	                
+			        $.ajax({
+			            type:'POST',
+			            dataType:'json',
+			            data: param,
+			            success: function(res){
+			            	stopSpinner();
+			                var obj = res;
+			                if (obj.result == 'timeout') {
+			                    location.href = '/login';
+			                    return;
+			                    
+			                } else if(obj.result == 'OK') {
+	                            reloadFlag = true;
+	                            jAlert('承認しました', '　');
+			                    return;
+			                    
+			                } else {
+			                    jAlert('' + obj.message, '　');
+			                }
+			            },
+			            error: function(){
+			            	stopSpinner();
+			                jAlert('予期せぬエラーが発生しました', 'エラー');
+			            },
+			            url: '/transaction-order/approve?approval_id=<?php echo $this->escape($this->approvalId); ?>&id=<?php echo $this->escape($this->id); ?>'
+					});
+	            } else {
+	                return false;
+	            }
+	        });	
+		});
+	
+	    $(document).on('click', '#popup_ok', function () {
+	        if (reloadFlag) {
+	            location.href = '/approval/list';
+	        }
+	    });
+    <?php } else { ?>
+	    $(document).on('click', '#popup_ok', function () {
+	        if (reloadFlag) {
+	            location.href = '/transaction-order/confirm?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>&pos=' + $(window).scrollTop();
+	        }
+	    });
+    
+    <?php } ?>
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+#from_logo {width:200px;}
+.from p {margin-bottom:0.4em;}
+.from p.company_name {font-size:1.3em}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+table.stamp {width:auto;float:right;}
+table.stamp tr td {border:1px solid #000;text-align:center;width:60px;padding:0;}
+table.order_form tr td {padding:0;border-top:1px solid #000;border-bottom:1px solid #000;border-right:1px dotted #000;border-left:1px dotted #000;vertical-align:top}
+table.order_form tr td input[type="text"]{border:none;width:100%;}
+table.order_form tr td textarea{border:none;width:100%;}
+table.order_form tr td .multi_rows_padding {padding:5px 6px 5px 6px}
+table.order_form tr td.td_item_action {width:50px;border-left:none;border-bottom:none;border-top:none;}
+table.order_form tr td.td_item_action .item_btn_frame {float:left;margin:8px 0 0 18px;}
+table.order_form tr td.td_item_action .item_btn_frame a {text-decoration:none;color:#000;font-size:1.6em;}
+table.order_form tr td.td_item_action .item_btn_frame a.select_product.active {color:#219c11}
+table.order_form tr td.td_action {width:50px;border-right:none;border-bottom:none;border-top:none;}
+table.order_form tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.order_form tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+textarea.flex {resize:none;padding:8px;line-height: 20px;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.align_right {text-align:right;}
+.align_center {text-align:center;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.add_row_button_frame {height:34px;margin-left:50px;margin-right:50px;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+.private_memo {margin-top:20px;padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin-bottom:0.8em}
+.multi_rows_padding {padding:5px 10px 5px 10px}
+table.payable .multi_rows_padding {padding:5px 6px 5px 6px}
+table.payable .align_right{text-align:right;margin-right:12px;}
+table.payable .align_center{text-align:center;margin-right:12px;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left base_frame">
+    
+    <form id="register_form" action="javascript:void(0);" method="post">
+	    
+	    <?php if ($this->data['order_form_type'] === (string)Shared_Model_Code::ORDER_FORM_TYPE_CREATE) { ?>
+		    <div style="border:1px solid #000;margin:0 120px 20px;">
+		    	<div class="clearfix" style="padding:50px 50px 40px 50px;">
+		    		<div class="clearfix" style="float:left;width:400px;">
+		    			<p style="float:left;font-size:1.5em;width:100%;"><?php echo nl2br($this->escape($this->data['to_name'])); ?></p>
+		    		</div>
+	
+		    		<?php 
+		    			$companyName = $this->groupData['organization_name'];
+		    			$address     = '〒' . $this->groupData['postal_code'] . ' ' . $this->groupData['prefecture'] . $this->groupData['city'] . $this->groupData['address'];
+		    			$tel = $this->groupData['tel'];
+		    			$fax = $this->groupData['fax'];
+		    			
+		    			$numberLabel = '発注書管理番号';
+		    			
+		    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+		    				$companyName = $this->groupData['organization_name_en'];
+		    				$address = $this->groupData['address_en'] . ' ' . $this->groupData['city_en'] . ", " . $this->groupData['prefecture_en'] . ' JAPAN'. ' (Zip: ' . $this->groupData['postal_code'] . ')';
+			    			$tel = $this->groupData['tel_int'];
+			    			$fax = $this->groupData['fax_int'];
+			    			
+			    			$numberLabel = 'ORDER FORM No.';
+		    			}
+		    			
+		    		?>
+		    		
+		    		<div class="from" style="float:right;width:330px">
+						<div class="clearfix" style="margin:0 auto 10px;text-align:right;">
+							<p style="margin-bottom:0;">
+							<?php
+								if (!empty($this->data['order_date'])) {
+									if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+						    			echo date('F d, Y', strtotime($this->data['order_date']));
+						    		} else {
+						    			echo date('Y年m月d日', strtotime($this->data['order_date']));
+						    		}
+					    		} else {
+					    			echo '---';
+					    		}
+					    	?>
+				    		</p>
+						</div>
+		    			<img id="from_logo" src="/resource/logo_group/logo.png" style="margin-bottom:10px;" />
+	
+						<div class="clearfix">
+							<p class="company_name"><?php echo $this->escape($companyName); ?></p>
+						</div>
+						<div class="clearfix">
+							<p><?php echo $this->escape($address); ?></p>
+						</div>
+						<div class="clearfix">
+							<p>TEL <?php echo $this->escape($tel); ?>　　FAX <?php echo $this->escape($fax); ?></p>
+						</div>
+						<div class="clearfix" style="padding-top:2px;">
+							<p style="float:left;padding-top:5px;" id="creater_user_name">
+								<?php
+			                		if (!empty($this->createdUser)) {
+			                			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+			                				echo 'PIC: ' . $this->escape($this->createdUser['department_name_en']) . '　' . $this->escape($this->createdUser['user_name_en']);
+			                			} else {
+			                				echo '担当者: ' . $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+			                			}
+			                		} else {
+			                			echo '---';
+			                		}
+								?>
+							</p>
+						</div>
+			    		<?php 
+			    			$author   = '作成';
+			    			$approval = '承認';
+			    			
+			    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+			    				$author   = 'PIC';
+			    				$approval = 'approval';
+			    			}
+			    			
+			    		?>
+		    			<div class="clearfix" style="margin-top:10px">
+							<table class="stamp">
+								<tr>
+									<td><?php echo $author; ?></td>
+									<td><?php echo $approval; ?></td>
+								</tr>
+								<tr>
+									<td style="height:60px;">&nbsp;</td>
+									<td>&nbsp;</td>
+								</tr>
+							</table>
+		    			</div>
+		    		</div>
+		    	</div>
+	
+				<div style="margin:0 auto 10px;width:650px;">
+					<div style="border-bottom:3px solid #000;">
+						<p class="estimate_title" style="text-align:center;margin:0 auto 10px;font-size:1.8em;"><?php echo $this->escape($this->data['title']); ?></p>		
+					</div>
+					<div class="clearfix" style="padding:0 0 30px;">
+						<div style="float:right;text-align:right;padding-right:5px">
+							<?php echo $numberLabel; ?>：<?php echo $this->escape($this->data['display_id']); ?>
+						</div>
+					</div>
+				</div>
+	
+				
+				<div style="padding-bottom:10px;">
+					<div class="clearfix" style="margin-left:50px;margin-right:50px;border-bottom:2px solid #000;">
+						&nbsp;
+					</div>
+					<div>
+						<table class="order_form" style="margin:0;">
+							<thead>
+								<tr>
+									<td class="td_item_action"></td>
+									<td style="width:40px;"><div class="multi_rows_padding"><?php echo $this->data['labels']['label_1']; ?></div></td>
+									<td><div class="multi_rows_padding"><?php echo $this->data['labels']['label_2']; ?></div></td>
+									<td style="width:130px;"><div class="multi_rows_padding"><?php echo $this->data['labels']['label_3']; ?></div></td>
+									<td style="width:90px;"><div class="multi_rows_padding align_center"><?php echo $this->data['labels']['label_4']; ?></div></td>
+									<td style="width:90px;"><div class="multi_rows_padding align_center"><?php echo $this->data['labels']['label_5']; ?></div></td>
+									<td class="td_action">&nbsp;</td>
+								</tr>
+							</thead>
+	
+							<tbody class="sortable_column" id="sortable_column">
+								<?php if (!empty($this->data['item_list'])) { ?>
+								<?php foreach ($this->data['item_list'] as $each) {?>
+								<tr id="<?php echo $this->escape($each['id']); ?>">
+									<td class="td_item_action">
+										<?php
+										//echo 'type:' . $each['supply_type'] . '<br>';
+										//echo 'id:' . $each['supply_id'];
+										?>
+										
+										<div class="item_btn_frame">
+											<?php if (!empty($each['supply_id'])) { ?>
+												<a id="<?php echo $this->escape($each['id']); ?>_select_product" class="select_product active" href="/<?php echo $this->escape($each['supply_type']); ?>/detail?id=<?php echo $this->escape($each['supply_id']); ?>" target-row="<?php echo $this->escape($each['id']); ?>" target="_blank"><i class="icon-th-large"></i></a>
+											<?php } ?>
+										</div>	
+									</td>
+									<td><div class="multi_rows_padding align_right"><?php echo $this->escape($each['id']); ?></div></td>
+									<td><div class="multi_rows_padding"><?php echo nl2br($this->escape($each['item_name'])); ?></div></td>
+									<td><div class="multi_rows_padding align_right"><?php if (!empty($each['unit_price'])) { echo $this->escape($this->data['currency_mark']) . ' ' . $this->numberFormat($this->escape($each['unit_price'])); } else { echo '0';} ?></div></td>
+									<td><div class="multi_rows_padding align_right"><?php if (!empty($each['amount'])) { echo $this->numberFormat($this->escape($each['amount'])); } else { echo '0';} ?></div></td>
+									<td><div class="multi_rows_padding align_right"><?php if (!empty($each['price'])) { echo $this->escape($this->data['currency_mark']) . ' ' . number_format($this->escape($each['price'])); } else { echo '0';} ?></div></td>
+						            <td class="td_action">&nbsp;</td>
+								</tr>
+								<?php } ?>
+								<?php } ?>
+							</tbody>
+						</table>
+						
+				        <div class="add_row_button_frame" style="border-top:2px solid #000;">
+				        	&nbsp;
+				        </div>
+				        
+				        <?php 
+			    			$subTotalLabel = '合計（税別）';
+			    			$taxLabel      = '消費税';
+			    			$totalLabel    = '合計（税込）';
+			    			
+			    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+			    				$subTotalLabel = 'SUB TOTAL';
+			    				$taxLabel      = 'TAX';
+			    				$totalLabel    = 'GRAND TOTAL';
+			    			}
+			    		?>
+						<?php if (!empty($this->data['including_tax'])) { ?>
+							<div class="clearfix" style="margin-left:50px;margin-right:50px;">
+								<div class="clearfix" style="padding-top:5px;border-bottom:2px solid #000;">
+									<div id="total_with_tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['total_with_tax'])) { echo $this->escape($this->data['currency_mark']) . ' ' . number_format($this->escape($this->data['total_with_tax'])); } else { echo '0'; } ?></div>
+									<div style="width:150px;float:right;font-size:1.3em;text-align:left"><?php echo $totalLabel; ?></div>
+									<input type="hidden" id="total_with_tax" name="total_with_tax" value="<?php echo $this->escape($this->data['total_with_tax']); ?>" />
+								</div>
+							</div>
+						<?php } else { ?>
+							<div class="clearfix" style="margin-left:50px;margin-right:50px;">
+								<div class="clearfix" style="padding-top:5px;border-bottom:2px solid #000;">
+									<div id="subtotal_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['subtotal'])) { echo $this->escape($this->data['currency_mark']) . ' ' . number_format($this->escape($this->data['subtotal'])); } else { echo '0'; } ?></div>
+									<div style="width:150px;float:right;font-size:1.3em;text-align:left;padding-top:0.2em"><?php echo $subTotalLabel; ?></div>
+								</div>
+								<div class="clearfix" style="padding-top:5px;">
+									<div id="tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;">
+										<?php if (!empty($this->data['tax'])) { echo $this->escape($this->data['currency_mark'])  . ' ' . number_format($this->escape($this->data['tax'])); } else { echo '0'; } ?>
+									</div>
+									<div style="width:150px;float:right;font-size:1.3em;text-align:left">
+										<?php echo $taxLabel; ?>（<?php echo $this->escape($this->data['tax_percentage']); ?>%）
+									</div>
+								</div>
+								<div class="clearfix" style="padding-top:5px;">
+									<div id="total_with_tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['total_with_tax'])) { echo $this->escape($this->data['currency_mark']) . ' ' . number_format($this->escape($this->data['total_with_tax'])); } else { echo '0'; } ?></div>
+									<div style="width:150px;float:right;font-size:1.3em;text-align:left"><?php echo $totalLabel; ?></div>
+									<input type="hidden" id="total_with_tax" name="total_with_tax" value="<?php echo $this->escape($this->data['total_with_tax']); ?>" />
+								</div>
+							</div>
+						<?php } ?>
+					</div>
+				</div>
+				<div style="padding:0 50px 50px 50px;">
+					<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->data['memo'])); ?></div>
+				</div>
+		    </div>
+	    
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+	                    <p class="label_text strong">基本情報</p>
+	                </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+		            <td class="column_label"><p class="label_text">納品予定日<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+			            <?php if (!empty($this->data['is_delivery_plan_date_unknown'])) { ?>
+			            	<p>未定（<?php echo date('Y-m-d', strtotime($this->data['delivery_plan_date'])); ?>）</p>
+			            <?php } else { ?>
+			            	<?php if (empty($this->data['delivery_plan_date'])) { ?>
+			            		<p>---</p>
+			            	<?php } else { ?>
+			            		<p><?php echo date('Y-m-d', strtotime($this->data['delivery_plan_date'])); ?></p>
+			            	<?php } ?>
+			            <?php } ?>
+		            </td>
+	            </tr>
+	        </table>
+	    <?php } else { ?>
+		    <div class="col-xs-12">
+		        <div class="page_title">
+		            <span><strong>発注内容</strong></span>
+		        </div>
+		    </div>
+
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+	                    <p class="label_text strong">基本情報</p>
+	                </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+		            <td class="column_label"><p class="label_text">注文書管理番号</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<p><?php echo $this->escape($this->data['display_id']); ?></p>
+		            </td>
+	            </tr>
+
+	            <tr>
+	                <td class="column_label"><p class="label_text">内容<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+						<div class="multi_rows_padding" style="padding-left:6px;"><?php echo nl2br($this->escape($this->data['title'])); ?></textarea>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">提出先<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p class="connection_name"><?php echo $this->escape($this->connectionData['company_name']); ?></p>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+		            <td class="column_label"><p class="label_text">注文書発行日<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<p><?php echo date('Y-m-d', strtotime($this->data['order_date'])); ?></p>
+		            </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">担当者<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p id="creater_user_name"><?php echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']); ?></p>
+	                </td>
+	            </tr>
+	            
+	            
+	            <?php
+	            	$currencyText = '';
+	            	foreach ($this->currencyList as $eachCurrency) {
+	            		if ($this->data['currency_id'] == $eachCurrency['id']) {
+	            			$currencyText = $eachCurrency['name'];
+	            		}
+	            	}
+	            ?>
+	            <tr>
+		            <td class="column_label"><p class="label_text">合計金額(税別)</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+                        <p style="width:220px;padding-left:0;text-align:right;">
+                        	<?php if (!empty($this->data['subtotal'])) { ?>
+                        		<?php echo number_format($this->escape($this->data['subtotal'])); ?>&nbsp;<?php echo $this->escape($currencyText); ?>
+                        	<?php } else { ?>
+                        		---
+                        	<?php } ?>
+                        </p>
+		            </td>
+	            </tr>
+            
+	            <tr>
+		            <td class="column_label"><p class="label_text">税率・税額</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<div class="clearfix" style="width:220px">
+		            		<p style="float:left;width:60px;"><?php echo $this->escape($this->data['tax_percentage']); ?>&nbsp;%</p>
+			            	<p style="float:right;padding-left:0;width:140px;text-align:right;">
+	                        	<?php if (!empty($this->data['tax'])) { ?>
+	                        		<?php echo number_format($this->escape($this->data['tax'])); ?>&nbsp;<?php echo $this->escape($currencyText); ?>
+	                        	<?php } else { ?>
+	                        		---
+	                        	<?php } ?>
+			            	</p>
+			            </div>
+		            </td>
+	            </tr>
+	            
+	            <tr>
+		            <td class="column_label"><p class="label_text">合計金額(税込)<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<p style="width:220px;padding-left:0;text-align:right;">
+                        	<?php if (!empty($this->data['total_with_tax'])) { ?>
+                        		<?php echo number_format($this->escape($this->data['total_with_tax'])); ?>&nbsp;<?php echo $this->escape($currencyText); ?>
+                        	<?php } else { ?>
+                        		---
+                        	<?php } ?>
+		            	</p>
+		            </td>
+	            </tr>
+
+	            <tr>
+		            <td class="column_label"><p class="label_text">納品予定日<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+			            <?php if (!empty($this->data['is_delivery_plan_date_unknown'])) { ?>
+			            	<p>未定（<?php echo date('Y-m-d', strtotime($this->data['delivery_plan_date'])); ?>）</p>
+			            <?php } else { ?>
+			            	<?php if (empty($this->data['delivery_plan_date'])) { ?>
+			            		<p>---</p>
+			            	<?php } else { ?>
+			            		<p><?php echo date('Y-m-d', strtotime($this->data['delivery_plan_date'])); ?></p>
+			            	<?php } ?>
+			            <?php } ?>
+		            </td>
+	            </tr>
+	            
+	            <tr>
+		            <td class="column_label"><p class="label_text">納品受領日</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+			            <p>
+			            	<?php if (empty($this->data['deliveried_date'])) { ?>
+			            		---
+			            	<?php } else { ?>
+			            		<?php echo date('Y-m-d', strtotime($this->data['deliveried_date'])); ?>
+			            	<?php } ?>
+			            </p>
+		            </td>
+	            </tr>
+	            
+	        </table>
+	    <?php } ?>
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right">
+                    <p class="label_text strong">添付資料</p>
+                </th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:13px;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['file_list'])) { ?>
+			        <?php foreach ($this->data['file_list'] as $each) { ?>
+				        <tr id="<?php echo $this->escape($each['id']); ?>">
+							<td class="column_value">
+								<div class="clearfix">
+									<div style="float:left;width:360px;">
+										<div class="clearfix" style="margin-bottom:5px">
+											<div style="float:left;width:50px;padding:15px 0 0 10px;">
+												<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+											</div>
+											<div style="float:left;width:300px;">
+												<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="<?php echo $this->escape($each['id']); ?>_file_name_text"><?php echo $this->escape($each['file_name']); ?></span></div>
+												<p style="padding-left:18px;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_OrderForm::getFileSize($this->data['id'], $each['file_name']), 2); ?></p>
+												
+											</div>
+										</div>
+										<div>
+											<a class="btn_setting" style="margin-left:12px;" target="_blank" href="<?php echo Shared_Model_Resource_OrderForm::getResourceUrl($this->data['id'], $each['file_name']); ?>">ダウンロード</a>
+										</div>
+									</div>
+									<div style="float:left;margin-left:10px;width:670px;">
+										<p>概要:</p>
+					                	<div class="multi_rows_padding" style="padding-left:6px;">
+					                		<?php echo nl2br($this->escape($each['summary'])); ?>
+					                	</div>	
+									</div>
+								</div>
+							</td>
+				            <td class="td_action">
+				            	<div class="edit_value_<?php echo $categoryId; ?> delete_btn_frame clearfix" style="display:none;">
+				            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+				            	</div>
+				            </td>
+				        </tr>
+			        <?php } ?>
+		        <?php } else { ?>
+			        <tr id="<?php echo $this->escape($each['id']); ?>">
+						<td class="column_value">
+							<p style="padding-left:12px;">---</p>
+						</td>
+			        </tr>
+		        <?php } ?>
+        	</tbody>
+    	</table>
+    	
+    	
+    	
+	    <?php if ($this->data['order_form_type'] === (string)Shared_Model_Code::ORDER_FORM_TYPE_UPLOAD) { ?>
+	        <div style="margin-bottom:13px;">
+				<table class="list_default" style="margin-bottom:0;">
+		                <th class="border-left border-top border-bottom border-right">
+		                    <p class="label_text strong">対象調達管理</p>
+		                </th>
+		            </tr>
+				</table>
+		        <table class="list_default" style="margin-bottom:0;">            
+					<tbody>
+			        <?php
+			        	$count = 1;
+
+						$supplyProductTable   = new Shared_Model_Data_SupplyProductProject();
+				        $productionTable      = new Shared_Model_Data_SupplyProductionProject();
+				        $subcontractingTable  = new Shared_Model_Data_SupplySubcontractingProject();
+				        $fixtureTable         = new Shared_Model_Data_SupplyFixtureProject();
+
+			        ?>
+			        <?php if (!empty($this->data['supply_list'])) { ?>
+				        <?php foreach ($this->data['supply_list'] as $each) { ?>
+				        <tr id="<?php echo $this->escape($count); ?>">
+				        	<td class="column_value">
+					        	<?php
+									$itemName = '---';
+									$url      = '';
+									if (!empty($each['reference_target_id'])) {
+							        	if ($each['reference_type'] == 'supply-product') {
+							        		$data = $supplyProductTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+							        		if (!empty($data)) {
+							        			$itemName = '<strong>原料製品 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+							        			$url      = '/supply-product/detail?id=' . $this->escape($data['id']) . '&direct=1';
+							        		}
+							        	} else if ($each['reference_type'] == 'supply-production') {
+							        		$data = $productionTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+							        		if (!empty($data)) {
+							        			$itemName = '<strong>製造加工委託 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+							        			$url      = '/supply-production/detail?id=' . $this->escape($data['id']) . '&direct=1';
+							        		}
+							        	} else if ($each['reference_type'] == 'supply-subcontracting') {
+							        		$data = $subcontractingTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+							        		if (!empty($data)) {
+							        			$itemName = '<strong>業務委託 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+							        			$url      = '/supply-subcontracting/detail?id=' . $this->escape($data['id']) . '&direct=1';
+							        		}
+							        	} else if ($each['reference_type'] == 'supply-fixture') {
+							        		$data = $fixtureTable->getById($this->adminProperty['management_group_id'], $each['reference_target_id']);
+							        		if (!empty($data)) {
+							        			$itemName = '<strong>備品資材 ' . $this->escape($data['display_id']) . '</strong>　' . $this->escape($data['title']);
+							        			$url      = '/supply-fixture/detail?id=' . $this->escape($data['id']) . '&direct=1';
+							        		}	
+							        	}
+						        	}
+					        	?>
+				            	<div class="supply_name multi_rows_padding" style="padding-left:12px;" id="<?php echo $this->escape($count); ?>_supply_name"><?php echo $itemName; ?></div>
+								<input type="hidden" class="reference_type" id="<?php echo $this->escape($each['id']); ?>_reference_type" name="<?php echo $this->escape($each['id']); ?>_reference_type" value="<?php echo $this->escape($each['reference_type']); ?>" />
+								<input type="hidden" class="reference_target_id" id="<?php echo $this->escape($each['id']); ?>_reference_target_id" name="<?php echo $this->escape($each['id']); ?>_reference_target_id" value="<?php echo $this->escape($each['reference_target_id']); ?>" />
+							</td>
+					
+							<td class="column_value" style="width:140px">
+								<?php if ($this->allowEditing === true) { ?>
+									<div class="clearfix">
+										<a class="option select_supply" style="margin:3px auto;padding:5px 35px 3px 35px;" href="<?php echo $url; ?>" target="_blank">表示</a>
+									</div>
+								<?php } ?>
+							</td>
+				        </tr>
+				        <?php $count++; ?>
+				        <?php } ?>
+				    <?php } ?>
+		        	</tbody>
+				</table>
+			</div>
+	    <?php } ?>
+    	
+    	<?php if ($this->data['status'] === (string)Shared_Model_Code::ORDER_FORM_STATUS_SUBMITTED) { ?>
+    		<?php
+    			$payableTable    = new Shared_Model_Data_AccountPayable();
+    		?>
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	            	<?php if ($this->data['order_form_payable_status'] === (string)Shared_Model_Code::ORDER_FORM_PAYABLE_COMPLETED) { ?>
+						<th class="border-left border-top border-bottom border-right">
+		                    <p class="label_text strong">請求申請情報（請求申請完了）</p>
+		                </th>
+	            	<?php } else { ?>
+		                <th class="border-left border-top border-bottom <?php if ($this->allowEditing === false) { ?>border-right<?php } ?>">
+		                    <p class="label_text strong">請求申請情報</p>
+		                </th>
+		                <?php if ($this->allowEditing === true) { ?>
+		                <th class="edit_category edit_mode" style="width:100px;">
+		                    <a class="btn_edit_category btn_payable_complete" style="width:100px;background-color:#02ad00;" href="javascript:void(0);"><span>支払申請完了</span></a>
+		                </th>
+		                <?php } ?>
+	                <?php } ?>
+	            </tr>
+			</table>
+			<table class="list_default payable">
+				<tr>
+					<th style="width:12%;"><p>支払予定日</p></th>
+					<th style="width:13%;"><p>ステータス</p></th>
+					<th style="width:15%;"><p>項目</p></th>
+					<th style="width:7%;"><p>通貨単位</p></th>	
+					<th style="width:13%;"><p>金額</p></th>
+					<th><p>支払先</p></th>
+					<th style="width:6%;"><p>詳細</p></th>
+				</tr>
+				<?php if (!empty($this->data['payable_ids'])) { ?>
+					<?php foreach ($this->data['payable_ids'] as $eachPayableId) { ?>
+				        <tr>
+				        	<?php $payableData = $payableTable->getById($this->adminProperty['management_group_id'], $eachPayableId); ?>
+							<td>
+								<p><?php echo date('Y-m-d', strtotime($payableData['paying_plan_date'])); ?></p>
+							</td>
+		
+							<td>
+								<p><?php echo $payableStatusList[$payableData['status']]; ?></p>
+							</td>
+							
+							<td>
+								<p><?php echo $this->accountTitleList[$payableData['account_title_id']]['title']; ?></p>
+							</td>
+							
+							<td>
+								<p class="align_center"><?php if (!empty($payableData['currency_id'])) { echo $this->escape($this->currencyList[$payableData['currency_id']]['name']); } ?></p>
+							</td>
+							
+							<td>
+								<?php
+									$totaltext = '';
+									if (!empty($payableData['total_amount'])) {
+										$totaltext = $this->escape(number_format($payableData['total_amount']));
+									}	
+								?>
+								<p class="align_right"><?php echo $totaltext; ?></p>
+							</td>
+		
+							<td style="border-right:none;">
+								<p><?php echo $this->roundText($this->escape($payableData['company_name']), 30); ?></p>
+							</td>
+							
+							<td>
+								<a class="option" style="padding:5px 10px 3px 10px" href="/transaction-payable/invoice-detail?id=<?php echo $this->escape($eachPayableId); ?>&direct=1" target="_blank">表示</a>
+							</td>
+				        </tr>
+			        <?php } ?>
+			    <?php } else { ?>
+			    	<tr>
+						<td colspan="7">
+							<p style="text-align:center;padding-left:0;">請求申請情報はありません</p>
+						</td>
+					</tr>
+		        <?php } ?>
+			</table>
+    	<?php } ?>
+
+    	
+	    <?php if (!empty($this->approvalId)) { ?>
+		    <div class="private_memo">
+		    	<p>社内共有メモ</p>
+		    	<textarea class="flex_other" name="memo_private" style="height:150px;width:1000px;"><?php echo $this->escape($this->data['memo_private']); ?></textarea>
+		    </div>
+		    
+		    <div class="private_memo">
+		    	<p>修正依頼／却下コメント</p>
+		    	<textarea class="flex_other" name="approval_comment" style="height:150px;width:1000px;"><?php echo $this->escape($this->data['approval_comment']); ?></textarea>
+		    </div>
+		    
+	    <?php } else { ?>
+	    	<div class="private_memo">
+	    		<p>社内共有メモ</p>
+	    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->data['memo_private'])); ?></div>
+	    	</div>
+
+	    	<?php if (!empty($this->data['approval_comment'])){ ?>
+		    	<div class="private_memo">
+		    		<p>修正依頼コメント</p>
+		    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->data['approval_comment'])); ?></div>
+		    	</div>
+	    	<?php } ?>
+	    <?php } ?>	    
+    </form>
+                   
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+
+

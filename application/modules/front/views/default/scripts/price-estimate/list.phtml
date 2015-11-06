@@ -1,0 +1,395 @@
+<?php
+$statusList   = Shared_Model_Code::codes('estimate_status');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+	
+    // 削除
+    $(document).on('click', '.btn_list_delete', function () {
+    	var targetId = $(this).attr('target-id');
+		jConfirm('本当に削除にしますか', '　', function(r) {
+			if(r) {
+				showSpinner();
+				$.ajax({
+		            type:'POST',
+		            dataType:'html',
+		            data:'target_id=' + targetId,
+		            success:function(res){
+		            	stopSpinner();
+		                reloadFlag = true;
+		                jAlert('削除しました', '　');
+		            },
+		            error:function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/price-estimate/delete'
+		        });
+		        
+			} else {
+			    return false;
+			}
+		});
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/price-estimate/list?page=<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+    
+
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+    
+    // 取引先 リセット
+    $(document).on('click', '#reset_connection', function () {
+		$('#connection_name_display').html('');
+		$('#connection_name').val('');
+		$('#connection_id').val('');
+	});
+	
+	
+    // 商品 選択 ポップアップ表示
+    $(document).on('click', '#select_item', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/product/list-select', null, function () {stopSpinner();});
+    });
+    
+    // 商品 選択 条件検索
+    $(document).on('click', '#search_product', function () {
+		updateProductList(1);
+    });
+
+    // 商品 引用解除
+    $(document).on('click', '#reset_item', function () {
+		$('#item_name_display').html('');
+		$('#item_name').val('');
+		$('#item_id').val('');
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name_display').html(name);
+	$('#connection_name').val(name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 商品 一覧ページ切り替え
+function pageProduct(pageNo) {
+	updateProductList(pageNo)
+}
+
+// 商品 一覧更新
+function updateProductList (pageNo) {
+    var $form = $('#product_condition_form');
+    var query = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/product/list-select?page=' + pageNo,
+    });
+}
+
+// 商品 選択完了
+function selectProduct(id, itemId, name, buyingName) {
+	if (name != '') {
+		$('#item_name_display').html(name);
+		$('#item_name').val(name);
+	} else {
+		$('#item_name_display').html(buyingName);
+		$('#item_name').val(buyingName);
+	}
+	
+	$('#item_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css">
+table.list_default tr th {position:relative;}
+table.list_default tr th i {position:absolute;right:10px;margin-left:5px;font-size:1.2em}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.deleted td {background:#ccc;}
+table.list_default tr.deleted:hover td {background:#bbb;}
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td p {height:auto;}
+
+table.list_default tr td a.btn_list_delete {position:absolute;left:50px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+table.list_default tr:hover td {background:#deeeff;}
+.align_right{text-align:right;margin-right:12px;}
+.align_center{text-align:center;margin-right:12px;}
+
+table.list_default tr td {overflow:inherit;}
+table.list_default tr td a.btn_list_delete {position:absolute;left:60px;z-index:100;margin:5px 0 0px 5px;padding:7px 0 5px 0;line-height:1;display:block;cursor:pointer;background-color:#d90034;color:#fff;text-decoration:none;width:36px;text-align:center}
+table.list_default tr td a.btn_list_delete:hover {text-decoration:none;background-color:#e8315d;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:85px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {width:20px;float:left;}
+.menu_frame p.select_type_title {padding:1.4em 0;margin:0;text-align:center;line-height:1;font-size:1.3em;}
+.menu_frame a.select_type {padding:1.4em 0;margin:0 1px 1px 1px;text-align:center;display:block;background-color:#444;color:#fff;font-weight:bold;text-decoration:none;font-size:1.3em;}
+.menu_frame a.select_type:hover{background-color:#63b02d;color:#fff;}
+.menu_frame a.btn_close.select_type_close {padding:1.0em 0;margin:0 1px 1px 1px;text-align:center;display:block;text-decoration:none;font-size:1.3em;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:500px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/price-estimate/create">新規作成</a>
+            </p>
+	        <span style=""><strong>提出見積管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<div class="condition_items clearfix">
+			<form id="condition_form" action="/price-estimate/list" method="get">
+				<p class="search_condition_title">検索条件</p>
+
+				<input type="hidden" id="search" name="search" value="1">
+				<input type="hidden" id="page" name="page" value="1">
+
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">見積ステータス：</p>
+                        <select id="status" name="status">
+                            <option value="">---</option>
+                        	<?php foreach ($statusList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['status']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+					
+					<div class="condition_item">
+						<p class="condition_label">テンプレート：</p>
+                        <select id="type" name="type">
+                            <option value="">---</option>
+                        	<?php foreach ($connectionTypeList as $key => $value) { ?>
+                                <option value="<?php echo $key; ?>" <?php if ((string)$key === $this->conditions['type']) echo 'selected="selectd"';?>><?php echo $value; ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">提出先：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="connection_name_display"><?php echo $this->escape($this->conditions['connection_name']); ?></span>
+							<a class="reset_popup" id="reset_connection" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_connection" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="connection_name" name="connection_name" value="<?php echo $this->escape($this->conditions['connection_name']); ?>">
+						<input type="hidden" id="connection_id" name="connection_id" value="<?php echo $this->escape($this->conditions['connection_id']); ?>">
+					</div>
+
+					<div class="condition_item">
+						<p class="condition_label">対象商品：</p>
+						<div class="input_box_fake">
+							<span class="target_text" id="item_name_display"><?php echo $this->escape($this->conditions['item_name']); ?></span>
+							<a class="reset_popup" id="reset_item" href="javascript:void(0);"><span><i class="icon-cancel"></i></span></a>
+							<a class="select_popup" id="select_item" href="javascript:void(0);"><span>選択</span></a>
+						</div>
+						<input type="hidden" id="item_name" name="item_name" value="<?php echo $this->escape($this->conditions['item_name']); ?>">
+						<input type="hidden" id="item_id" name="item_id" value="<?php echo $this->escape($this->conditions['item_id']); ?>">
+					</div>
+				</div>
+				
+				<div class="condition_items_row clearfix">
+					<div class="condition_item">
+						<p class="condition_label">キーワード：</p>
+                        <input type="text" id="keyword" name="keyword" value="<?php echo $this->escape($this->conditions['keyword']); ?>" disabled="disabled">
+					</div>
+				</div>
+				
+				<div style="text-align:center">
+					<input type="button" class="clear_form" style="display:inline-block;width:150px;" value="リセット">
+					<input type="submit" class="submit" style="display:inline-block;width:150px;" value="検索">
+				</div>
+			</form>
+		</div>
+	</div>	
+
+	<div class="clearfix">
+		<p style="float:right;margin-bottom:13px;">全<?php echo number_format($this->getHelper('Pager')->getPaginator()->getPages()->totalItemCount); ?>件 (<?php echo $this->getHelper('Pager')->getPaginator()->getPages()->pageCount; ?>ページ)</p>
+    </div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:13%;"><p>更新日</p></th>
+				<th style="width:10%;"><p>見積ID</p></th>
+				<th style="width:8%;"><p>ステータス</p></th>
+				<th style="width:18%;"><p>テンプレート</p></th>
+				<th style="width:18%;"><p>提出先<i class="icon-info-circle"></i></p></th>
+				<th><p>表題<i class="icon-info-circle"></i></p></th>
+				<th style="width:4%;"><p>詳細</p></th>
+			</tr>
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $this->escape($each['id']); ?>">
+						<td>
+							<p><?php echo date('Y-m-d H:i', strtotime($each['updated'])); ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->escape($each['display_id']); ?></p>
+						</td>
+
+						<td>
+							<?php if ($each['status'] == (string)Shared_Model_Code::ESTIMATE_STATUS_SUBMITTED) { ?>
+								<p><strong><?php echo $statusList[$each['status']]; ?></strong></p>
+							<?php } else {?>
+								<p><?php echo $statusList[$each['status']]; ?></p>
+							<?php } ?>
+						</td>
+						
+						<td>
+							<p><?php echo $this->templateList[$each['template_id']]['title']; ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['company_name']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['company_name']), 14); ?></p>
+						</td>
+
+						<td class="desc" all-content="<?php echo $this->escape($each['title']); ?>">
+							<p><?php echo $this->roundText($this->escape($each['title']), 20); ?></p>
+						</td>
+								
+						<td style="position:relative;">
+							<?php if (!empty($this->adminProperty['allow_delete_row_data'])) { ?>
+								<a class="btn_list_delete" target-id="<?php echo $this->escape($each['id']); ?>">削除</a>
+							<?php } ?>
+							<p><a href="/price-estimate/version-list?id=<?php echo $this->escape($each['id']); ?>">表示</a></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

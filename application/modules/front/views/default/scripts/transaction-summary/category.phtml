@@ -1,0 +1,296 @@
+<?php
+$rowTypeList = Shared_Model_Code::codes('account_totaling_row_type');
+
+$yearList          = Shared_Model_Code::getYearListFromRelease();
+$monthList         = Shared_Model_Code::getMonthList();
+?>
+<script type="text/javascript">
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+var referenceTargetRow = '';
+
+$(function () {
+	$(document).ready(function(){
+
+	});
+});
+  
+</script>
+<style type="text/css">
+table.list_default tr th, table.list_default tr td {border-bottom:1px solid #666;}
+table.list_default tr th {background-color:#d6f3ff}
+table.list_default tr th.bg_gray {background-color:#555;color:#fff;font-size:1.2em;}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr:hover th {background-color:#b0e7ff}
+table.list_default tr:hover th.bg_gray {background-color:#555}
+
+p.number_text {text-align:right;margin-right:12px;}
+
+body input[type="submit"] {text-decoration:none;background-color:#00469b;color:#fff;display:block;padding:5px 5px 3px;width:70px;margin-top:5px;margin-right:5px;text-align:center;float:left;font-weight:bold}
+a.prev, a.next {text-decoration:none;background-color:#42adff;color:#fff;display:block;padding:5px 5px 3px;width:70px;margin-top:5px;margin-right:5px;text-align:center;float:left;font-weight:bold}
+a.prev:visited, a.next:visited { color:#fff;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>採算 - <?php echo $this->escape($this->categoryData['category_name']); ?></strong></span>
+	    </div>
+	</div>
+
+
+	<form>
+	<div class="col-xs-12 clearfix" style="margin-bottom:20px;">
+		<input type="hidden" name="category_id" value="<?php echo $this->escape($this->categoryId); ?>">
+		<select name="type" style="width:180px;margin-right:10px;display:block;float:left;">
+			<option value="accrual" <?php if ($this->sumType === 'accrual') { echo 'selected="selected"'; } ?>>発生日基準</option>
+			<option value="settlement" <?php if ($this->sumType === 'settlement') { echo 'selected="selected"'; } ?>>入金/支払日基準</option>
+		</select>
+		
+		<select name="year" style="width:120px;margin-right:10px;display:block;float:left;">
+			<?php foreach ($yearList as $key => $val) { ?>
+				<option value="<?php echo $this->escape($key); ?>" <?php if ((int)$this->year === (int)$key) { echo 'selected="selected"'; } ?>><?Php echo $this->escape($val); ?></option>
+			<?php } ?>
+		</select>
+		
+		<select name="month" style="width:120px;margin-right:10px;display:block;float:left;">
+			<option value="all" <?php if ($this->month === 'all') { echo 'selected="selected"'; } ?>>全て</option>
+			<?php foreach ($monthList as $key => $val) { ?>
+				<option value="<?php echo $this->escape($key); ?>" <?php if ((int)$this->month === (int)$key) { echo 'selected="selected"'; } ?>><?Php echo $this->escape($val); ?></option>
+			<?php } ?>
+		</select>
+		
+		<input type="submit" class="submit" style="display:block;float:left;width:150px;height:2.3em;margin-right:40px;" value="選択">
+		
+		<?php if (!empty($this->prevUrl)) { ?>
+			<a class="prev" href="<?php echo $this->escape($this->prevUrl); ?>">＜前月</a>
+	        <a class="next" href="<?php echo $this->escape($this->nextUrl); ?>">翌月＞</a>
+		<?php } ?>
+	</div>
+	</form>
+	
+	<div class="col-sm-12 clearfix">
+		<form id="register_form" action="#" method="post">
+					
+			<?php
+				//var_dump($this->sumType);
+				//var_dump($this->from);
+				//var_dump($this->to);
+				
+				$groupTable      = new Shared_Model_Data_AccountTotalingGroup();
+				$payableTable    = new Shared_Model_Data_AccountPayable();
+				$receivableTable = new Shared_Model_Data_AccountReceivable();
+				
+				$refTotals = array();
+				$items = array();
+				$totalRowCount = 0;
+				//echo $this->sumType;
+				
+				if (!empty($this->items)) {
+					foreach($this->items as &$each) {
+						
+						if ($each['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) {
+							$groupData = $groupTable->getById($this->adminProperty['management_group_id'], $each['content']);
+							
+							//echo $groupData['title'] . '<br>';
+							
+							$each['title'] = $groupData['title'];
+							//echo $each['title'];
+							
+							$total = 0;
+							
+							$receivableItems = $receivableTable->getItemsWithTotalingGroupId($this->adminProperty['management_group_id'], $groupData['id'], $this->sumType, $this->from, $this->to);
+							if (!empty($receivableItems)) {
+								foreach ($receivableItems as $eachReceivable) {
+									$total += (float)$eachReceivable['total_amount'];
+								}
+							}
+
+
+							$payableItems = $payableTable->getItemsWithTotalingGroupId($this->adminProperty['management_group_id'], $groupData['id'], $this->sumType, $this->from, $this->to);
+							if (!empty($payableItems)) {
+								foreach ($payableItems as $eachPayable) {
+									$total += -(float)$eachPayable['total_amount'];
+								}
+							}
+							
+							
+							$each['total'] = $total;
+							$refTotals[$each['unique_id']] = $total;
+						}
+					}
+					
+					foreach($this->items as &$eachRow) {
+						// 参照アイテムの置換
+						if ($eachRow['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) {
+							$eachRow['calc_text_default'] = $eachRow['calc_text']; 
+							$totalRowCount++;
+							//var_dump($each['calc_text']);
+							foreach ($refTotals as $key => $val) {
+								$eachRow['calc_text'] = str_replace($key, '(' . $val . ')', $eachRow['calc_text']);
+								//echo $eachRow['calc_text'] . '<br>';
+							}
+						}
+					}
+					
+					// 外部参照アイテムの解決
+					foreach($this->items as &$eachRowData) {
+						if ($eachRow['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) {
+							
+								
+							$str='(東京都)(神奈川県)(千葉県)';
+							$pattern = '/\(.+?\)/';
+							preg_match_all($pattern, $str, $match);
+							
+							
+							
+						}
+					}
+					
+					// DEBUG
+					/*
+					foreach($this->items as &$unu) {
+						if ($unu['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) {
+							echo $unu['calc_text'] . '<br>';
+						}
+					}
+					*/
+					
+					// トータルアイテムの置換
+					for ($count = 0; $count < $totalRowCount; $count++) {
+						foreach($this->items as &$eachData) {
+							
+							if ($eachData['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) {
+								
+								foreach ($refTotals as $key => $val) {
+									$eachData['calc_text'] = str_replace($key, '(' . $val . ')', $eachData['calc_text']);
+								}
+								
+								//echo $eachData['calc_text'] . '<br>';
+								
+								if (preg_match('/^[0-9\-]+$/', $eachData['calc_text'])) {
+									continue;
+									
+								} else if (preg_match('/^[0-9 \(\)\+\-\*\/\.]+$/', $eachData['calc_text'])) {
+									$desc = array(
+									   0 => array("pipe", "r"),
+									   1 => array("pipe", "w"),
+									   2 => array("pipe", "w")
+									);
+									$proc = proc_open("bc", $desc, $pipes);
+									//$eachData['calc_text'] = str_replace('(', '\(', $eachData['calc_text']);
+									//$eachData['calc_text'] = str_replace(')', '\)', $eachData['calc_text']);
+									//echo $eachData['calc_text'] . '****<br>';
+									fwrite($pipes[0], $eachData['calc_text'] . PHP_EOL);
+									fclose($pipes[0]);
+									$eachData['calc_text'] = str_replace("\n", '', stream_get_contents($pipes[1]));
+									//echo $eachData['calc_text'] . '%%%%<br>';
+									fclose($pipes[1]);
+									fclose($pipes[2]);
+									proc_close($proc);
+									//echo $eachData['calc_text'] . '<br>';
+									$refTotals[$eachData['unique_id']] = $eachData['calc_text'];
+								}
+							}
+						}
+					}
+					
+					
+				}
+				
+				//var_dump($refTotals);
+			?>
+							
+							
+			<table class="list_default" style="margin-bottom:0;">
+
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach($this->items as $eachItem) { ?>
+						<tr id="<?php echo $this->escape($eachItem['unique_id']); ?>">
+							<?php if ($eachItem['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_HEADING) { ?>
+									<th colspan="3" class="border-left border-top border-bottom border-right bg_gray">
+										<p><?php echo $this->escape($eachItem['content']); ?></p>
+									</th>
+							<?php } else if ($eachItem['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_TOTAL) { ?>
+									<th style="width:50%">
+										<p><?php echo $this->escape($eachItem['content']); ?><?php /* echo '<span style="color:#00f;">' . $this->escape($eachItem['unique_id']) . '</span>';*/ ?></p>
+									</th>
+									
+						            <td>
+							            <?php if (preg_match('/^[0-9\-\.]+$/', (string)$eachItem['calc_text'])) { ?>
+							            	<?php if ($eachItem['calc_text'] < 0) { ?>
+								            	<p class="number_text" style="color:#f00;"><?php echo '-' . $this->numberFormat(round(abs($eachItem['calc_text']))); ?></p>
+								            <?php } else { ?>
+								            	<p class="number_text"><?php echo $this->numberFormat(round($eachItem['calc_text'])); ?></p>
+								            <?php } ?>
+								            
+							            <?php } else { ?>
+								            <p class="number_text">-</p>
+							            <?php } ?>
+							            <?php /*<div class="multi_rows_padding" style="width:500px;color:#00f;"><?php echo $this->escape($eachItem['calc_text_default']); ?></div>*/ ?>
+						            </td>
+
+						            <td style="width:5%">
+							            &nbsp;
+						            </td>
+							<?php } else if ($eachItem['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_FREE) { ?>
+									<th>
+										<p><?php echo $this->escape($eachItem['content']); ?></p>
+									</th>
+									
+						            <td>
+										<input type="">
+						            </td>
+						            
+						            <td style="width:5%">
+							            &nbsp;
+						            </td>
+							<?php } else if ($eachItem['row_type'] === (string)Shared_Model_Code::ACCOUNT_TOTALING_ROW_TYPE_REFERENCE) { ?>
+
+									<th>
+										<p><?php echo $this->escape($eachItem['title']); ?><?php /* echo '<span style="color:#00f;">' . $this->escape($eachItem['unique_id']) . '</span>'; */  ?></p>
+									</th>
+									
+						            <td>
+							            <?php if ($eachItem['total'] < 0) { ?>
+							            	<p class="number_text" style="color:#f00;"><?php echo $this->numberFormat($eachItem['total']); ?></p>
+							            <?php } else { ?>
+							            	<p class="number_text"><?php echo $this->numberFormat($eachItem['total']); ?></p>
+							            <?php } ?>
+						            </td>
+						            
+						            <td style="width:5%">
+							            <p><a href="/transaction-summary/detail?category_id=<?php echo $this->escape($this->categoryData['id']); ?>&id=<?php echo $this->escape($eachItem['id']); ?>&type=<?php echo $this->escape($this->sumType); ?>&year=<?php echo $this->escape($this->year); ?>&month=<?php echo $this->escape($this->month); ?>" target="_blank">明細</a></p>
+						            </td>
+							<?php } ?>
+						</tr>
+					<?php } ?>
+				<?php } ?>
+
+			</table>
+
+		</form>
+
+	</div>
+
+
+</div>
+</div>
+</div>
+</div>
+
+

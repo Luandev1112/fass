@@ -1,0 +1,176 @@
+2021-07-01T18:31:42+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_product_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyProductController.php(159): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyProductController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:42+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-product
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:49+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_production_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyProductionController.php(154): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyProductionController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:49+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-production
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:50+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_subcontracting_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplySubcontractingController.php(153): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplySubcontractingController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:50+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-subcontracting
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:51+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_fixture_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyFixtureController.php(152): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyFixtureController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:51+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-fixture
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:56+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_product_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyProductController.php(159): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyProductController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:56+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-product
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:57+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_production_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyProductionController.php(154): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyProductionController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:57+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-production
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:31:58+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_subcontracting_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplySubcontractingController.php(153): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplySubcontractingController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:31:58+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-subcontracting
+    [module] => front
+    [action] => index
+)
+
+2021-07-01T18:32:00+09:00 (CRIT): SQLSTATE[42S22]: Column not found: 1054 Unknown column 'frs_supply_fixture_project.is_copied' in 'field list' #0 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Statement.php(305): Zend_Db_Statement_Pdo->_execute(Array)
+#1 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Abstract.php(479): Zend_Db_Statement->execute(Array)
+#2 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Db/Adapter/Pdo/Abstract.php(238): Zend_Db_Adapter_Abstract->query(Object(Nutex_Data_Db_Select), Array)
+#3 /var/www/fass-dev.fresco-co.net/Web/library/Nutex/Data/Db/Select.php(18): Zend_Db_Adapter_Pdo_Abstract->query(Object(Nutex_Data_Db_Select))
+#4 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator/Adapter/DbSelect.php(151): Nutex_Data_Db_Select->query()
+#5 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(784): Zend_Paginator_Adapter_DbSelect->getItems(0, 50)
+#6 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Paginator.php(613): Zend_Paginator->getItemsByPage(1)
+#7 /var/www/fass-dev.fresco-co.net/Web/application/modules/front/controllers/SupplyFixtureController.php(152): Zend_Paginator->getCurrentItems()
+#8 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Action.php(516): SupplyFixtureController->indexAction()
+#9 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Dispatcher/Standard.php(295): Zend_Controller_Action->dispatch('indexAction')
+#10 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Controller/Front.php(954): Zend_Controller_Dispatcher_Standard->dispatch(Object(Nutex_Request), Object(Nutex_Response))
+#11 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application/Bootstrap/Bootstrap.php(97): Zend_Controller_Front->dispatch()
+#12 /var/www/fass-dev.fresco-co.net/Web/library/Zend/Application.php(366): Zend_Application_Bootstrap_Bootstrap->run()
+#13 /var/www/fass-dev.fresco-co.net/Web/public/index.php(22): Zend_Application->run()
+#14 {main}
+2021-07-01T18:32:00+09:00 (CRIT): Request Parameters Array
+(
+    [controller] => supply-fixture
+    [module] => front
+    [action] => index
+)
+

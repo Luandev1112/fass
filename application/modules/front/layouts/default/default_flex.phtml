@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<?php
+$text = Shared_Model_Message::get('common');
+?>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="canonical" href="<?php echo HTTPS_PROTOCOL . APPLICATION_DOMAIN . $this->defaultUrl; ?>">
+<link rel="alternate" href="<?php echo HTTPS_PROTOCOL . APPLICATION_DOMAIN . $this->defaultUrl; ?>" hreflang="ja-JP">
+<link rel="alternate" href="<?php echo HTTPS_PROTOCOL . APPLICATION_DOMAIN . $this->defaultUrl; ?>" hreflang="en">
+<link rel="shortcut icon" type="image/png" href="/resource/favicon.png">
+<title><?php echo $this->escape($this->pageTitle); ?></title>
+<link rel="stylesheet" type="text/css" href="/resource/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="/resource/management/css/flex_new_module.css?<?php echo date('ymdHi') ?>">
+<link rel="stylesheet" type="text/css" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" type="text/css" href="/resource/type/fontello.css">
+<link rel="stylesheet" type="text/css" href="/resource/type/fontello-world/css/fontello.css">
+<link rel="stylesheet" type="text/css" href="/resource/type/budicons.css">
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery-confirm-v3.3.4/dist/jquery-confirm.min.css">
+<link rel="stylesheet" type="text/css" href="/resource/js/tipped-4.4.2-light/css/tipped/tipped.css">
+<script type="text/javascript" src="/resource/js/jquery.min.js"></script> 
+<script type="text/javascript" src="/resource/bootstrap/bootstrap.min.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/resource/js/jquery-confirm-v3.3.4/dist/jquery-confirm.min.js"></script>
+<script type="text/javascript" src="/resource/js/spin/spin.js"></script>
+<script type="text/javascript" src="/resource/js/tipped-4.4.2-light/js/tipped/tipped.js"></script>
+<script type="text/javascript">
+<?php if (empty($this->allowFullScreenDrop)) { ?>
+// cancel dropping file
+$(function () {
+	$(document).on('drop dragover', function (e) {
+    	e.stopPropagation();
+		e.preventDefault();
+	});
+});
+<?php } ?>
+// spinner
+var target;
+var spinner;
+function showSpinner() {
+    $('.loading_frame').show();  
+    var opts = {
+      lines:13,length:10,width:7,radius:20,corners:1,rotate:30,color:'#dfdfdf',speed:1,trail:89,
+      shadow:false,hwaccel:false,className:'spinner',zIndex:2e9,top:'50%',left:'50%',position:'absolute'
+    };
+	target = document.getElementById('loading');
+    spinner = new Spinner(opts).spin(target);
+    spinner.spin(target);
+}
+function stopSpinner() {
+    $('.loading_frame').hide();
+    spinner.stop();
+}
+
+$(function(){
+	$('#smart_menu').click( function(){
+		if ($('#supplier_menu').is(':visible')) {
+			$('#glayLayerSupplierMenu').hide();
+			$('#supplier_menu').hide();
+		} else {
+			$('#glayLayerSupplierMenu').show().css('opacity', '0.6');
+			$('#supplier_menu').show();
+		}
+	});
+	$('#glayLayer').click( function(){
+		$('#glayLayerSupplierMenu').hide();
+		$('#supplier_menu').hide();
+	});	
+			
+	$('#supplier_menu a').click( function(){
+		$('#glayLayerSupplierMenu').hide();
+		$('#supplier_menu').hide();
+		location.href = $(this).attr('to');		
+	});
+
+    $(window).on('resize', function(){
+	    if ($(this).width() > 992) {
+			$('#glayLayerSupplierMenu').hide();
+			$('#supplier_menu').hide();
+		}
+		
+		$('#overBoxLayer .container').css('height', window.innerHeight - 80);
+		$('.popup_content').css('height', $('#overBoxLayer .container').height() - $('#overBoxLayer .btn_close_popup').outerHeight());
+    });
+});
+</script>
+</head>
+<body>
+<div id="glayLayerSupplierMenu" style="display:none;"></div>
+<div id="glayLayer" style="display:none;"></div>
+<div id="dropLayer" style="display:none;">
+	<i class="icon-upload-cloud"></i>
+</div>
+<div id="overBoxLayer" style="display:none;">
+	<div class="container inner"><div class="popup_content"></div><a class="btn_close_popup">ポップアップを閉じる</a></div>
+</div>
+<div class="body-wrapper">
+	<div id="header_bar" class="section for_supplier" <?php if (!empty($this->adminProperty['group_data']['group_header_color'])) { ?>style="background-color:#<?php echo $this->escape($this->adminProperty['group_data']['group_header_color']); ?>"<?php } ?>>
+		<div class="light-wrapper">
+			<div class="container clearfix">
+				<?php if (!empty($this->adminProperty)) { ?>
+					<strong><?php echo $this->escape($this->adminProperty['group_data']['organization_name']); ?></strong>
+					<a id="switch_organization" href="/user/list-switch">組織切替</a>
+					<a id="header_manual_button" href="/office-manual" target="_balnk">マニュアル</a>
+				<?php } else { ?>
+					<strong>FASSログイン</strong>
+				<?php } ?>
+			</div>	
+		</div>
+	</div>
+	
+	<div id="header" class="section supplier">
+		<div class="light-wrapper">
+			<div class="container">
+				<div class="clearfix">
+					<div class="top_logo_supplier">
+						<a id="site_logo" href="/">
+							<img class="header_logo_image" src="/resource/img/common/fass_logo.png" alt="FASS">
+						</a>
+
+						<?php if (!empty($this->adminProperty)) { ?>
+							<a id="smart_change" href="/user/list-switch">
+								<i class="icon-retweet-1"></i><p>組織切替</p>
+							</a>
+							
+							<a id="smart_menu" href="javascript:void(0);">
+								<i class="icon-menu-1"></i><p>メニュー</p>
+							</a>
+						<?php } ?>
+					</div>
+					
+					<?php if (!empty($this->adminProperty)) { ?>
+						
+						<?php if ($this->menuCategory == 'approval') { /* 承認・確認待ち */ ?>
+							<a class="member_menu <?php if($this->menu == 'history') echo "selected"; ?>" href="/approval/history-list"><i class="icon-th-list"></i><span><span>全履歴</span></a>
+							<a class="member_menu <?php if($this->menu == 'pending') echo "selected"; ?>" href="/approval/list"><i class="icon-download-1"></i><span><span>承認・確認待ち</span></a>
+							
+						<?php } else { ?>
+							<a class="member_menu" href="/login/logout"><i class="icon-logout-1"></i><span><span>ログアウト</span></a>
+							<!-- <a class="member_menu <?php if($this->menuCategory == 'index') echo "selected"; ?>" href="/"><i class="icon-th-list"></i><span><span>管理メニュー</span></a> -->
+						<?php } ?>
+					<?php } ?>
+				</div>
+				
+				<div id="supplier_menu" style="display:none;">
+					<div class="container">
+				        <?php if ($this->menuCategory == 'approval') { /* 承認・確認待ち */ ?>
+							<a class="menu_item <?php if($this->menu == 'pending') echo "selected"; ?>" to="/approval/list"><i class="icon-download-1"></i><span><span>承認・確認待ち</span></a>
+							<a class="menu_item <?php if($this->menu == 'history') echo "selected"; ?>" to="/approval/history-list"><i class="icon-th-list"></i><span><span>全履歴</span></a>
+						<?php } else { ?>
+							<!-- <a class="menu_item <?php if($this->menu == 'index') echo "selected"; ?>" to="/"><i class="icon-th-list"></i><span><span>管理メニュー</span></a> -->
+							<a class="menu_item" to="/login/logout"><i class="icon-logout-1"></i><span><span>ログアウト</span></a>
+						<?php } ?>
+						
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	
+	
+	<?php /* メインコンテンツ */ ?>
+	<?php echo $this->partialWithParentView($this->bodyLayoutName) ?>
+	<?php /* メインコンテンツ */ ?>
+
+
+	<footer class="footer<?php if (!empty($this->keepFooter)) { ?> fotter_fixed<?php } ?>">
+		<div class="container inner">
+    		<p>copyright (C)fResco corporation, All Right Reserved.</p>
+    	</div><!-- container -->
+	</footer><!-- footer -->
+	
+</div><!-- body-wrapper -->
+</body>
+</html>

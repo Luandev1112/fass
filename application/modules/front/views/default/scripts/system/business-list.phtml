@@ -1,0 +1,99 @@
+<?php
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr th{position:relative;}
+table.list_default tr th i{position:absolute;right:10px;margin-left:5px;font-size:1.2em}
+table.list_default tr:hover td {background:#deeeff;}
+table.list_default tr.deleted td {background:#ccc}
+table.list_default tr.deleted:hover td {background:#bbb;}
+table.list_default tr td p {height:auto;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+<div class="clearfix">
+	<div style="float:left;width:200px;">
+		<?php
+	        echo $this->partial('system/define-menu.phtml', array(
+				'action'    => $this->action,
+			));
+	    ?>
+	</div>
+	<div style="float:right;width:890px;">    
+		<div class="col-xs-12">
+		    <div class="page_title" style="position:relative;">
+		    	<?php /*
+				<p style="position:absolute;width:162px;right:0;">
+	                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin-right:10px;border:none;" href="/connection/add">新規登録</a>
+	            </p>
+	            */ ?>
+		        <span style=""><strong>当社事業リスト</strong></span>
+		    </div>
+		</div>
+	    
+		<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+			<table class="list_default">
+				<tr>
+					<th style="width:13%;">
+						<p>ID</p>
+					</th>
+					
+					<th style="width:20%;">
+						<p>事業コード</p>
+					</th>
+					
+					<th>
+						<p>事業名</p>
+					</th>
+					
+					<th style="width:5%;">
+						<p>詳細</p>
+					</th>
+				</tr>
+	
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+						<tr>
+							<td>
+								<p><?php echo $this->escape($each['display_id']); ?></p>
+							</td>
+							
+							<td>
+								<p><?php  ?></p>
+							</td>
+							
+							<td>
+								<p><?php echo $this->escape($each['name']); ?></p>
+							</td>
+								
+							<td>
+								<p><a href="">編集</a></p>
+							</td>
+						</tr>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="7">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>          
+		</div>
+	</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+

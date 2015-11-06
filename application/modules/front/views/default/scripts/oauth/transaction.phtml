@@ -1,0 +1,56 @@
+<?php
+?>
+<script type="text/javascript" src="/resource/js/jquery-match-height-0.7.2/dist/jquery.matchHeight-min.js"></script>
+<script type="text/javascript">
+var pos = 0;
+$(function () {
+	$(document).ready(function(){
+
+	});
+});    
+</script>
+<style type="text/css">
+.row_loading {margin:0.4em 0.5em;width:2em;}
+p.align_right {text-align:right;}
+</style>
+<div class="section anchor">
+	<div class="light-wrapper">
+		<div class="container inner" style="padding-top:0;padding-bottom:10px;min-height:800px;margin-bottom:60px;">
+
+			<div class="col-xs-12">
+			    <div class="page_title" style="position:relative;">
+			        <span style=""><strong>GMOあおぞら口座 - <?php echo $this->items['account_id']; ?></strong></span>
+			    </div>
+			</div>
+		
+
+			<table class="list_default">
+				<tr>
+				    <th class="width:16%"><p>明細キー</p></th>
+					<th class="width:12%"><p>日付</p></th>
+					<th><p>摘要</p></th>
+					<th style="width:12%"><p>入金</p></th>
+					<th style="width:12%"><p>出金</p></th>
+					<th style="width:12%"><p>残高</p></th>
+				</tr>
+				<?php foreach ($this->items['transactions'] as $each) { ?>
+					<tr>
+					    <td><p><?php echo $each['item_key']; ?></p></td>
+						<td><p><?php echo $each['transaction_date']; ?></p></td>
+						<td><p><?php echo $each['remarks']; ?></p></td>
+						<td><p class="align_right"><?php if ($each['transaction_type'] === '1') { echo $this->numberFormat($each['amount']); } ?></p></td>
+						<td><p class="align_right"><?php if ($each['transaction_type'] === '2') { echo $this->numberFormat($each['amount']); } ?></p></td>
+						<td><p class="align_right"><?php echo $this->numberFormat($each['balance']); ?></p></td>
+						
+					</tr>
+				<?php } ?>
+			</table>
+
+			
+				
+			<?php var_dump($this->items); ?>
+				
+		</div>
+	</div>
+</div>
+

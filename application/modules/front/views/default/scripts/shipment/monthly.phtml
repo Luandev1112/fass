@@ -1,0 +1,225 @@
+<?php
+$statusList       = Shared_Model_Code::codes('shipment_status');
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+$monthList        = Shared_Model_Code::getMonthListFromRelease();
+?>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function () {
+    $(document).ready( function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+    
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find("textarea, :text, select").val("").end().find(":checked").prop("checked", false);
+	});
+	
+
+    // 月選択
+    $(document).on('change', '#month_select', function () {
+	    showSpinner();
+        location.href = '/shipment/monthly?month_select=' + $('#month_select').val();
+    });
+});    
+</script>
+<style type="text/css">
+table.list_default tr:hover td {background:#deeeff;}
+.delivery_code {color:#04a127;}
+p.action_title {font-size:1.1em;padding-left:11px;padding-top:10px;font-weight:bold;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+</div>
+	
+	<div class="col-xs-12">
+        <div class="item_header clearfix">
+            <span style="display:block;float:left;padding:11px 0 0 12px;height:15px;line-height:1;font-weight:bold;">月間出荷実績</span>
+            <select id="month_select" name="month_select" style="width:150px;margin-right:4px;margin-top:4px;display:block;float:right;height:26px;">
+                <option value="">年月を選択</option>
+                <?php foreach ($monthList as $key => $each) { ?>
+                    <option value="<?php echo $key . '-01'; ?>" <?php if ($this->targetDate == $key . '-01') { echo 'selected="selected"'; } ?>><?php echo $each; ?></option>
+                <?php } ?>
+        	</select>
+        </div>
+	</div>	
+	
+	<div>
+		<p style="font-size:1.2em;padding:1.0em 0.6em;">このページは年月を選択後、表示まで時間がかかります</p>
+	</div>
+	
+	<p style="font-size:1.6em;margin-bottom:0.4em;padding-left:0.6em;"><?php echo date('Y年m月', strtotime($this->targetDate)); ?></p>
+    <p style="font-size:1.6em;margin-bottom:0.4em;padding-left:0.6em;">発送み済注文数：<span id="order_count"></span></p>
+    <p style="font-size:1.6em;margin-bottom:1.0em;padding-left:0.6em;">発送済み合計金額：<span id="total_amount"></span></p>
+    
+    <p style="font-size:1.6em;margin-bottom:1.0em;padding-left:0.6em;">うちリピート：<span id="repeat_count"></span></p>
+	
+	    
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:8%;">
+					<p>注文ID</p>
+				</th>
+
+				<th style="width:8%;">
+					<p>ステータス</p>
+				</th>
+				
+				<th style="width:9%;">
+					<p>注文日</p>
+				</th>
+
+				<th style="width:9%;">
+					<p>発送予定日</p>
+				</th>
+
+				<th style="width:5.5%;">
+					<p>日指定</p>
+				</th>
+
+				<th style="width:12%;">
+					<p>支払方法</p>
+				</th>
+					
+				<th style="width:15%;">
+					<p>配送方法</p>
+				</th>
+				
+				<th >
+					<p>配送先</p>
+				</th>
+
+				<th style="width:8%">
+					<p>過去注文</p>
+				</th>
+
+				<th style="width:8%">
+					<p>回数</p>
+				</th>
+						
+			</tr>
+			
+			<?php $today = date('Y-m-d'); ?>
+			<?php
+				$orderCount = 0;
+				$repeatCount = 0;
+				$total = 0;
+				$orderTable = new Shared_Model_Data_Order();
+				
+				$countSum = array();
+				
+				for ($count = 0; $count <= 20; $count++) {
+					$countSum[$count] = 0;
+				}
+			?>
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['relational_order_id']; ?></p>
+						</td>
+		
+						<td>
+							<p <?php if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_NEW) { echo 'style="color:#f00;"'; } else if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { echo 'style="color:#ff8ddc;font-weight:bold;"'; } ?>><?php echo $statusList[$each['status']]; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo date('Y-m-d', strtotime($each['order_datetime'])); ?></p>
+						</td>
+						
+						<td <?php if ($today != $each['shipment_plan_date']) { echo 'style="background-color:#b3eaff;"'; } ?> >
+							<p><?php echo $this->escape($each['shipment_plan_date']); ?></p>
+						</td>
+
+						<td>
+							<p><?php if (!empty($each['delivery_request_date'])) { echo '<span class="delivery_code">●</span>'; } ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $paymentTypeList[$each['payment_method']]; ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $deliveryTypeList[$each['delivery_method']]; ?><?php if (!empty($each['delivery_code'])) { echo '&nbsp;<span class="delivery_code">●</span>'; } ?></p>
+						</td>
+						
+						<td>
+							<p><?php echo $this->roundText($this->escape($each['order_customer_name']), 10); ?></p>
+						</td>
+						
+						<td>
+							<?php
+								$lastData = NULL;
+								if ($each['status'] == Shared_Model_Code::SHIPMENT_STATUS_SHIPPED) {
+									
+									$orderCount++;
+									$total += (int)$each['total'];
+									$selectObj = $orderTable->select();
+									$selectObj->where($orderTable->aesdecrypt('order_customer_name', false) . ' = ?', $each['order_customer_name']);
+									$selectObj->where('order_datetime < ?', $this->targetDate);
+									$selectObj->where('relational_order_id != ?', $each['relational_order_id']);
+									$selectObj->order('order_datetime DESC');
+									$lastData = $selectObj->query()->fetchAll();
+								}
+							?>
+							<?php if (!empty($lastData)) {
+								echo '<p>' . $lastData[0]['relational_order_id'] . '</p>';
+								$repeatCount++;
+							} ?>
+						</td>
+						
+						<td>
+							<?php 
+								$count = 0;
+								if (!empty($lastData)) {
+									$count = count($lastData);
+								}
+								
+								echo '<p>' . $count . '</p>';
+								
+								if ($count > 20) {
+									$countSum[20] += 1;
+								} else {
+									$countSum[$count] += 1;
+								}
+							?>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="10">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+		
+		<?php foreach ($countSum as $key => $val) { ?>
+			<p><?php echo $key; ?>回：<?php echo $val; ?></p>
+		<?php } ?>
+	</div>
+
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function () {
+    $(document).ready( function(){
+	    $('#total_amount').html('<?php echo $this->numberFormat($total); ?> 円');
+        $('#order_count').html('<?php echo $orderCount; ?>');
+        $('#repeat_count').html('<?php echo $repeatCount; ?>');
+    });
+});    
+</script>
+</div>
+</div>
+</div>
+</div>
+

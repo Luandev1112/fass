@@ -1,0 +1,58 @@
+<div class="col-xs-12">
+    <div class="page_title" style="position:relative;">
+		<p style="position:absolute;width:76px;right:0;">
+            <a class="btn_setting btn_close" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;background-color:#f00;">キャンセル</a>
+        </p>       
+        <span><strong>クレジットカード選択</strong></span>
+    </div>
+</div>
+	
+<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+	<form id="register_form" action="#" method="post"> 
+	<table class="list_default">
+		<tr>
+			<th style="width:35%;"><p>カード名</p></th>
+			<th><p>カード会社名</p></th>
+			<th style="width:15%;"><p>カード番号下4桁</p></th>
+			<th style="width:8%;">
+				<p>選択</p>
+			</th>
+		</tr>
+		<tbody class="sortable_column" id="sortable_column">
+		<?php if (!empty($this->items)) { ?>
+			<?php foreach ($this->items as $each) { ?>
+				<tr id="<?php echo $this->escape($each['id']); ?>">
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['card_name']); ?></div>
+					</td>
+
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['card_company']); ?></div>
+					</td>
+					
+					<td>
+						<div class="multi_rows_padding"><?php echo $this->escape($each['card_no_last4']); ?></div>
+					</td>
+
+					<td>
+						<a class="option" href="javascript:selectCard('<?php echo $each['id']; ?>', '<?php echo $this->escape($each['card_name']); ?>', '<?php echo $this->escape($each['card_no_last4']); ?>');">選択</a>
+					</td>
+				</tr>
+			<?php } ?>
+		<?php } else { ?>
+			<tr>
+				<td colspan="4">
+					<p style="text-align:center;">データがありません</p>
+				</td>
+			</tr>
+		<?php } ?>
+		</tbody>
+	</table>
+	
+    <div style="padding:2.0em 0;">
+    <?php echo $this->pager() ?>
+    </div>
+            
+</div>
+
+

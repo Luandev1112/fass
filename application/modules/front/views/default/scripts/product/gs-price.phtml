@@ -1,0 +1,683 @@
+<?php
+$strategyList             = Shared_Model_Code::codes('strategy');
+?>
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '2') {
+			apiUrl = '/product/update-gs-price?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/product/gs-price?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>&pos=' + $(window).scrollTop();
+    	}
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/product/gs-price?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>&pos=' + $(window).scrollTop();
+    });
+    
+	//
+    // 標準卸価格コピー
+    //
+    $(document).on('click', '.btn_copy_lot', function () {
+		var targetId   = $(this).attr('target-id');
+	    var targetName = $(this).attr('target-name');
+	    
+	    jConfirm('本当に「' + targetName + '」をコピーしますか', '　', function(r) {
+            if(r) {
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:null,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                        } else if(obj.result == 'OK') { 
+	                        reloadFlag = true;                           
+                            jAlert('コピーしました', '　');
+                    		return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/product/price-lot-copy?item_id=<?php echo $this->escape($this->id); ?>&lot_id=' + targetId,
+				});
+        
+            } else {
+                return false;
+            }
+        });
+	});    
+
+
+	$(document).on('click', '.btn_up_list_item', function () {
+		var targetId   = $(this).attr('target-id');
+		showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'json',
+            data:null,
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if(obj.result == 'OK') {
+                    location.href = '/product/gs-price?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>&pos=' + $(window).scrollTop();
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/product/price-lot-order?id=<?php echo $this->escape($this->id); ?>&direction=up&lot_id=' + targetId,
+		});
+	});
+
+	$(document).on('click', '.btn_down_list_item', function () {
+		var targetId   = $(this).attr('target-id');
+		showSpinner();
+		$.ajax({
+            type:'POST',
+            dataType:'json',
+            data:null,
+            success:function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if(obj.result == 'OK') {
+                    location.href = '/product/gs-price?id=<?php echo $this->escape($this->id); ?>&direct=<?php echo $this->escape($this->direct); ?>&pos=' + $(window).scrollTop();
+                }
+            },
+            error:function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:'/product/price-lot-order?id=<?php echo $this->escape($this->id); ?>&direction=down&lot_id=' + targetId,
+		});
+	});
+	       
+	//
+    // 標準卸価格削除
+    //
+    $(document).on('click', '.btn_delete_lot', function () {
+		var targetId   = $(this).attr('target-id');
+	    var targetName = $(this).attr('target-name');
+
+	    jConfirm('本当に「' + targetName + '」を削除しますか', '　', function(r) {
+            if(r) {
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data:null,
+                    success:function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                        } else if(obj.result == 'OK') { 
+	                        reloadFlag = true;                           
+                            jAlert('削除しました', '　');
+                    		return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error:function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url:'/product/price-lot-delete?item_id=<?php echo $this->escape($this->id); ?>&lot_id=' + targetId,
+				});
+        
+            } else {
+                return false;
+            }
+        });
+	});
+
+    // 卸価格提示方法
+    $(document).on('change', 'input.price_open_condition[type="radio"]', function () {
+	    if ($(this).val() === '<?php echo Shared_Model_Code::GS_PRICE_OPEN_COMUNICATION; ?>') {
+			$('.price_default_frame').show();
+			$('input[name=price_default]').val([]);
+		} else {
+			$('.price_default_frame').hide();
+			$('#estimate_advisability').prop("disabled", false);
+		}
+    });
+    
+    // 標準卸価格設定しない場合は、個別見積可否の対応する固定
+    $(document).on('change', 'input.price_default[type="radio"]', function () {
+	    if ($(this).val() === '<?php echo Shared_Model_Code::GS_PRICE_DEFAULT_OFF; ?>') {
+			$('#estimate_advisability').val('<?php echo Shared_Model_Code::GS_ESTIMATE_ADVISABILITY_OK; ?>').prop("disabled", true);
+		} else {
+			$('#estimate_advisability').prop("disabled", false);
+		}
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;padding-right:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td.column_value select.short {width:300px;}
+.checkbox_item {float:left;height:28px;padding-top:6px;padding-left:1px;margin-right:12px;}
+.multi_rows_padding {padding:5px 0 5px 10px}
+
+.condition_label{float:left;}
+a.btn_link {display:block;background-color:#64bd63;color:#fff;padding:2px 3px;text-decoration:none;border-radius:5px;width:80px;text-align:center;margin:3px 0 0 10px;float:left;cursor:pointer;}
+table.list_default tr th.add_category {border-right:1px solid #fff}
+a.btn_edit_list_item {
+display:block;background-color:#ffa600;color:#fff;border-radius:0.3em;box-shadow:0px 2px 2px rgba(0, 0, 0, 0.29);
+font-weight:bold;padding:0.2em 0.6em;margin:0 0.8em 0 0;text-decoration:none;text-align:center;cursor:pointer;
+}
+a.btn_select_list_item {
+display:block;background-color:#006ac7;color:#fff;border-radius:0.3em;box-shadow:0px 2px 2px rgba(0, 0, 0, 0.29);
+font-weight:bold;padding:0.2em 0.6em;margin:0 0.8em 0 0;text-decoration:none;text-align:center;cursor:pointer;
+}
+
+a.btn_delete_list_item {
+display:block;background-color:#ea5759;color:#fff;border-radius:0.3em;box-shadow:0px 2px 2px rgba(0, 0, 0, 0.29);
+font-weight:bold;padding:0.2em 0.6em;margin:0 0.8em 0 0;text-decoration:none;text-align:center;cursor:pointer;
+}
+
+a.btn_copy_list_item {
+display:block;background-color:#006ac7;color:#fff;border-radius:0.3em;box-shadow:0px 2px 2px rgba(0, 0, 0, 0.29);
+font-weight:bold;padding:0.1em 1.0em;margin:0 0.8em 0 0;text-decoration:none;text-align:center;cursor:pointer;
+}
+a.btn_up_list_item, a.btn_down_list_item {
+display:block;background-color:#666;color:#fff;border-radius:0.3em;box-shadow:0px 2px 2px rgba(0, 0, 0, 0.29);font-size:1.2em;line-height:1.3;
+font-weight:bold;padding:0.2em 1.0em;margin:0.3em 0.5em 0;text-decoration:none;text-align:center;cursor:pointer;
+}
+a.btn_up_list_item.inactive, a.btn_down_list_item.inactive {
+background-color:#ccc;
+}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+	<?php
+		$titleName = '';
+		if ($this->data['product_name_type'] === (string)Shared_Model_Code::PRODUCT_NAME_TYPE_SUPPLY) {
+			$titleName = $this->escape($this->data['buying_item_name']);
+		} else {
+			$titleName = $this->escape($this->data['item_name']);
+		}
+	?>     
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>商品管理 - <?php echo $titleName; ?></strong></span>
+        </div>
+    	<?php
+            echo $this->partial('product/menu.phtml', array(
+    			'action'    => $this->action,
+    			'id'        => $this->id,
+    			'direct'    => $this->direct,
+    		));
+        ?>
+    </div>
+
+    <div class="clearfix">
+	    <?php if (empty($this->data['gs_display_id'])) { ?>
+	    	<p style="background-color:#d4f3ff;padding:2.0em 0;text-align:center;">連携してください</p>
+	    
+	    <?php } else { ?>
+		    <?php
+	        /* 参考情報 */
+	        $categoryId = 1;
+	        ?>
+			<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">参考情報</p></th>
+	            </tr>
+	        </table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	                <td class="column_label"><p class="label_text">商品戦略</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+		            	<p>
+		            		<?php
+			            		if (!empty($this->data['strategy'])) {
+				            		if ($this->data['strategy'] === (string)Shared_Model_Code::PRODUCT_STRATEGY_SPECIAL) {
+			            				echo '<strong>' . $strategyList[$this->data['strategy']] . '</strong>';
+			            			} else {
+				            			echo $strategyList[$this->data['strategy']];
+			            			}
+			            		} else {
+				            		echo '---';
+			            		}
+			            	?>
+		            	</p>
+	                </td>
+	            </tr>
+	        </table>
+	        </form>
+		    
+		    <?php
+	        /* 価格前提条件 */
+	        $categoryId = 2;
+	        ?>
+			<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom"><p class="label_text strong">価格前提条件</p></th>
+	                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                    <span>×</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+	                </th>
+	            </tr>
+	        </table>
+	        <table class="list_default" style="margin-bottom:50px;">
+	            <tr>
+	                <td class="column_label"><p class="label_text">卸価格提示方法<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+							<?php if (!empty($this->gsItemData['price_open_condition'])) { ?>
+								<p><?php echo $this->gsItemData['price_open_condition_list'][$this->gsItemData['price_open_condition']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<?php foreach ($this->gsItemData['price_open_condition_list'] as $key => $val) { ?>
+								<div class="checkbox_item">
+									<label><input type="radio" class="price_open_condition" name="price_open_condition" value="<?php echo $this->escape($key); ?>" <?php if ((string)$key === (string)$this->gsItemData['price_open_condition']) { echo 'checked="checked"'; } ?>><?php echo $this->escape($val); ?></label>
+								</div>
+							<?php } ?>
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr class="price_default_frame" <?php if ($this->gsItemData['price_open_condition'] !== (string)Shared_Model_Code::GS_PRICE_OPEN_COMUNICATION) { ?>style="display:none;"<?php } ?>>
+	                <td class="column_label"><p class="label_text">標準卸価格<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+	                		<?php if (!empty($this->gsItemData['price_default'])) { ?>
+								<p><?php echo $this->gsItemData['price_default_list'][$this->gsItemData['price_default']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<?php foreach ($this->gsItemData['price_default_list'] as $key => $val) { ?>
+								<div class="checkbox_item">
+									<label><input type="radio" class="price_default" name="price_default" value="<?php echo $this->escape($key); ?>" <?php if ((string)$key === (string)$this->gsItemData['price_default']) { echo 'checked="checked"'; } ?>><?php echo $this->escape($val); ?></label>
+								</div>
+							<?php } ?>
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">個別見積可否の対応</p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+	                		<?php if (!empty($this->gsItemData['estimate_advisability'])) { ?>
+								<p><?php echo $this->gsItemData['estimate_advisability_list'][$this->gsItemData['estimate_advisability']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+		                	<select id="estimate_advisability" name="estimate_advisability" class="short">
+								<option value="">---</option>
+								<?php foreach ($this->gsItemData['estimate_advisability_list'] as $key => $val) { ?>
+									<option value="<?php echo $this->escape($key) ?>" <?php if ($this->gsItemData['estimate_advisability'] === (string)$key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+								<?php } ?>
+							</select>
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">国内小売可否<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+	                		<?php if (!empty($this->gsItemData['sales_domestic'])) { ?>
+								<p><?php echo $this->gsItemData['sales_domestic_list'][$this->gsItemData['sales_domestic']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                			<select name="sales_domestic" class="short">
+								<option value="">---</option>
+								<?php foreach ($this->gsItemData['sales_domestic_list'] as $key => $val) { ?>
+									<option value="<?php echo $this->escape($key) ?>" <?php if ($this->gsItemData['sales_domestic'] === (string)$key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+								<?php } ?>
+							</select>
+	                	</div>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">上代価格種類<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+	                		<?php if (!empty($this->gsItemData['sales_price_type'])) { ?>
+								<p><?php echo $this->gsItemData['sales_price_type_list'][$this->gsItemData['sales_price_type']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                			<select name="sales_price_type" class="short">
+								<option value="">---</option>
+								<?php foreach ($this->gsItemData['sales_price_type_list'] as $key => $val) { ?>
+									<option value="<?php echo $this->escape($key) ?>" <?php if ($this->gsItemData['sales_price_type'] === (string)$key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+								<?php } ?>
+							</select>
+	                	</div>
+	                </td>
+	            </tr>
+
+	            <tr>
+	                <td class="column_label"><p class="label_text">消費税率(10月より適用)<span class="require">&nbsp;＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<div class="clearfix">
+	                	<div class="display_value_<?php echo $categoryId; ?>">
+	                		<?php if (!empty($this->gsItemData['tax_rate'])) { ?>
+								<p><?php echo $this->gsItemData['tax_rate_list'][$this->gsItemData['tax_rate']]; ?></p>
+							<?php } else { ?>
+								<p>---</p>
+							<?php } ?>
+	                	</div>
+	                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+                			<select name="tax_rate" class="short">
+								<option value="">---</option>
+								<?php foreach ($this->gsItemData['tax_rate_list'] as $key => $val) { ?>
+									<option value="<?php echo $this->escape($key) ?>" <?php if ($this->gsItemData['tax_rate'] === (string)$key) { echo 'selected="selected"'; } ?>><?php echo $this->escape($val); ?></option>
+								<?php } ?>
+							</select>
+	                	</div>
+	                </td>
+	            </tr>
+	        </table>
+	        </form>
+	        
+	        
+	        
+	        
+			<div class="col-xs-12">
+			    <div class="page_title" style="position:relative;">
+					<p style="position:absolute;width:180px;right:0;">
+		                <a class="btn_setting" style="display:block;float:left;width:80px;padding:5px 0;margin:0;border:none;margin-right:10px;" href="/product/gs-price-apply-apploval">承認申請</a>
+		                <a class="btn_setting" style="display:block;float:left;width:90px;padding:5px 0;margin:0;border:none;" href="/product/update-gs-price">goosaに反映</a>
+		            </p>
+			    </div>
+			    <span>&nbsp;</span>
+			</div>  
+			
+			
+			<?php if ($this->gsItemData['price_default'] === (string)Shared_Model_Code::GS_PRICE_DEFAULT_ON) { ?>
+			
+		    <?php
+	        /* 標準卸価格(マスターデータ) */
+	        $categoryId = 3;
+	        ?>
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom"><p class="label_text strong">標準卸価格(マスターデータ)</p></th>
+	                
+	                <th class="add_category"  id="add_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_add_category" id="btn_add_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="/product/gs-price-add?item_id=<?php echo $this->escape($this->data['id']); ?>">
+	                    <span>+</span>
+	                    </a>
+	                </th>
+	            </tr>
+	        </table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	                <td><p class="label_text">項目</p></td>
+	                <td style="width:15%"><p class="label_text">上代価格</p></td>
+	                <td style="width:18%"><p class="label_text">卸価格単価</p></td>
+	                <td style="width:20%"><p class="label_text">注文ロット</p></td>
+	                <td style="width:15%"><p class="label_text">操作</p></td>
+	                <td style="width:6%">&nbsp;</td>
+	            </tr>
+	            <?php if (!empty($this->masterPriceList)) { ?>
+		            <?php foreach ($this->masterPriceList as $each) { ?>
+						<tr>
+							<td>
+								<div class="multi_rows_padding clearfix">
+									<a class="btn_copy_list_item btn_copy_lot" style="float:right;" target-id="<?php echo $this->escape($each['id']); ?>" target-name="<?php echo $this->escape($each['title']); ?>">コピー</a>
+									<strong><?php echo $this->escape($each['title']); ?></strong><br>
+									<span class="price_branch_name">枝番号：<?php echo $this->escape($each['branch_id']); ?></span><br>
+									<?php if (empty($each['setting_shipping_id'])) { ?>
+										<span class="shipping_selected"><i class="icon-truck"></i>&nbsp;発送なし</span>
+									<?php } else { ?>
+										<span class="shipping_selected"><i class="icon-truck"></i>&nbsp;<?php echo $this->shippingSettingList[$each['setting_shipping_id']]['title']; ?></span>
+									<?php } ?>
+								</div>
+							</td>
+							<td>
+								<div class="multi_rows_padding clearfix">
+									<?php if ($this->gsItemData['sales_price_type'] === (string)Shared_Model_Code::PRICE_TYPE_OPEN || $this->gsItemData['sales_price_type'] === (string)Shared_Model_Code::PRICE_TYPE_NONE) { ?>
+											<?php echo $salesPriceTypeList[$this->gsData['sales_price_type']]; ?></span><br>
+									<?php } else if(!empty($each['sales_price'])) { ?>
+										<?php echo $this->numberFormat($each['sales_price']); ?>&nbsp;円(税抜)<br>
+										<?php echo $this->numberFormat(Shared_Model_Utility_Tax::calcuratePriceWithTax($each['sales_price'], $this->gsItemData['tax_rate'])); ?>&nbsp;円(税込)
+									<?php } else { ?>
+									---
+									<?php } ?>
+								</div>
+							</td>
+							
+							<td>
+								<div style="padding-left:1.0em;">
+								<?php echo $this->numberFormat($this->escape($each['unit_price'])); ?>&nbsp;円(税抜)&nbsp;/&nbsp;<?php echo $this->escape($each['lot_unit_name']); ?><br>
+								<?php echo $this->numberFormat(Shared_Model_Utility_Tax::calcuratePriceWithTax($each['unit_price'], $this->gsData['tax_rate'])); ?>&nbsp;円(税込)&nbsp;/&nbsp;<?php echo $this->escape($each['lot_unit_name']); ?>
+								</div>
+							</td>
+							
+							<td>
+								<div style="text-align:right;padding-right:1.0em">
+									<?php echo $this->numberFormat($each['lot']) . '&nbsp;' . $this->escape($each['lot_unit_name']); ?>
+								</div>
+							</td>
+							
+							<td>
+								<div class="multi_rows_padding clearfix">
+									<a class="btn_edit_list_item" style="float:left;" href="/product/gs-price-edit?item_id=<?php echo $this->escape($this->id); ?>&lot_id=<?php echo $this->escape($each['id']); ?>&direct=1">編集</a>
+									<a class="btn_delete_list_item btn_delete_lot" style="float:left;" target-id="<?php echo $this->escape($each['id']); ?>" target-name="<?php echo $this->escape($each['title']); ?>">削除</a>
+								</div>
+							</td>
+							<td>
+								<a class="btn_up_list_item <?php if ($each === reset($this->masterPriceList)) { ?> inactive<?php } ?>" target-id="<?php echo $this->escape($each['id']); ?>"><i class="icon-sort-up"></i></a>
+								<a class="btn_down_list_item <?php if ($each === end($this->masterPriceList)) { ?> inactive<?php } ?>" target-id="<?php echo $this->escape($each['id']); ?>"><i class="icon-sort-down"></i></a>
+							</td>
+						</tr>
+		            <?php } ?>
+		        <?php } else { ?>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません。必ず一つ以上登録してください。</p>
+					</td>
+		        <?php } ?>
+	        </table>
+        
+        
+		    <?php
+	        /* 標準卸価格(公開中) */
+	        $categoryId = 2;
+	        ?>
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right" style="background-color:#c7f0df;"><p class="label_text strong">標準卸価格(公開中)</p></th>
+	            </tr>
+	        </table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+	                <td><p class="label_text">項目</p></td>
+	                <td style="width:15%"><p class="label_text">上代価格</p></td>
+	                <td style="width:18%"><p class="label_text">卸価格単価</p></td>
+	                <td style="width:20%"><p class="label_text">注文ロット</p></td>
+	                <td style="width:21%"><p class="label_text">在庫数</p></td>
+	            </tr>
+	            <?php if (!empty($this->gsPriceList)) { ?>
+		            <?php foreach ($this->gsPriceList as $each) { ?>
+						<tr>
+							<td>
+								<div class="multi_rows_padding clearfix">
+									<strong><?php echo $this->escape($each['title']); ?></strong><br>
+									<span class="price_branch_name">枝番号：<?php echo $this->escape($each['branch_id']); ?></span><br>
+									<?php if (empty($each['setting_shipping_id'])) { ?>
+										<span class="shipping_selected"><i class="icon-truck"></i>&nbsp;発送なし</span>
+									<?php } else { ?>
+										<span class="shipping_selected"><i class="icon-truck"></i>&nbsp;<?php echo $this->escape($each['setting_shipping_title']); ?></span>
+									<?php } ?>
+								</div>
+							</td>
+							<td>
+								<div class="multi_rows_padding clearfix">
+								<?php if ($this->gsData['sales_price_type'] === (string)Shared_Model_Code::PRICE_TYPE_OPEN || $this->gsData['sales_price_type'] === (string)Shared_Model_Code::PRICE_TYPE_NONE) { ?>
+										<?php echo $salesPriceTypeList[$this->gsData['sales_price_type']]; ?></span><br>
+								<?php } else if(!empty($each['sales_price'])) { ?>
+									<?php echo $this->numberFormat($each['sales_price']); ?>&nbsp;円(税抜)<br>
+									<?php echo $this->numberFormat(Shared_Model_Utility_Tax::calcuratePriceWithTax($each['sales_price'], $this->gsData['tax_rate'])); ?>&nbsp;円(税込)
+								<?php } else { ?>
+								---
+								<?php } ?>
+								</div>
+							</td>
+							
+							<td>
+								<div style="padding-left:1.0em;">
+								<?php echo $this->numberFormat($this->escape($each['unit_price'])); ?>&nbsp;円(税抜)&nbsp;/&nbsp;<?php echo $this->escape($each['lot_unit_name']); ?><br>
+								<?php echo $this->numberFormat(Shared_Model_Utility_Tax::calcuratePriceWithTax($each['unit_price'], $this->gsData['tax_rate'])); ?>&nbsp;円(税込)&nbsp;/&nbsp;<?php echo $this->escape($each['lot_unit_name']); ?>
+								</div>
+							</td>
+							
+							<td>
+								<div style="text-align:right;padding-right:1.0em;">
+									<?php echo $this->numberFormat($each['lot']) . '&nbsp;' . $this->escape($each['lot_unit_name']); ?>
+								</div>
+							</td>
+							
+							<td>
+								<div style="text-align:right;padding-right:1.0em;">
+									<?php if (!empty($each['stock_count_free'])) { echo '設定しない'; } else { echo $this->numberFormat($this->escape($each['stock_count'])); } ?>
+								</div>
+							</td>
+						</tr>
+		            <?php } ?>
+		        <?php } else { ?>
+					<td colspan="7">
+						<p style="text-align:center;">データがありません。</p>
+					</td>
+		        <?php } ?>
+	        </table>
+	        <?php } else { ?>
+	        	<p>現在、標準卸価格なしの設定になっています</p>
+	        <?php } ?>
+	        
+	        
+        <?php } ?>
+        
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>
+

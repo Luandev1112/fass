@@ -1,0 +1,83 @@
+	<div class="clearfix">
+		<table class="list_default" style="margin-bottom:0;">
+			<?php if (!empty($this->isPopup)) { ?>
+	            <tr>
+	                <th style="border-left border-top border-bottom">
+	                    <p class="label_text strong">管理情報</p>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_select_uploaded select_estimate_item" item-id="<?php echo $this->escape($each['item_id']); ?>" estimate-id="<?php echo $this->escape($this->data['display_id']); ?>" target-id="<?php echo $this->escape($this->versionData['id']); ?>" target-row="0" item-name="" href="javascript:void(0);"><span>選択</span></a>
+	                </th>
+	            </tr>
+			<?php } else { ?>
+	            <tr>
+	                <th class="border-left border-top border-bottom border-right">
+	                    <p class="label_text strong">管理情報</p>
+	                </th>
+	            </tr>
+			<?php } ?>
+		</table>
+         
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積もり管理番号</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="multi_rows_padding"><?php echo $this->escape($this->data['display_id']); ?></div>
+                </td>
+            </tr>
+        
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">宛先<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="multi_rows_padding"><?php echo $this->escape($this->versionData['to_name']); ?></div>                 
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">担当者<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<div class="multi_rows_padding">
+						<?php
+	                		if (!empty($this->createdUser)) {
+	                			echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+	                		} else {
+	                			echo '---';
+	                		}
+						?>
+					</div>              
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積書発行日<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="multi_rows_padding"><?php echo date('Y年m月d日', strtotime($this->data['estimate_date'])); ?></div>
+                </td>
+            </tr>
+                  
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">表題<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="multi_rows_padding"><?php echo $this->escape($this->versionData['title']); ?></div>
+                </td>
+            </tr>
+            
+        	<tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">見積書ファイルデータ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="multi_rows_padding"><span id="file_name_text"><?php echo $this->escape($this->versionData['file_name']); ?></div>
+                	<?php if (!empty($this->versionData['file_name'])) { ?>
+                		<a class="option" target="_blank" href="<?php echo Shared_Model_Resource_EstimateUpload::getResourceUrl($this->data['id'], $this->versionData['id'], $this->versionData['file_name']); ?>">ダウンロード</a>
+                	<?php } ?>
+                </td>
+			</tr>
+        </table>      
+		
+	</div><!-- clearfix -->	
+	

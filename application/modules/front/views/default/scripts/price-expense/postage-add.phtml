@@ -1,0 +1,445 @@
+<?php
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var estimateId = 0;
+var editing = 0;
+var pos = 0;
+
+$(function() {
+    $(document).ready(function(){
+
+    });
+    			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/price-expense/postage";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+		showSpinner();
+
+        var $form = $('#register_form');
+        var query = $form.serialize();
+        var param = $form.serializeArray();
+
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                    
+                } else if(obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('登録しました', '　');
+                    return;
+                    
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/price-expense/postage-add-post'
+		});
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+    	if (reloadFlag) {
+    		location.href = '/price-expense/postage';
+    	}
+    });
+    
+    // 取引先選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 取引先条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+
+	// 取引先解除
+	$(document).on('click', '#reset_connection', function () {
+		$('.connection_name').html('---');
+		$('#connection_id').val('');
+		$('.btn_close').click();
+	});
+	
+    // 備品資材 ポップアップ表示
+    $(document).on('click', '#select_fixture', function () {
+    	showSpinner();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/supply-fixture/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 備品資材 条件検索
+    $(document).on('click', '#search_fixture', function () {
+		updateSupplyFixtureList(1);
+    });
+
+	// 備品資材 解除
+	$(document).on('click', '#reset_fixture', function () {
+		$('#supply_fixture_name').html('---');
+		$('#supply_fixture_id').val('');
+		$('.btn_close').click();
+	});
+	
+    // 業務委託 ポップアップ表示
+    $(document).on('click', '#select_subcontracting', function () {
+    	showSpinner();
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/supply-subcontracting/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 業務委託 条件検索
+    $(document).on('click', '#search_subcontracting', function () {
+		updateSupplySubcontractingList(1);
+    });
+
+	// 業務委託 解除
+	$(document).on('click', '#reset_subcontracting', function () {
+		$('#supply_subcontracting_name').html('---');
+		$('#supply_subcontracting_id').val('');
+		$('.btn_close').click();
+	});
+	
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先選択
+function selectConnection(id, displayId, name) {
+	$('.connection_name').html('<strong>' + displayId + '</strong>　' + name);
+	$('#connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 備品資材 一覧ページ切り替え
+function pageSupplyFixture(pageNo) {
+	updateSupplyFixtureList(pageNo)
+}
+
+// 備品資材 一覧更新
+function updateSupplyFixtureList (pageNo) {
+    var $form = $('#fixture_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/supply-fixture/list-select?page=' + pageNo,
+    });
+}
+
+// 備品資材 選択
+function selectSupplyFixture(id, itemId, name) {
+	console.log('selectSupplyFixture id:' + id + 'itemId:' + itemId  + 'name:' + name);
+	$('#supply_fixture_name').html('<strong>' + itemId + '</strong>　' + name);
+	$('#supply_fixture_id').val(id);
+	$('.btn_close').click();
+}
+
+// 業務委託 一覧ページ切り替え
+function pageSupplySubcontracting(pageNo) {
+	updateSupplySubcontractingList(pageNo)
+}
+
+// 業務委託 一覧更新
+function updateSupplySubcontractingList (pageNo) {
+    var $form = $('#subcontracting_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/supply-subcontracting/list-select?page=' + pageNo,
+    });
+}
+
+// 業務委託 選択
+function selectSupplySubcontracting(id, itemId, name) {
+	$('#supply_subcontracting_name').html('<strong>' + itemId + '</strong>　' + name);
+	$('#supply_subcontracting_id').val(id);
+	$('.btn_close').click();
+}
+</script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>原単位・送料 - 新規登録</strong></span>
+        </div>
+    </div>
+
+    <form id="register_form" action="javascript:void(0);" method="post">
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">基本情報</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">名称<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <input type="text" name="title" value="" maxlength="" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">内容<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="description" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">標準サイズ<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<input type="text" name="size" value="" maxlength="" />
+					</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text" style="padding-left:12px;">試用輸送箱資材<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="supply_fixture_name">---</p>
+                    <a class="option" id="select_fixture">備品・資材選択</a>
+                    <a class="option" id="reset_fixture">解除</a>
+                    <input type="hidden" id="supply_fixture_id" name="supply_fixture_id" value="" />
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">国<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<input type="text" class="short" name="country" value="" maxlength="" />
+					</div>
+                </td>
+            </tr>
+        </table>
+        
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">送料</p></th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">原価計算用　一律送料<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                    <input type="text" style="float:left;width:120px" name="standard_price" value="" maxlength="" />
+	                    <p style="float:left;">&nbsp;円</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">地域別・送料実費の範囲　下限<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                    <input type="text" style="float:left;width:120px" name="minimum_price" value="" maxlength="" />
+	                    <p style="float:left;">&nbsp;円</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">地域別・送料実費の範囲　上限<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                    <div class="clearfix">
+	                    <input type="text" style="float:left;width:120px" name="max_price" value="" maxlength="" />
+	                    <p style="float:left;">&nbsp;円</p>
+                    </div>
+                </td>
+            </tr> 
+		</table>
+
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-left border-top border-bottom border-right"><p class="label_text strong">委託先</p></th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:13px;">  
+            <tr>
+                <td class="column_label"><p class="label_text">取引先<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="connection_name">---</p>
+                    <a class="option" id="select_connection">取引先選択</a>
+                    <a class="option" id="reset_connection">解除</a>
+                    <input type="hidden" id="connection_id" name="connection_id" value="" />
+                </td>
+            </tr>
+            <tr>
+                <td class="column_label"><p class="label_text">業務委託ID<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="supply_subcontracting_name">---</p>
+                    <a class="option" id="select_subcontracting">業務委託選択</a>
+                    <a class="option" id="reset_subcontracting">解除</a>
+                    <input type="hidden" id="supply_subcontracting_id" name="supply_subcontracting_id" value="" />
+                </td>
+            </tr>
+		</table>
+		
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">メモ</p>
+                </th>
+            </tr>
+		</table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">メモ</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+						<textarea name="memo" style="height:100px;margin-bottom:6px;"></textarea>
+					</div>
+                </td>
+            </tr>
+        </table>
+	</div><!-- clearfix -->	
+    </form>
+               
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,92 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+$typeList     = Shared_Model_Code::codes('item_type');
+?>
+<script type="text/javascript">
+$(function () {
+    $(document).ready( function(){
+
+    });
+});    
+</script>
+<style type="text/css"><!--
+
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:76px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:76px;padding:5px 0;margin:0;border:none;" href="/warehouse/add/<?php echo $this->escape($this->type); ?>">新規登録</a>
+            </p>
+	        <span style=""><strong>自社倉庫</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+
+				<th style="width:10%;">
+					<p>倉庫ID</p>
+				</th>
+				
+				<th style="width:30%;">
+					<p>倉庫名</p>
+				</th>
+				
+				<th style="width:18%;">
+					<p>都道府県</p>
+				</th>
+				
+				<th>
+					<p>会社名</p>
+				</th>
+			</tr>
+			
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $this->escape($each['id']); ?></p>
+						</td>
+
+						<td>
+							<p>
+								<a href="/warehouse/detail?id=<?php echo $each['id']; ?>"><?php echo $this->escape($each['name']); ?></a>
+							</p>
+						</td>
+
+						<td>
+							<p><?php echo $this->escape($each['prefecture']); ?></p>
+						</td>
+											
+						<td>
+							<p><?php echo $this->escape($each['company_name']); ?></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

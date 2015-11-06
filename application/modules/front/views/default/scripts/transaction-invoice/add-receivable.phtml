@@ -1,0 +1,369 @@
+<?php
+
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+    });
+    			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+		jConfirm('登録せずに中止しますか', '　', function(r) {
+            if(r) {
+               location.href = "/transaction-invoice/list";
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    //
+    // 登録
+    //
+    $('.btn_save').click( function(){
+    	jConfirm('登録しますか', '　', function(r) {
+    		if(r) {
+				showSpinner();
+		
+		        var $form = $('#register_form');
+		        var query = $form.serialize();
+		        var param = $form.serializeArray();
+		
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: param,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';
+		                    return;
+		                    
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            jAlert('登録しました', '　');
+                            return;
+		                    
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/transaction-invoice/add-receivable-post?invoice_id=<?php echo $this->escape($this->invoiceData['id']); ?>'
+				});
+            } else {
+                return false;
+            }
+        });
+	});
+	
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/transaction-invoice/list';
+        }
+    });
+    
+    // 取引先選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select');
+    });
+    
+	// 取引先条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+
+    // 会計科目 選択ポップアップ表示
+    $(document).on('click', '#select_account_title', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/office/accounting-select', null, function () {stopSpinner();});
+    });
+
+    // 採算コード 選択ポップアップ表示
+    $(document).on('click', '#select_account_totaling_group', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial-totaling/item-select', null, function () {stopSpinner();});
+    });
+    
+    // 採算コード グループ切り替え
+    $(document).on('change', '#account_totaling_group_category_id', function () {
+		updateAccountTotalingList($(this).val());
+	});
+    
+    // 銀行口座 選択ポップアップ表示
+    $(document).on('click', '#select_bank', function () {
+   		showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/financial/bank-list-select', null, function () {stopSpinner();});
+    });
+     
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': 0});
+    	$('html,body').scrollTop(0);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	$('#connection_name').html(name);
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+}
+
+// 会計科目 選択完了
+function selectAccountTitle(id, title) {
+	$('#account_title_name').html(title);
+	$('#account_title_id').val(id);
+	$('.btn_close').click();
+}
+
+// 採算コード 一覧更新
+function updateAccountTotalingList (categoryId) {
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: null,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+        	stopSpinner();
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/financial-totaling/item-select?category_id=' + categoryId,
+    });
+}
+
+// 採算コード 選択完了
+function selectAccountTotalingGroup(id, groupName, title) {
+	$('#account_totaling_group_name').html(groupName + '　＞　' + title);
+	$('#account_totaling_group_id').val(id);
+	$('.btn_close').click();
+}
+
+// 銀行口座 選択完了
+function selectBank(id, bankName, branchName, accountType, accountNo) {
+	$('#bank_name').html(bankName + ' ' + branchName + ' ' + accountType + ' ' + accountNo);
+	$('#bank_id').val(id);
+	$('.btn_close').click();
+}
+
+</script>
+<style type="text/css"><!--
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+table.list_default tr td.column_value input.datepicker[type="text"]{width:150px;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+--></style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:400px;margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>入金予定登録</strong></span>
+        </div>
+    </div>
+
+    <form id="register_form" action="javascript:void(0);" method="post">
+    <div class="clearfix">
+
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right">
+                    <p class="label_text strong">入金予定情報</p>
+                </th>
+            </tr>
+		</table>
+         
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_label"><p class="label_text">請求書ID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->invoiceData['display_id']); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">発生日(請求日)</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->invoiceData['invoice_date']); ?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">会計科目<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="account_title_name">---</p>
+                    <a class="option" id="select_account_title">選択</a>
+                    <input type="hidden" id="account_title_id" name="account_title_id" value="">
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">摘要</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+					<textarea name="memo" style="height:100px;margin-bottom:6px;"></textarea>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">採算コード<span class="require">&nbsp;＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="account_totaling_group_name">---</p>
+                    <a class="option" id="select_account_totaling_group">選択</a>
+                    <input type="hidden" id="account_totaling_group_id" name="account_totaling_group_id" value="">
+                </td>
+            </tr>
+             
+            <tr>
+                <td class="column_label"><p class="label_text">入金予定口座<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p id="bank_name">---</p>
+                    <a class="option" id="select_bank">金融機関選択</a>
+                    <input type="hidden" id="bank_id" name="bank_id" value="">
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label"><p class="label_text">入金予定額</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php
+            			$currencyText = '';
+            			foreach ($this->currencyList as $eachCurrency) {
+            				if ($this->invoiceData['currency_id'] == $eachCurrency['id']) {
+            					$currencyText = $eachCurrency['name'];
+            				}
+            			}
+            			
+            			if (!empty($this->invoiceData['total_with_tax'])) {
+            				echo number_format($this->invoiceData['total_with_tax']) . '&nbsp;' . $this->escape($currencyText);
+            			} else {
+            				echo '';
+            			}
+                	?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label"><p class="label_text">入金予定日<span class="require">＊</span></p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<div class="clearfix">
+                		<input type="text" class="datepicker" id="receive_plan_date" name="receive_plan_date" value="" autocomplete="off">
+					</div>
+                </td>
+            </tr>
+            
+
+
+		</table>
+	</div><!-- clearfix -->	
+    </form>
+               
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+

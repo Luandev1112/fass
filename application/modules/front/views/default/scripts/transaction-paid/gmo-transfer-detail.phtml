@@ -1,0 +1,171 @@
+<?php
+$statusList   = Shared_Model_Code::codes('payable_payment_status');
+$payingMethodList = Shared_Model_Code::codes('payable_paying_method_bank');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+
+function separate(num){
+    return String(num).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+}
+
+$(function () {
+	$(document).ready(function(){
+    });   
+
+	$(".clear_form").bind("click", function(){
+	    $(this.form).find('textarea, :text, :hidden:not("#view_type, #search, #page")').val("");
+	    $(this.form).find('select option').removeAttr('selected');
+	    $('.target_text').html('');
+	});
+	$(document).on('click', '.submit', function () {
+		showSpinner();
+	});
+
+    //
+    // 保存
+    //
+    $('.btn_save').click( function(){
+        jConfirm('チェックした総合振込を割当しますか', '　', function(r) {
+            if(r) {
+                var $form = $('#register_form');
+                var query = $form.serialize();
+                var param = $form.serializeArray();
+        		
+        		showSpinner();
+        		
+                $.ajax({
+                    type:'POST',
+                    dataType:'json',
+                    data: param,
+                    success: function(res){
+                    	stopSpinner();
+                        var obj = res;
+                        if (obj.result == 'timeout') {
+                            location.href = '/login';
+                            return;
+                            
+                        } else if(obj.result == 'OK') {
+                            reloadFlag = true;
+                            location.href = '<?php echo $this->backUrl; ?>';
+                            //jAlert('登録しました', '　');
+                            return;
+                            
+                        } else {
+                            jAlert('' + obj.message, '　');
+                        }
+                    },
+                    error: function(){
+                    	stopSpinner();
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/transaction-bank/select-gmo-attach'
+				});
+        
+            } else {
+                return false;
+            }
+        });	
+	});
+});
+
+</script>
+<style type="text/css">
+table.list_default tr th p.align_center, table.list_default tr td p.align_center{text-align:center;padding-left:0;}
+table.list_default tr th p.align_right, table.list_default tr td p.align_right{text-align:right;padding-right:12px;}
+
+table.list_default tr td a.show_detail {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#005bd9;color:#fff !important;text-decoration:none;}
+table.list_default tr td a.btn_setting {margin:5px 0 0px 5px;padding:7px 15px 5px 15px;line-height:1;display:block;float:left;cursor:pointer;background-color:#02ad00}
+body input, body textarea, body select {font-size: 12px;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:3px auto;padding:5px 35px 3px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1100px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin: 5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.menu_frame table.list_default tr:hover td {background:#deeeff;}
+.menu_frame table.list_default tr td.column_value {border-right:none;}
+.menu_frame table.list_default tr td.column_value p.column_label {border-right:none;width:120px;float:left;}
+.menu_frame table.list_default tr td.column_value p.colon {float:left;width:20px;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding {width:280px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value div.multi_rows_padding.long {width:740px;padding:4px 0 0 12px;float:left;word-wrap:break-word;word-break:break-all;}
+.menu_frame table.list_default tr td.column_value input[type="text"] {width:240px;display:block;float:left;}
+.menu_frame table.list_default tr td textarea{width:620px;height:60px;}
+.menu_frame table.list_default tr td.td_action {width:56px;border-right:none;padding-right:5px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+.menu_frame table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+.menu_frame table.list_default .multi_rows_padding {padding:5px 10px 5px 10px;}
+
+input[type=checkbox] {margin:0.8em 0.6em 0;}
+p.total_price {font-size:1.3em;font-weight:bold;color:#f00;padding-left:0.6em;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span><strong>GMO総合振込 - 詳細</strong></span>
+	    </div>
+	</div>
+	
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+	        <span style="color:#f00;"><strong>受付番号（振込申請番号）：<?php echo $this->escape($this->applyNo); ?></strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		
+		<form id="register_form" action="#" method="post">
+			<input type="hidden" name="row_id" value="<?php echo $this->escape($this->rowId); ?>">
+			<table class="list_default">
+				<tr>
+					<th><p>振込先名</p></th>
+					<th style="width:20%;"><p>金額</p></th>
+				</tr>
+				<?php if (!empty($this->items)) { ?>
+					<?php foreach ($this->items as $each) { ?>
+						<?php
+							$grayOut = '';
+						?>
+						<tr>
+							<td>
+								<p><?php echo $this->escape($each['company_name']); ?></p>
+							</td>
+							
+							<td>
+	                            <p class="align_right"><?php echo $this->numberFormat($each['total_amount']); ?></p>
+							</td>
+						</tr>
+					<?php } ?>
+				<?php } else { ?>
+					<tr>
+						<td colspan="2">
+							<p style="text-align:center;">データがありません</p>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>
+		</form>
+		
+		
+	</div>	
+		
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>

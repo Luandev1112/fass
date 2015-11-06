@@ -1,0 +1,1143 @@
+<?php
+$statusList              = Shared_Model_Code::codes('shipment_status');
+$paymentTypeList         = Shared_Model_Code::codes('payment_type');
+$deliveryTypeList        = Shared_Model_Code::codes('delivery_type');
+$deliveryRequestTimeList = Shared_Model_Code::codes('delivery_request_time');
+
+$orderSiteTypeList       = Shared_Model_Code::codes('order_site_type');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery.imgareaselect-0.9.10/css/imgareaselect-default.css">
+<script type="text/javascript" src="/resource/js/jquery.imgareaselect-0.9.10/scripts/jquery.imgareaselect.pack.js"></script>
+<script type="text/javascript">
+var reloadFlag  = false;
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+        
+		$('.datepicker').datepicker();
+        $('.datepicker').datepicker("option", "dateFormat", "yy-mm-dd");
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+        
+        $("#shipment_plan_date").datepicker("setDate", "<?php echo date('Y-m-d', strtotime($this->orderData['shipment_plan_date'])); ?>");
+        
+        <?php if (!empty($this->orderData['delivery_request_date'])) { ?>
+        	$("#delivery_request_date").datepicker("setDate", "<?php echo date('Y-m-d', strtotime($this->orderData['delivery_request_date'])); ?>");
+        <?php } ?>
+    });
+
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存'); 
+    });
+
+	// キャンセルに変更
+    $(document).on('click', '#btn_update_to_cancel', function () {
+        var button = $(this);
+
+        jConfirm('この注文をキャンセルに変更しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:null,
+		            success:function(res){
+			            stopSpinner();
+			            reloadFlag = true;
+						jAlert('キャンセルに変更しました', '　');
+		            },
+		            error:function(){
+			            stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/shipment/update-to-cancel?id=<?php echo $this->escape($this->id); ?>',
+		        });
+            } else {
+                return false;
+            }
+        });
+    });
+    
+	// 新規注文に戻す
+    $(document).on('click', '#btn_update_to_new', function () {
+        var button = $(this);
+        jConfirm('この注文を新規注文に戻しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data:null,
+		            success:function(res){
+			            stopSpinner();
+			            reloadFlag = true;
+						jAlert('新規注文に変更しました', '　');
+		            },
+		            error:function(){
+			            stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url:'/shipment/update-to-new?id=<?php echo $this->escape($this->id); ?>',
+		        });
+            } else {
+                return false;
+            }
+        });
+    });
+
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/shipment/update-basic?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/shipment/update-amount?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '3') {
+			apiUrl = '/shipment/update-customer?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '4') {
+			apiUrl = '/shipment/update-delivery?id=<?php echo $this->escape($this->id); ?>';
+		} else if (categoryId == '5') {
+			apiUrl = '/shipment/update-items?id=<?php echo $this->escape($this->id); ?>';
+		} else {
+			return;
+		}
+		
+		showSpinner();
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data:params,
+            success:function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    stopSpinner();
+                    jAlert('保存しました', '　');
+                } else {
+	                stopSpinner();
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error:function(){
+	            stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url:apiUrl,
+        });
+    });
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/shipment/detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/shipment/detail?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+    });
+});
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:100px;}
+table.list_default tr td.column_label p.label_text {}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+table.list_default.summary tr td.column_label {width:100px;}
+table.list_default.summary tr td.column_value {width:246px;border-right:none;}
+table.list_default.other tr td.column_label {border-right:none;width:220px;}
+table.list_default tr td.item_head{background-color:#deeeff}
+table.list_default tr td.column_count_label{border-right:none;}
+table.list_default tr td.column_item_code {border-right:none;}
+table.list_default tr td.column_item_name {border-right:none;}
+table.list_default tr td.column_item_unitprice{border-right:none;}
+table.list_default tr td.column_item_amount {border-right:none;}
+table.list_default tr td p.align_right {text-align:right;padding-right::11px;}
+
+.divide4 p.label{float:left;width:50px;}
+.divide4 p.colon{float:left;width:15px;}
+.divide4 p.value{float:left;width:80px;text-align:right;}
+.divide4 div.value {float:left;width:80px;padding-left:10px;}
+.divide4 div.value input {text-align:right;}
+.divide4 p.unit{float:left;width:30px;}
+a.btn_setting {margin:5px;padding:3px 15px 1px 15px;cursor:pointer;}
+a.btn_setting:hover {}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:120px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:120px;padding:5px 0;margin:0;border:none;" target="_blank" href="<?php echo '/shipment/export-statement-each/' . $this->orderData['id'] . '/明細書_' . str_replace(' ', '_', $this->orderData['order_customer_name']) . '.pdf'; ?>">明細PDF</a>
+            </p>
+            <span><strong>出荷管理 - 詳細</strong></span>
+        </div>
+    </div>
+
+    <div class="col-xs-12">
+	    
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right"><p class="label_text strong">ステータス</p></th>
+            </tr>
+        </table>
+        <table class="list_default summary" style="margin-bottom:13px;">            
+            <tr>
+	            <td class="column_label" >
+                	<p class="label_text">ステータス</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value" style="width:auto;">
+                	<p style="float:left;"><?php echo $statusList[$this->orderData['status']]; ?></p>
+
+					<?php if ($this->orderData['status'] === (string)Shared_Model_Code::SHIPMENT_STATUS_NEW) { ?>
+						 <a id="btn_update_to_cancel" class="btn_setting">キャンセルに変更</a>
+					<?php } else if ($this->orderData['status'] === (string)Shared_Model_Code::SHIPMENT_STATUS_CANCELED) { ?>
+						 <a id="btn_update_to_new" class="btn_setting">新規注文に戻す</a>
+					<?php } ?>
+					
+					<?php var_dump($this->orderData['shipment_error']); ?>
+                </td>
+            </tr>
+        </table>
+	    
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th class="border-top border-bottom border-left"><p class="label_text strong">基本情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default summary" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label">
+                	<p class="label_text">注文ID</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+                	<p><?php echo $this->escape($this->orderData['relational_order_id']); ?></p>
+                </td>
+
+                <td class="column_label">
+                	<p class="label_text">注文日</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+                	<p><?php echo date('Y/m/d', strtotime($this->orderData['order_datetime'])); ?></p>
+                </td>
+
+                <td class="column_label">
+                </td>
+                <td class="colon">
+                </td>
+                <td class="column_value">
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label">
+                	<p class="label_text">支払い方法</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+                	<p><?php echo $paymentTypeList[$this->orderData['payment_method']]; ?></p>
+                </td>
+                
+                <td class="column_label">
+                	<p class="label_text">検品日時</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+					<?php if (!empty($this->orderData['inspection_datetime'])) { ?>
+                		<p><?php echo date('Y/m/d', strtotime($this->orderData['inspection_datetime'])); ?></p>
+                	<?php } else { ?>
+                		<p>---</p>
+                	<?php } ?>
+                </td>
+                
+                <td class="column_label">
+                	<p class="label_text">検品者</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+					<?php if (!empty($this->orderData['inspection_user_name'])) { ?>
+                		<p><?php echo $this->escape($this->orderData['inspection_user_name']); ?></p>
+                	<?php } else { ?>
+                		<p>---</p>
+                	<?php } ?>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class="column_label">
+                	<p class="label_text">配送方法</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+					<?php if (empty($this->orderData['delivery_method'])) { ?>
+						<p><strong class="red">配送方法が設定されていません</strong></p>
+					<?php } else { ?>
+						<p><?php echo $deliveryTypeList[$this->orderData['delivery_method']]; ?></p>
+					<?php } ?>
+                </td>
+                
+                <td class="column_label">
+                	<p class="label_text">お届け希望日</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+					<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_INSPECTED || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+						<p class="display_value_<?php echo $categoryId; ?>"><?php if (!empty($this->orderData['delivery_request_date'])) { echo date('Y-m-d', strtotime($this->orderData['delivery_request_date'])); } else { echo '---'; } ?></p>
+						<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" class="datepicker" id="delivery_request_date" name="delivery_request_date" value="<?php echo date('Y-m-d', strtotime($this->orderData['delivery_request_date'])); ?>" maxlength="" style="width:150px" autocomplete="off">
+	                	</div>
+                	<?php } else { ?>
+                		<p><?php if (!empty($this->orderData['delivery_request_date'])) { echo date('Y-m-d', strtotime($this->orderData['delivery_request_date']));  } else { echo '---'; } ?></p>
+                		<input type="hidden" name="delivery_request_date" value="<?php if (!empty($this->orderData['delivery_request_date'])) { echo date('Y-m-d', strtotime($this->orderData['delivery_request_date'])); } ?>" maxlength="" />
+                	<?php } ?>
+                </td>
+                
+                <td class="column_label">
+                	<p class="label_text">お届け希望時間</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+	                <?php
+		                $timeText = '---';
+		                if (!empty($this->orderData['delivery_request_time'])) {
+							if ($this->orderData['delivery_request_time'] === '0812') {
+								$timeText =	'午前中';
+							} else {
+								$from = mb_substr($this->orderData['delivery_request_time'], 0, 2);
+								$to   = mb_substr($this->orderData['delivery_request_time'], 2, 2);
+	
+								$timeText = $from . ':00〜' . $to . ':00';
+							}
+						}
+					?>
+						
+	                <?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_INSPECTED || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+						<p class="display_value_<?php echo $categoryId; ?>"><?php echo $timeText; ?></p>
+						<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<select class="short" id="delivery_request_time" name="delivery_request_time" style="width:120px;">
+	                            <option value="">---</option>
+	                            <?php foreach ($deliveryRequestTimeList as $key => $val) { ?>
+	                                <option value="<?php echo $key; ?>" <?php if ($key === $this->orderData['delivery_request_time']) echo 'selected="selected"'; ?>><?php echo $val; ?></option>
+	                            <?php } ?>
+	                    	</select>
+	                	</div>
+					<?php } else { ?>
+						<p><?php echo $timeText; ?></p>
+					<?php } ?>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="column_label">
+                	<p class="label_text">発送予定日</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+					<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_INSPECTED || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+						<p class="display_value_<?php echo $categoryId; ?>"><?php echo date('Y-m-d', strtotime($this->orderData['shipment_plan_date'])); ?></p>
+						<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+							<input type="text" class="datepicker" id="shipment_plan_date" name="shipment_plan_date" value="<?php echo date('Y-m-d', strtotime($this->orderData['shipment_plan_date'])); ?>" maxlength="" style="width:150px" />
+	                	</div>
+                	<?php } else { ?>
+                		<p><?php echo date('Y-m-d', strtotime($this->orderData['shipment_plan_date'])); ?></p>
+                		<input type="hidden" name="shipment_plan_date" value="<?php echo date('Y-m-d', strtotime($this->orderData['shipment_plan_date'])); ?>" maxlength="" />
+                	<?php } ?>
+                </td>
+                     
+                <td class="column_label">
+                	<p class="label_text">発送日時</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+                	<?php if (empty($this->orderData['shipment_datetime'])) { ?>
+						<p>---</p>
+					<?php } else { ?>
+						<p><?php echo date('Y-m-d H:i', strtotime($this->orderData['shipment_datetime'])); ?></p>
+					<?php } ?>
+                </td>
+                
+                <td class="column_label">
+                	<p class="label_text">配送伝票番号</p>
+                </td>
+                <td class="colon">
+                	<p class="label_text">：</p>
+                </td>
+                <td class="column_value">
+                	<?php if (empty($this->orderData['delivery_code'])) { ?>
+						<p class="display_value_<?php echo $categoryId; ?>">---</p>
+					<?php } else { ?>
+						<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_code']); ?></p>
+					<?php } ?>
+					<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="delivery_code" value="<?php echo $this->escape($this->orderData['delivery_code']); ?>">
+					</div>
+                </td>
+            </tr>
+        </table>
+		</form>
+
+	    <?php
+        /* 支払情報 */
+        $categoryId = 2;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left"><p class="label_text strong">支払情報</p></th>
+                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_value">
+                	<div class="divide4">
+                		<p class="label">手数料</p>
+                		<p class="colon">：</p>
+						<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+							<p class="value display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['charge']); ?></p>
+							<div class="value edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+								<input type="text" id="charge" name="charge" value="<?php echo $this->escape($this->orderData['charge']); ?>" maxlength="">
+		                	</div>
+	                	<?php } else { ?>
+	                		<p class="value"><?php echo $this->escape($this->orderData['charge']); ?></p>
+	                	<?php } ?>
+                		<p class="unit">円</p>
+
+                		
+                		<p class="label">送料</p>
+                		<p class="colon">：</p>
+						<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+							<p class="value display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_fee']); ?></p>
+							<div class="value edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+								<input type="text" id="delivery_fee" name="delivery_fee" value="<?php echo $this->escape($this->orderData['delivery_fee']); ?>" maxlength="">
+		                	</div>
+	                	<?php } else { ?>
+	                		<p class="value"><?php echo $this->escape($this->orderData['delivery_fee']); ?></p>
+	                	<?php } ?>
+                		<p class="unit">円</p>
+                		
+                		
+                		<p class="label">消費税</p>
+                		<p class="colon">：</p>
+						<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+							<p class="value display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['tax']); ?></p>
+							<div class="value edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+								<input type="text" id="tax" name="tax" value="<?php echo $this->escape($this->orderData['tax']); ?>" maxlength="">
+		                	</div>
+	                	<?php } else { ?>
+	                		<p class="value"><?php echo $this->escape($this->orderData['tax']); ?></p>
+	                	<?php } ?>
+                		<p class="unit">円</p>
+                		
+                		
+                		<p class="label">値引き額</p>
+                		<p class="colon">：</p>
+						<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+							<p class="value display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['discount']); ?></p>
+							<div class="value edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+								<input type="text" id="discount" name="discount" value="<?php echo $this->escape($this->orderData['discount']); ?>" maxlength="">
+		                	</div>
+	                	<?php } else { ?>
+	                		<p class="value"><?php echo $this->escape($this->orderData['discount']); ?></p>
+	                	<?php } ?>
+                		<p class="unit">円</p>
+                		
+                		
+                		<p class="label">合計金額</p>
+                		<p class="colon">：</p>
+						<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+							<p class="value display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['total']); ?></p>
+							<div class="value edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+								<input type="text" id="total" name="total" value="<?php echo $this->escape($this->orderData['total']); ?>" maxlength="">
+		                	</div>
+	                	<?php } else { ?>
+	                		<p class="value"><?php echo $this->escape($this->orderData['total']); ?></p>
+	                	<?php } ?>
+	                	<p class="unit">円</p>
+                	</div>
+                </td>
+            </tr>
+        </table>
+        </form>
+        
+	    <div class="clearfix">
+	    	<div style="float:left;width:49%;">
+			    <?php
+		        /* 依頼主 */
+		        $categoryId = 3;
+		        ?>
+				<form id="form_category_<?php echo $categoryId; ?>">
+		        <table class="list_default" style="margin-bottom:0px;">
+		            <tr>
+		                <th class="border-top border-bottom border-left"><p class="label_text strong">依頼主</p></th>
+		                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+		                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+		                    <span>×</span>
+		                    </a>
+		                </th>
+		                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+		                </th>
+		            </tr>
+		        </table>
+
+		        <table class="list_default" style="margin-bottom:13px;">            
+		            <tr>
+		                <td class="column_label"><p class="label_text">依頼主名</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_customer_name']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_customer_name" name="order_customer_name" value="<?php echo $this->escape($this->orderData['order_customer_name']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_customer_name']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">依頼主名カナ</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_customer_name_kana']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_customer_name_kana" name="order_customer_name_kana" value="<?php echo $this->escape($this->orderData['order_customer_name_kana']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_customer_name_kana']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">郵便番号</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_zipcode']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_zipcode" name="order_zipcode" value="<?php echo $this->escape($this->orderData['order_zipcode']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_zipcode']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">都道府県</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_prefecture']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_prefecture" name="order_prefecture" value="<?php echo $this->escape($this->orderData['order_prefecture']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_prefecture']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">住所</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_address1']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_address1" name="order_address1" value="<?php echo $this->escape($this->orderData['order_address1']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_address1']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">建物</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_address2']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_address2" name="order_address2" value="<?php echo $this->escape($this->orderData['order_address2']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_address2']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">電話番号</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['order_tel']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="order_tel" name="order_tel" value="<?php echo $this->escape($this->orderData['order_tel']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['order_tel']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <?php /*
+		            <tr>
+		                <td class="column_label"><p class="label_text">FAX</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+		                	<p></p>
+		                </td>
+		            </tr>
+		            */ ?>
+		        </table>
+				</form>
+	    	</div>
+	        <div class="col-xs-9" style="float:right;width:49%;">
+			    <?php
+		        /* 配送先 */
+		        $categoryId = 4;
+		        ?>
+				<form id="form_category_<?php echo $categoryId; ?>">
+		        <table class="list_default" style="margin-bottom:0px;">
+		            <tr>
+		                <th class="border-top border-bottom border-left"><p class="label_text strong">配送先</p></th>
+		                <th class="cancel_category"  id="cancel_category_<?php echo $categoryId; ?>">
+		                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);">
+		                    <span>×</span>
+		                    </a>
+		                </th>
+		                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+		                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+		                </th>
+		            </tr>
+		        </table>
+		        <table class="list_default" style="margin-bottom:13px;">            
+		            <tr>
+		                <td class="column_label"><p class="label_text">配送先名</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_name']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_name" name="delivery_name" value="<?php echo $this->escape($this->orderData['delivery_name']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_name']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">配送先名カナ</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_name_kana']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_name_kana" name="delivery_name_kana" value="<?php echo $this->escape($this->orderData['delivery_name_kana']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_name_kana']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">郵便番号</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_zipcode']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_zipcode" name="delivery_zipcode" value="<?php echo $this->escape($this->orderData['delivery_zipcode']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_zipcode']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">都道府県</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_prefecture']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_prefecture" name="delivery_prefecture" value="<?php echo $this->escape($this->orderData['delivery_prefecture']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_prefecture']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">住所</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_address1']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_address1" name="delivery_address1" value="<?php echo $this->escape($this->orderData['delivery_address1']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_address1']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">建物</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_address2']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_address2" name="delivery_address2" value="<?php echo $this->escape($this->orderData['delivery_address2']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_address2']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">電話番号</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+							<?php if ($this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_NEW || $this->orderData['status'] == (string)Shared_Model_Code::SHIPMENT_STATUS_HOLDED) { ?>
+								<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->orderData['delivery_tel']); ?></p>
+								<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+									<input type="text" id="delivery_tel" name="delivery_tel" value="<?php echo $this->escape($this->orderData['delivery_tel']); ?>" maxlength="">
+			                	</div>
+		                	<?php } else { ?>
+		                		<p><?php echo $this->escape($this->orderData['delivery_tel']); ?></p>
+		                	<?php } ?>
+		                </td>
+		            </tr>
+		            <?php /*
+		            <tr>
+		                <td class="column_label"><p class="label_text">FAX</p></td>
+		                <td class="colon"><p class="label_text">：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['order_customer_name']); ?></p>
+		                </td>
+		            </tr>
+		            */ ?>
+		        </table>
+				</form>
+	        </div>
+		</div>	
+	
+	
+	
+	    <?php
+        /* 注文明細 */
+        $categoryId = 4;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right"><p class="label_text strong">注文明細</p></th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">
+            <tr>
+                <td class="column_count_label item_head" style="width:5%"><p class="label_text"></p></td>
+                <td class="column_item_code item_head" style="width:12%"><p>商品コード</p></td>
+                <td class="column_item_name item_head"><p style="padding-left:0;">商品名</p></td>
+                <td class="column_item_unitprice item_head" style="width:12%"><p>単価</p></td>
+                <td class="column_item_amount item_head" style="width:6%"><p>数量</p></td>
+                <td class="column_item_amount item_head" style="width:6%"><p>税率</p></td>
+                
+                <td class="column_item_amount item_head" style="width:10%"><p>小計(税抜)</p></td>
+                <td class="column_item_amount item_head" style="width:10%"><p>小計(税込)</p></td>
+            </tr>
+        	<?php foreach ($this->orderItems as $each) { ?>
+	            <tr>
+	                <td class="column_label">
+	                	<p class="label_text"><?php echo $this->escape($each['branch_no']); ?>：</p>
+	                </td>
+	                <td class="column_item_code">
+	                	<p><?php echo $this->escape($each['product_code']); ?></p>
+	                </td> 
+	                <td class="column_item_name">
+	                	<div class="multi_roes_padding"><?php echo $this->escape($each['product_name']); ?></div>
+	                </td>
+	                <td class="column_item_unitprice">
+	                	<p class="align_right"><?php echo $this->numberFormat($each['unit_price']); ?></p>
+	                </td>
+	                
+	                <td class="column_item_amount">
+	                	<p class="align_right"><?php echo $this->escape($each['amount']); ?></p>
+	                </td>
+	                
+	                <td class="column_item_amount">
+	                	<p><?php echo $this->escape($each['item_tax_rate']); ?>&nbsp;%</p>
+	                </td>
+	                
+	                <td class="column_item_amount">
+	                	<p class="align_right"><?php echo $this->numberFormat($each['item_total']); ?></p>
+	                </td>
+	                
+	                <td class="column_item_amount">
+	                	<p class="align_right"><?php echo $this->numberFormat($each['item_total_with_tax']); ?></p>
+	                </td>
+	            </tr>
+            <?php } ?>
+        </table>
+		</form>
+
+	    <?php
+        /* その他情報 */
+        $categoryId = 5;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right"><p class="label_text strong">その他情報</p></th>
+            </tr>
+        </table>
+	    <div class="clearfix">
+	    	<div style="float:left;width:49%;">
+		        <table class="list_default other" style="margin-bottom:13px;">            
+		            <tr>
+		                <td class="column_label"><p class="label_text">備考(店舗内通信欄)：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['message_inside']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄2(配送会社向け通信欄)：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['message_for_delivery']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄(お客様向け1)：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['message_to_customer_1']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄(お客様向け2)：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['message_to_customer_2']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄(お客様向け3)：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['message_to_customer_3']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄(お客様向け4)：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['message_to_customer_4']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">自由記入欄(お客様向け5)：</p></td>
+		                <td class="column_value">
+		                	<p><?php echo $this->escape($this->orderData['message_to_customer_5']); ?></p>
+		                </td>
+		            </tr>
+		        </table>
+	    	</div>
+	        <div class="col-xs-9" style="float:right;width:49%;">
+		        <table class="list_default other" style="margin-bottom:13px;">            
+		            <?php /*
+		            <tr>
+		                <td class="column_label"><p class="label_text">DM購読：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">ショップ注文ステータス：</p></td>
+		                <td class="column_value">
+		                	<p<?php echo $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">会員ランク：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">使用ポイント：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">付与ポイント：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">残ポイント：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            
+		            <tr>
+		                <td class="column_label"><p class="label_text">注文回数：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['order_count']); ?></p>
+		                </td>
+		            </tr>
+		            */ ?>
+
+		            <tr>
+		                <td class="column_label"><p class="label_text">注文サイト：</p></td>
+		                <td class="column_value">
+		                	<?php if (empty($this->orderData['order_from_site'])) { ?>
+								<p>---</p>
+							<?php } else { ?>
+								<p><?php echo $orderSiteTypeList[$this->orderData['order_from_site']]; ?></p>
+							<?php } ?>
+		                </td>
+		            </tr>
+		            
+
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期注文ID：</p></td>
+		                <td class="column_value">
+		                	<?php if (empty($this->orderData['subscription_id'])) { ?>
+								<p>---</p>
+							<?php } else { ?>
+								<p><?php echo $this->escape($this->orderData['subscription_id']); ?></p>
+							<?php } ?>
+		                </td>
+		            </tr>
+
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期注文回数：</p></td>
+		                <td class="column_value">
+		                	<?php if (empty($this->orderData['subscription_count'])) { ?>
+								<p>---</p>
+							<?php } else { ?>
+								<p><?php echo $this->escape($this->orderData['subscription_count']); ?></p>
+							<?php } ?>
+		                </td>
+		            </tr>
+    
+		            <?php /*
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期ステータス：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期次回発送日：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期次回お支払い方法：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期お届け間隔：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->orderData['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期次回お届け日：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->data['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            <tr>
+		                <td class="column_label"><p class="label_text">定期次回お届け時間：</p></td>
+		                <td class="column_value">
+		                	<p><?php $this->escape($this->data['item_name']); ?></p>
+		                </td>
+		            </tr>
+		            */ ?>
+		            
+		        </table>
+	        </div>
+		</div><!-- clearfix -->
+		</form>
+		
+		
+		
+		
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right"><p class="label_text strong">在庫引当</p></th>
+            </tr>
+        </table>
+		<table class="list_default" style="margin-bottom:13px;">
+			<tr>
+				<td style="width:12%;"><p><strong>出庫ID</strong></p></td>
+				<td style="width:50%"><p><strong>資材名</strong></p></td>
+				<td style="width:9%;"><p><strong>数量</strong></p></td>
+			</tr>
+			<?php $itemTable = new Shared_Model_Data_WarehouseItem(); ?>
+			<?php if (!empty($this->consumptionList)) { ?>
+				<?php foreach ($this->consumptionList as $each) { ?>
+				
+					<?php $itemData = $itemTable->getById($this->adminProperty['management_group_id'], $this->warehouseId, $each['warehouse_item_id']); ?>
+		            <tr>
+			            <td>
+			            	<p><?php echo $this->escape($each['id']); ?></p>
+			            </td>
+			            
+						<td>
+							<?php if ($itemData['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_ITEM) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($itemData['item_name']); ?></div>
+							<?php } else if ($itemData['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_PRODUCT) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($itemData['supply_product_name']); ?></div>
+							<?php } else if ($itemData['target_type'] === (string)Shared_Model_Code::WAREHOUSE_ITEM_TARGET_TYPE_SUPPLY_FIXTURE) { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($itemData['supply_fixture_name']); ?></div>
+							<?php } else { ?>
+								<div class="multi_rows_padding"><?php echo $this->escape($itemData['stock_name']); ?></div>
+							<?php } ?>
+						</td>
+					
+	                    <td>
+	                    	<p><?php echo $this->numberFormat($each['sub_count']); ?></p>
+	                    </td>
+		            </tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="11">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+
+
+        <table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th class="border-top border-bottom border-left border-right"><p class="label_text strong">JACCS</p></th>
+            </tr>
+        </table>
+		<table class="list_default" style="margin-bottom:0;">
+			<tr>
+				<td style="width:12%;"><p><strong>トランザクションID</strong></p></td>
+				<td>
+					<p><?php echo $this->escape($this->orderData['jaccs_transaction_id']); ?></p>
+				</td>
+			</tr>
+
+			<tr>
+				<td style="width:12%;"><p><strong>同梱</strong></p></td>
+				<td>
+					<p><?php if (!empty($this->orderData['jaccs_with_package'])) { echo '●'; } ?></p>
+				</td>
+			</tr>
+			
+			<tr>
+				<td style="width:12%;"><p><strong>印字データ</strong></p></td>
+				<td>
+					<pre><?php var_dump(unserialize($this->orderData['jaccs_invoice_data'])); ?></pre>
+				</td>
+			</tr>
+			
+			<tr>
+				<td style="width:12%;"><p><strong>エラーデータ</strong></p></td>
+				<td>
+					<pre><?php var_dump(unserialize($this->orderData['jaccs_error_data'])); ?></pre>
+				</td>
+			</tr>
+		</table>
+	 </div>
+</div>
+</div>
+</div>
+</div>
+

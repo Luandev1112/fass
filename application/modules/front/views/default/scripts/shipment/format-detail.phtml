@@ -1,0 +1,532 @@
+<?php
+$importColumnList     = Shared_Model_Code::codes('order_import_column');
+
+
+$deliveryTypeList = Shared_Model_Code::codes('delivery_type');
+$paymentTypeList  = Shared_Model_Code::codes('payment_type');
+?>
+<link rel="stylesheet" type="text/css" href="/resource/js/jquery.imgareaselect-0.9.10/css/imgareaselect-default.css" />
+<script type="text/javascript" src="/resource/js/jquery.imgareaselect-0.9.10/scripts/jquery.imgareaselect.pack.js"></script>
+
+<script type="text/javascript"><!--
+var reloadFlag  = false;
+var deletedFlag = false;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+$(function() {
+    $(document).ready(function(){
+        <?php if (!empty($this->posTop)) { ?>
+        $(window).scrollTop(<?php echo $this->posTop; ?>);
+        <?php } ?>
+
+        $('td:visible').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });      
+    });
+
+    $(".sortable_column").sortable({
+        items: "tr:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+            
+            if (categoryId == '2') {
+	            count = 1;
+	            $('#sortable_column_' + categoryId + ' .row_count').each(function(){
+	            	$(this).html(count++);
+	        	});
+        	}
+        
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {
+        },
+        start: function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+    	var categoryId = $(this).attr('target-category');
+
+        var uuid = guid();
+        $('.column_copy_base_' + categoryId + ' .select_column').attr('name', uuid + '_value');
+        $('.column_copy_base_' + categoryId + ' .delete_button').attr('target-column', uuid);
+        
+        if (categoryId == '2') {
+        	lastCount = parseInt($('#sortable_column_' + categoryId + ' tr:last .row_count').html());
+        	if (lastCount) {
+        		$('.column_copy_base_' + categoryId + ' .row_count').html(lastCount + 1);
+        	} else {
+        		$('.column_copy_base_' + categoryId + ' .row_count').html(1);
+        	}
+        	
+        } else if (categoryId == '3') {
+        	$('.column_copy_base_' + categoryId + ' .column_base').attr('name', uuid + '_base');
+        	$('.column_copy_base_' + categoryId + ' .column_converted').attr('name', uuid + '_converted');
+        
+        }
+        
+        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', '').attr('id', uuid).css('display', ''));
+        
+        $('td.added_row').each(function(){
+            $(this).css('width', $(this).width() +'px');
+        });
+        
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-column');
+		$('tr#' + targetId).remove();
+		
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+        
+        if (categoryId == '2') {
+            count = 1;
+            $('#sortable_column_' + categoryId + ' .row_count').each(function(){
+            	$(this).html(count++);
+        	});
+    	}
+    });
+    
+    // 編集
+    $(document).on('click', '.btn_edit_category', function () {
+        var categoryId = $(this).attr('category_id');
+        
+        $('.display_value_' + categoryId).hide();
+        $('.edit_value_' + categoryId ).show();
+    
+        // ×,保存ボタン
+        $('#cancel_category_' + categoryId).show();
+        $('th#edit_category_' + categoryId).addClass('edit_mode');
+        $(this).removeClass('btn_edit_category').addClass('btn_save_category');
+        $('#btn_edit_label_' + categoryId).html('保存');
+        
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+    });
+    
+    // 保存
+    $(document).on('click', '.btn_save_category', function () {
+        var button = $(this);
+        var categoryId = $(this).attr('category_id');
+        var $form = $('#form_category_' + categoryId);
+        var params = $form.serializeArray();
+		
+		var apiUrl = '';
+		
+		if (categoryId == '1') {
+			apiUrl = '/shipment/format-update-basic?id=<?php echo $this->id ?>';
+		} else if (categoryId == '2') {
+			apiUrl = '/shipment/format-update-column?id=<?php echo $this->id ?>';
+		} else if (categoryId == '3') {
+			apiUrl = '/shipment/format-update-convert?id=<?php echo $this->id ?>';
+		} else {
+			return;
+		}
+		
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: params,
+            success: function(res){
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';
+                    return;
+                } else if (obj.result == 'OK') {
+                    reloadFlag = true;
+                    jAlert('保存しました', '　');
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: apiUrl,
+        });
+    });
+    
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+        	if (deletedFlag == true) {
+        		location.href = '/shipment/format-list';
+        	} else {
+            	location.href = '/shipment/format-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+            }
+        }
+    });
+
+    // 編集中止
+    $(document).on('click', '.btn_cancel_category', function () {
+        var categoryId = $(this).attr('category_id');
+        location.href = '/shipment/format-detail?id=<?php echo $this->id; ?>&pos=' + $(window).scrollTop();
+    });
+
+    // 削除
+    $(document).on('click', '.btn_delete_menu', function () {
+       jConfirm('本当に削除しますか', '　', function(r) {
+        	if(r) {
+        	   $.ajax({
+                    type:'POST',
+                    dataType:'html',
+                    data: 'id=<?php echo $this->id ?>',
+                    success: function(res){
+                        reloadFlag = true;
+                        deletedFlag = true;
+                        jAlert('削除しました', '　');
+                    },
+                    error: function(){
+                        jAlert('予期せぬエラーが発生しました', 'エラー');
+                    },
+                    url: '/item/delete'
+                });
+                
+        	} else {
+        	    return false;
+        	}
+        });
+    });
+    
+});
+--></script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+table.list_default .sortable_column tr {background-color:#fff;}
+table.list_default .sortable_column tr td {border-right:none;}
+table.list_default .sortable_column tr td p.label_text {padding:11px 0 0 12px;}
+table.list_default .sortable_column tr td label {display:block;margin:0.3em auto 0.2em;}
+table.list_default .sortable_column tr td.td_value {border-right:none;}
+table.list_default .sortable_column tr td.td_target_column p, table.list_default .sortable_column tr td.td_target_column select {float:left}
+table.list_default .sortable_column tr td.td_base p, table.list_default .sortable_column tr td.td_converted p {float:left}
+table.list_default .sortable_column tr td.td_base input {float:left; width:380px;}
+table.list_default .sortable_column tr td.td_converted input {float:left; width:120px;}
+
+select.select_column {width:300px;}
+table.list_default tr td.td_action {width:60px;}
+table.list_default tr td.td_action .order_btn_frame {float:left;margin:6px 0 0 12px;cursor:ns-resize;}
+table.list_default tr td.td_action .order_btn_frame .icon-up-dir-1 {font-size:14px;color:#999;line-height:1;display:block;}
+table.list_default tr td.td_action .order_btn_frame .icon-down-dir-1 {font-size:14px;margin-top:-6px;color:#999;line-height:1;display:block;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left">
+        
+    <div class="col-xs-12">
+        <div class="page_title">
+            <span><strong>注文取込フォーマット - 編集</strong></span>
+        </div>
+    </div>
+
+    <div class="clearfix">
+	    <?php
+        /* 基本情報 */
+        $categoryId = 1;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+        <table class="list_default" style="margin-bottom:0px;">
+            <tr>
+                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">基本情報</p></th>
+                <th class="cancel_category" id="cancel_category_<?php echo $categoryId; ?>">
+                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+                    <span>×</span>
+                    </a>
+                </th>
+                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+                </th>
+            </tr>
+        </table>
+        <table class="list_default" style="margin-bottom:13px;">            
+            <tr>
+                <td class="column_label"><p class="label_text">フォーマットID</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p><?php echo $this->data['id']; ?></p>
+                </td>
+            </tr>
+                 
+            <tr>
+                <td class="column_label"><p class="label_text">フォーマット名</p></td>
+                <td class="colon"><p class="label_text">：</p></td>
+                <td class="column_value">
+                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $this->escape($this->data['name']); ?></p>
+                	<div class="edit_value_<?php echo $categoryId; ?> clearfix" style="display:none;">
+						<input type="text" name="name" value="<?php echo $this->escape($this->data['name']); ?>" maxlength="" />
+                	</div>
+                </td>
+            </tr>
+
+		</table>
+		</form>
+
+
+
+	    <?php
+        /* CSVデータ順 */
+        $categoryId = 2;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+			
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">CSVデータ順</p></th>
+	                <th class="cancel_category" id="cancel_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                    <span>×</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+	                </th>
+	            </tr>
+	        </table>
+		    <div style="margin-bottom:13px;">
+	            <table class="list_default" style="margin-bottom:0px;">
+	                <tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+	                	<?php $count = 1; ?>
+	                    <?php if (!empty($this->data['column_setting'])) { ?>
+	                    <?php foreach ($this->data['column_setting'] as $key => $eachColumn) { ?>
+	                        <tr id="<?php echo $key; ?>">
+			                    <td class="td_value" style="width:10%;">
+			                    	<p class="label_text">列番号：<span class="row_count"><?php echo $count++; ?></span></p>
+			                    </td>
+			                    
+	                            <td class="td_value">
+	                                <p class="label_text display_value_<?php echo $categoryId; ?>"><?php if (array_key_exists($eachColumn, $importColumnList)) { echo $importColumnList[$eachColumn]; } else { echo '---'; } ?></p>
+				                    <select name="<?php echo $key; ?>_value" class="edit_value_<?php echo $categoryId; ?> select_column" style="display:none;">
+				                    	<option value="">---</option>
+				                    	<?php foreach($importColumnList as $k => $v) { ?>
+				                    		<option value="<?php echo $this->escape($k); ?>" <?php if ($k == $eachColumn) { ?>selected="selected"<?php } ?>><?php echo $this->escape($v); ?></option>
+				                    	<?php } ?> 
+				                    </select>
+	                            </td>
+                
+	                            <td class="td_action">
+				                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+				                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column="<?php echo $key; ?>"><i class="budicon-cancel-1"></i></a>
+				                	</div>
+				                    <div class="order_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+				                        <i class="icon-up-dir-1"></i>
+				                        <i class="icon-down-dir-1"></i>
+				                    </div>
+	                            </td>
+	                        </tr>
+	                    <?php } ?>
+	                    <?php } ?>
+	                </tbody>
+	            </table>
+		        <div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #dfdfdf;height:34px;display:none;">
+		            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+		        </div>
+	        </div>
+	        
+	        <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="order" value="" />
+        </form>
+        
+        <table style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row td_value" style="width:10%;">
+                    <p>列番号：<span class="row_count">1</span></p>
+                </td>
+                <td class="added_row td_value">
+                    <select class="select_column" name="" >
+                    	<option value="">---</option>
+                    	<?php foreach($importColumnList as $k => $v) { ?>
+                    		<option value="<?php echo $k; ?>"><?php echo $v; ?></option>
+                    	<?php } ?> 
+                    </select>
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column=""><i class="budicon-cancel-1"></i></a>
+                	</div>
+                    <div class="order_btn_frame edit_value_<?php echo $categoryId; ?>">
+                        <i class="icon-up-dir-1"></i>
+                        <i class="icon-down-dir-1"></i>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        
+        
+        
+        
+	    <?php
+        /* 値変換 */
+        $categoryId = 3;
+        ?>
+		<form id="form_category_<?php echo $categoryId; ?>">
+	        <table class="list_default" style="margin-bottom:0px;">
+	            <tr>
+	                <th style="border-left:1px solid #ddd;border-top:1px solid #ddd;border-bottom:1px solid #ddd;"><p class="label_text strong">値変換</p></th>
+	                <th class="cancel_category" id="cancel_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_cancel_category" id="btn_cancel_category_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" style="" href="javascript:void(0);">
+	                    <span>×</span>
+	                    </a>
+	                </th>
+	                <th class="edit_category" id="edit_category_<?php echo $categoryId; ?>">
+	                    <a class="btn_edit_category" id="btn_edit_<?php echo $categoryId; ?>" category_id="<?php echo $categoryId; ?>" href="javascript:void(0);"><span id="btn_edit_label_<?php echo $categoryId; ?>"><i class="budicon-setting" style="margin-top:-3px; padding-left:1px; font-size:20px; color:#FFF; line-height: 1; display:block;"></i></span></a>
+	                </th>
+	            </tr>
+	        </table>
+            <table class="list_default" style="margin-bottom:0px;">
+                <tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+                    <?php if (!empty($this->data['convert_setting'])) { ?>
+                    <?php foreach ($this->data['convert_setting'] as $key => $eachColumn) { ?>
+                        <tr id="<?php echo $key; ?>">
+			                <td class="td_target_column" style="width:30%;">
+			                	<div class="clearfix">
+				                	<p>対象項目：</p>
+				                	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $importColumnList[$eachColumn['target_column']]; ?></p>
+				                    <select class="edit_value_<?php echo $categoryId; ?> select_column" name="<?php echo $key; ?>_target_column" style="display:none">
+				                    	<option value="">---</option>
+				                    	<?php foreach($importColumnList as $k => $v) { ?>
+				                    		<option value="<?php echo $k; ?>" <?php if ($eachColumn['target_column'] == $k) { ?>selected="selected"<?php } ?>><?php echo $v; ?></option>
+				                    	<?php } ?> 
+				                    </select>
+			                    </div>
+			                </td>
+			                <td class="td_base" style="width:38%;">
+			                    <div class="clearfix">
+			                    	<p>変換前：</p>
+			                    	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $eachColumn['base']; ?></p>
+			                    	<input class="edit_value_<?php echo $categoryId; ?> column_date" type="text" name="<?php echo $key; ?>_base" value="<?php echo $eachColumn['base']; ?>" style="display:none" />
+			                    </div>
+			                </td>
+			                <td class="td_converted" style="width:20%;">
+			                	<div class="clearfix">
+			                    	<p>変換後：</p>
+			                    	<p class="display_value_<?php echo $categoryId; ?>"><?php echo $eachColumn['converted']; ?></p>
+			                    	<input class="edit_value_<?php echo $categoryId; ?> column_value" type="text" name="<?php echo $key; ?>_converted" value="<?php echo $eachColumn['converted']; ?>" style="display:none" />
+			                    </div>
+			                </td>
+			                <td>
+			                </td>
+                            <td class="td_action">
+			                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+			                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column="<?php echo $key; ?>"><i class="budicon-cancel-1"></i></a>
+			                	</div>
+			                    <div class="order_btn_frame edit_value_<?php echo $categoryId; ?>" style="display:none;">
+			                        <i class="icon-up-dir-1"></i>
+			                        <i class="icon-down-dir-1"></i>
+			                    </div>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    <?php } ?>
+                </tbody>
+            </table>
+	        <div class="edit_value_<?php echo $categoryId; ?>" style="border-bottom:1px solid #dfdfdf;height:34px;display:none;margin-bottom:13px;">
+	            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+	        </div>
+	        <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="order" value="" />
+        </form>
+
+
+        <table style="display:none;">
+            <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+                <td class="added_row td_target_column" style="width:30%;">
+                	<div class="clearfix">
+	                	<p>対象項目：</p>
+	                    <select class="select_column" name="new_column_target_column">
+	                    	<option value="">---</option>
+	                    	<?php foreach($importColumnList as $k => $v) { ?>
+	                    		<option value="<?php echo $k; ?>"><?php echo $v; ?></option>
+	                    	<?php } ?> 
+	                    </select>
+                    </div>
+                </td>
+                <td class="added_row td_base" style="width:38%;">
+                    <div class="clearfix">
+                    	<p>変換前：</p>
+                    	<input class="column_base" type="text" name="new_column_base" value="" />
+                    </div>
+                </td>
+                <td class="added_row td_converted" style="width:20%;">
+                	<div class="clearfix">
+                    	<p>変換後：</p>
+                    	<input class="column_converted" type="text" name="new_column_converted" value="" />
+                    </div>
+                </td>
+                <td class="added_row">
+                </td>
+                <td class="added_row td_action">
+                	<div class="delete_btn_frame edit_value_<?php echo $categoryId; ?>">
+                		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-column=""><i class="budicon-cancel-1"></i></a>
+                	</div>
+                    <div class="order_btn_frame edit_value_<?php echo $categoryId; ?>">
+                        <i class="icon-up-dir-1"></i>
+                        <i class="icon-down-dir-1"></i>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        
+        <h2 style="margin-top:1.3em;padding-left:0.6em;margin-bottom:0.6em;">FASS内部コード</h2>
+        <p style="padding-left:0.6em;margin-bottom:0.6em;">以下の数値になるように、値を変換してください。
+        
+        <div class="clearfix">
+            <div style="float:left;width:500px;margin-right:12px;">
+                <table class="list_default">
+                    <tr>
+                        <th colspan="2"><p>決済方法</p></th>
+                    </tr>
+                    <?php foreach ($paymentTypeList as $key => $val) { ?>
+                    <tr>
+                        <td style="40%"><p><?php echo $this->escape($val); ?></p></td>
+                        <td><p><?php echo $this->escape($key); ?></p></td>
+                    </tr>
+                    <?php } ?>
+                </table>
+            </div>
+            <div style="float:left;width:500px;">
+                <table class="list_default">
+                    <tr>
+                        <th colspan="2"><p>配送方法</p></th>
+                    </tr>
+                    <?php foreach ($deliveryTypeList as $key => $val) { ?>
+                    <tr>
+                        <td style="40%"><p><?php echo $this->escape($val); ?></p></td>
+                        <td><p><?php echo $this->escape($key); ?></p></td>
+                    </tr>
+                    <?php } ?>
+                </table>
+            </div>
+        </div>
+
+			
+	</div><!-- clearfix -->	                
+</div>
+</div>
+</div>
+</div>
+

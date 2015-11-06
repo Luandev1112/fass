@@ -1,0 +1,11 @@
+{
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/gmoaozora/gmo-aozora-api-php.git"
+    }
+  ],
+  "require": {
+    "gmoaozora/gmo-aozora-api-php": "*@dev"
+  }
+}

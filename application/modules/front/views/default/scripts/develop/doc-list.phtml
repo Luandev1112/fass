@@ -1,0 +1,61 @@
+<?php
+
+?>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+
+table.list_default tr.gray_out td {background-color:#aaa;}
+table.list_default tr.gray_out td p.red {background-color:#cf2124;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {height:auto;}
+table.list_default tr td.column_value p {}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:340px;}
+table.list_default tr td table.product_code_item {margin:5px 0;}
+table.list_default tr td table.product_code_item tr td {border:none;height:auto;padding:0 0 0 12px;}
+table.list_default tr td table.product_code_item tr td.column_label {width:134px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+        
+    <div class="clearfix">
+
+      	<table class="list_default">
+			<?php foreach ($this->items as $each) { ?>
+				<tr <?php if (empty($each['status'])) { echo 'class="gray_out"'; } ?>>
+					<td class="column_label">
+						<div style="float:left;width:200px;">
+							<p>status：<?php echo $this->escape($each['status']); ?></p>
+						</div>
+						<div style="float:left;width:300px;">
+							<p><?php echo $this->roundText($this->escape($each['item_name']), 20); ?></p>
+						</div>
+						<div style="float:left;width:200px;">
+							<?php
+								$size = Shared_Model_Resource_ItemDocument::getFileSize($each['item_id'], $each['id'], $each['file_name']);
+								$haveError = false;
+								if ((float)$size === (float)0) {
+									$haveError = true;
+								}
+							?>
+							<p class="file_size <?php if ($haveError) { echo 'red'; } ?>">file size：<?php echo $this->byteFormat($size, 2); ?></p>
+						</div>
+						<div style="float:left;width:350px;">
+							<div class="multi_rows_padding" style="padding-left:10px;"><?php echo $this->escape($each['file_name']); ?></div>
+						</div>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	
+	</div><!-- clearfix -->
+	             
+</div>
+</div>
+</div>
+</div>
+

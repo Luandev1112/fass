@@ -1,0 +1,108 @@
+<?php
+$statusList   = Shared_Model_Code::codes('item_status');
+?>
+<script type="text/javascript">
+$(function () {
+
+    
+});    
+</script>
+<style type="text/css"><!--
+
+--></style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;">
+			<p style="position:absolute;width:90px;right:0;">
+                <a class="btn_setting" style="display:block;float:left;width:90px;padding:5px 0;margin:0;border:none;" href="/including/add">生産情報入力</a>
+            </p>
+	        <span style=""><strong>生産管理</strong></span>
+	    </div>
+	</div>
+
+	<div class="col-sm-12 clearfix" style="margin-bottom:13px;">
+		<table class="list_default">
+			<tr>
+				<th style="width:10%;"><p>商品ID</p></th>
+				<th style="width:40%;"><p>商品名</p></th>
+				<th style="width:10%;"><p>工程数</p></th>
+				<th style="width:10%;"><p>最終生産日</p></th>
+			</tr>
+
+
+<?php
+
+$items = array();
+
+$items[] = array(
+'id' => '3',
+'name' => '琉球しまぐわ　健糖値の特桑茶（粉末タイプ・ミニ30g入り）',
+'step' => "4",
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'id' => '2',
+'name' => 'MOMOこらーげん',
+'step' => "3",
+'updated' => '2018-09-09 00:00',
+);
+
+
+$items[] = array(
+'id' => '1',
+'name' => '健骨・健歯・健康美　ライシア原粉末',
+'step' => "5",
+'updated' => '2018-09-09 00:00',
+);
+
+$this->items = $items;
+
+?>	
+
+			<?php if (!empty($this->items)) { ?>
+				<?php foreach ($this->items as $each) { ?>
+
+					<tr id="<?php echo $each['id']; ?>">
+						<td>
+							<p><?php echo $each['id']; ?></p>
+						</td>
+
+						<td>
+							<p><a href="/manufacture/performance?id=<?php echo $each['id'] ?>"><?php echo $each['name']; ?></a></p>
+						</td>
+						
+						<td>
+							<p><?php echo $each['step']; ?></p>
+						</td>
+
+						<td>
+							<p><?php echo $each['updated']; ?></p>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } else { ?>
+				<tr>
+					<td colspan="4">
+						<p style="text-align:center;">データがありません</p>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+
+        <div style="padding:2.0em 0;">
+        <?php echo $this->pager() ?>
+        </div>
+	            
+	</div>
+
+</div>
+</div>
+</div>
+</div>
+

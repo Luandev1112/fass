@@ -1,0 +1,270 @@
+<?php
+
+?>
+<script type="text/javascript">
+$(function () {
+	$('input').on('input', function(e) {
+  		var unit_work_cost             = parseInt($('.unit_work_cost').html().split(',').join('').trim());
+  		var unit_work_per              = parseInt($('.unit_work_per').html().split(',').join('').trim());
+  		var unit_transport_cost        = parseInt($('.unit_transport_cost').html().split(',').join('').trim());
+  		var unit_transport_per         = parseInt($('.unit_transport_per').html().split(',').join('').trim());
+  	
+		// 輸出先販売価格
+		var price_domestic             = parseInt($('.price_domestic').html().split(',').join('').trim());
+		var percentage_sales_price     = parseInt($('.percentage_sales_price').val().split(',').join('').trim()) / 100;
+		var price_export               = (price_domestic * percentage_sales_price).toFixed(0);
+		$('.price_export').html(price_export);
+	
+		// 卸価格
+		var price_export                = parseInt($('.price_export').html().split(',').join('').trim());
+		var percentage_wholesale_price  = parseInt($('.percentage_wholesale_price').val().split(',').join('').trim());
+		var wholesale_price             = (price_export * percentage_wholesale_price).toFixed(2);
+		$('.wholesale_price').html(wholesale_price);
+	
+		
+		$('.domestic_work').html(unit_work_cost);
+		$('.transport_cost').html(unit_transport_cost);
+		
+		var domestic_work  = parseInt($('.domestic_work').html().split(',').join('').trim());
+		var transport_cost = parseInt($('.transport_cost').html().split(',').join('').trim());
+	
+		$('.maritime_insurance').html((wholesale_price + domestic_work + transport_cost) * 0.1).toFixed(2);;
+
+		$('.cif').html(domestic_work + transport_cost);
+	
+		var cif                        = Number($('.cif').html());
+		$('.cif_price').html(domestic_work + transport_cost + cif);
+	});
+});    
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+table.list_default tr td.column_label {border-right:none;width:180px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {}
+table.list_default tr td.column_value p {padding-left:10px;}
+table.list_default tr td.column_value input[type="text"] {width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"] {width:280px;}
+
+.left{float:left;width:280px;}
+.right{float:left;width:800px;margin-left:20px;}
+ul.left_menu {margin-bottom:20px;}
+ul.left_menu li {display:block;border-bottom:1px solid #b7d3d4}
+ul.left_menu a {display:block;background-color:#e0feff;line-height:34px;padding-left:12px;text-decoration:none;}
+
+table.detail tr th, table.detail tr td {border:1px solid #000;padding:8px 12px}
+table.detail tr td {width:14%;}
+table.detail tr th {background-color:#3d5474;color:#fff;font-weight:normal;}
+table.detail tr p {margin-bottom:0;font-size:1.2em;}
+</style>
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="min-height:900px;margin-bottom:100px;">
+<div class="row text-left">
+
+	<div class="col-xs-12">
+	    <div class="page_title" style="position:relative;margin-bottom:9px;">
+	        <span style=""><strong>原単位・輸出物流</strong></span>
+	    </div>
+	</div>
+
+    <div class="clearfix">
+
+		<div class="clearfix">
+			<div class="left">
+				<ul class="left_menu" class="clearfix">
+					<li><a href="">掛率</a></li>
+					<li><a href="">掛率</a></li>
+				</ul>
+			
+				<ul class="left_menu" class="clearfix">
+					<li><a class="selected" href="">シンガポール</a></li>
+					<li><a href="">韓国</a></li>
+				</ul>
+			</div>
+			<div class="right">
+		        <table class="detail">
+		            <tr>
+		            	<th><p>国内作業単価 / 1ロット数量</p></th>
+		            	<td style="width:69.5%"><p><span class="unit_work_cost">15,900</span> / <span class="unit_work_per">300</span></p></td>
+		            </tr>
+		            <tr>
+		            	<th><p>輸送費単価 / 1ロット数量</p></th>
+		            	<td style="width:69.5%"><p><span class="unit_transport_cost">12,000 / <span class="unit_transport_per">300</span></p></td>
+		            </tr> 
+				</table>
+			
+		        <table class="detail">
+		            <tr>
+		            	<th><p>注文数</p></th>
+		            	<td><p>30</p></td>
+		            	<td><p>100</p></td>
+		            	<td><p>300</p></td>
+		            	<td><p>1,000</p></td>
+		            	<td><p>3,000</p></td>
+		            </tr>
+		            
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >原価</p>
+		                </th>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+		            
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >フレスコ原価率</p>
+		                </th>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+		            
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >日本小売価格</p>
+		                </th>
+		            	<td><p class="price_domestic">4074</p></td>
+		            	<td><p>4,074</p></td>
+		            	<td><p>4,074</p></td>
+		            	<td><p>4,074</p></td>
+		            	<td><p>4,074</p></td>
+		            </tr>
+
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >掛率</p>
+		                </th>
+		            	<td><input type="text" class="percentage_sales_price" name="percentage_sales_price" style="width:60px;float:left;" /><p style="float:left">%</p></td>
+		            	<td><p>110%</p></td>
+		            	<td><p>110%</p></td>
+		            	<td><p>110%</p></td>
+		            	<td><p>110%</p></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >輸出先販売価格</p>
+		                </th>
+		            	<td><p class="price_export">4,481.40</p></td>
+		            	<td><p>4,481.40</p></td>
+		            	<td><p>4,481.40</p></td>
+		            	<td><p>4,481.40</p></td>
+		            	<td><p>4,481.40</p></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >掛率</p>
+		                </th>
+		            	<td><p><input type="text" class="percentage_wholesale_price" name="percentage_sales_price" style="width:60px;float:left;" /><p style="float:left">%</p></td>
+		            	<td><p>58%</p></td>
+		            	<td><p>54%</p></td>
+		            	<td><p>49%</p></td>
+		            	<td><p>47%</p></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >卸価格</p>
+		                </th>
+		            	<td><p class="wholesale_price"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >国内作業</p>
+		                </th>
+		            	<td><p class="domestic_work"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >輸送費</p>
+		                </th>
+		            	<td><p class="transport_cost"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >海上保険</p>
+		                </th>
+		            	<td><p class="maritime_insurance"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >CIF</p>
+		                </th>
+		            	<td><p class="cif"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+		            
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >CIF単価</p>
+		                </th>
+		            	<td><p class="cif_price"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+		            
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >関税</p>
+		                </th>
+		            	<td><p class="maritime_insurance"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>
+
+		            <tr>
+		                <th>
+		                	<p class="display_value_<?php echo $categoryId; ?>" >CIF+関税</p>
+		                </th>
+		            	<td><p class="maritime_insurance"></p></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            	<td></td>
+		            </tr>		                         
+				</table>
+			</div>
+		</div>
+
+
+</div>
+</div>
+</div>
+</div>
+

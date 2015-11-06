@@ -1,0 +1,1393 @@
+<?php
+$languageList      = Shared_Model_Code::codes('language');
+$includingTaxList  = Shared_Model_Code::codes('including_tax');
+?>
+<script type="text/javascript">
+var reloadFlag = false;
+var pos = 0;
+var isEdited = false;
+var rowCount = <?php echo count($this->data['item_list']); ?>;
+var lineHeight = 20;
+var lineHeightCompany = 22;
+var lineHeightOther = 14;
+var targetRow = 0;
+var targetRowDirectOrder = 0;
+
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+function dragover(e) {
+    e.preventDefault();
+}
+					
+function drop(id, e) {
+	$('#' + id + '_add_image_box').removeClass('over');
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+  
+	if (files.length > 1) {
+  		jAlert('ファイルは一枚ずつドロップしてください。', 'エラー');
+ 	 	return;
+	}
+
+    // アップロード処理へ
+    fileUpload(id, files[0]);
+}
+
+function fileUpload(id, fd) {
+    var formData = new FormData();
+    formData.append('file', fd);
+	
+	showSpinner();
+	
+    $.ajax({
+      async: true,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      url:'/transaction-order/upload?id=<?php echo $this->data['id']; ?>',
+      data:formData,
+      dataType :'json'
+    }).done(function(res){
+    	stopSpinner();
+    	
+        var obj = res;
+        if (obj.result == 'timeout') {
+            location.href = '/login';
+            return;            
+        } else if(obj.result == true) {
+        	$('#' + id + '_file_name_text').html(obj.file_name);
+        	$('#' + id + '_file_name').val(obj.file_name);
+        	$('#' + id + '_temp_file_name').val(obj.temp_file_name);
+        	updateEdited(true);
+        } else {
+        	jAlert('予期せぬエラーが発生しました', 'エラー');
+        }
+    });
+}
+
+function getTimeStamp() {
+	var date = new Date();
+	return String(date.getFullYear()) + ("0"+(date.getMonth() + 1)).slice(-2) + ("0"+(date.getDate() + 1)).slice(-2)
+                            	+ '_' + ("0"+(date.getHours() + 1)).slice(-2) + ("0"+(date.getMinutes() + 1)).slice(-2) + ("0"+(date.getSeconds() + 1)).slice(-2);
+}
+
+function separate(num){
+    return String(num).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+}
+function isNumber(n) { return /^-?[\d.]+(?:e-?\d+)?$/.test(n); } 
+function initValue(value) {
+	if (isNumber(value)) {
+		return parseInt(value);
+	}
+	return 0;
+}
+
+function updateEdited(edited) {
+	isEdited = edited;
+	if (isEdited) {
+		$('.btn_estimate_save').removeClass('inactive');
+		$('.btn_estimate_preview').addClass('inactive');
+		$('.btn_save').addClass('inactive');
+	} else {
+		$('.btn_estimate_save').addClass('inactive');
+		$('.btn_estimate_preview').removeClass('inactive');
+		$('.btn_save').removeClass('inactive');
+	}
+}
+
+$(function() {
+    $(document).ready(function(){
+		$('.datepicker').datepicker({onSelect: function(dateText) {updateEdited(true);}});
+		<?php if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) { ?>   
+        	$('.datepicker').datepicker("option", "dateFormat", "mm dd, yy");
+        <?php } else { ?>
+        	$('.datepicker').datepicker("option", "dateFormat", "yy年mm月dd日");
+        <?php } ?>
+        $('.datepicker').datepicker("option", "yearSuffix", '年');
+        $('.datepicker').datepicker("option", "monthNames", ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']);
+		$('.datepicker').datepicker("option", "showMonthAfterYear", true);
+        $('.datepicker').datepicker("option", "dayNames", ['日', '月', '火', '水', '木', '金', '土']);
+        $('.datepicker').datepicker("option", "dayNamesMin", ['日', '月', '火', '水', '木', '金', '土']);
+
+        <?php if (!empty($this->data['invoice_date'])) { ?>
+        	<?php if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) { ?>  
+        		$("#invoice_date").datepicker("setDate", "<?php echo date('m d, Y', strtotime($this->data['invoice_date'])); ?>");
+        	<?php } else { ?>
+        		$("#invoice_date").datepicker("setDate", "<?php echo date('Y年m月d日', strtotime($this->data['invoice_date'])); ?>");
+        	<?php } ?>
+        <?php } ?>
+            
+		$('table.invoice_form tr').each(function(){
+			var rowId = $(this).attr('id');
+			var maxLines = 1;
+	    	$('tr#' + rowId + ' textarea').each(function(){
+	    		var lines = ($(this).val() + '\n').match(/\n/g).length;
+	    		if (lines > maxLines) {
+	      			maxLines = lines;
+	    		}
+	    	});
+	    	$('tr#' + rowId + ' textarea').each(function(){
+	    		$(this).height(lineHeight * maxLines);
+	    	});
+    	});
+
+    	var linesToName = ($('#connection_name').val() + '\n').match(/\n/g).length;
+    	$('#connection_name').height(lineHeightCompany * linesToName);
+
+    	var linesMemo = ($('#memo').val() + '\n').match(/\n/g).length;
+    	$('#memo').height(lineHeightOther * linesMemo);
+
+    	var linesMemoPrivate = ($('#memo_private').val() + '\n').match(/\n/g).length;
+    	$('#memo_private').height(lineHeightOther * linesMemoPrivate);
+
+		var result1 = $("#sortable_column_1").sortable("toArray");
+	    $('input#hidden_contents_order_1').val(result1);
+	    
+		var result2 = $("#sortable_column_2").sortable("toArray");
+	    $('input#hidden_contents_order_2').val(result2);
+        
+        var result3 = $("#sortable_column_3").sortable("toArray");
+	    $('input#hidden_contents_order_3').val(result3);
+	    
+		<?php if (!empty($this->data['file_list'])) { ?>
+	    <?php foreach ($this->data['file_list'] as $each) { ?>			
+			<?php $uid = uniqid(); ?>
+			
+	        // ファイルのドロップ時エフェクト
+			var targetE<?php echo $uid; ?> = document.getElementById('<?php echo $this->escape($each['id']); ?>_add_image_box');
+			var innerFlag<?php echo $uid; ?> = false;
+			
+			targetE<?php echo $uid; ?>.addEventListener('dragenter', function () {
+			    innerFlag<?php echo $uid; ?> = true;
+			}, false);
+			
+			targetE<?php echo $uid; ?>.addEventListener('dragover', function () {
+			    innerFlag<?php echo $uid; ?> = false;
+			    targetE<?php echo $uid; ?>.className = 'add_image_box over';
+			}, false);
+			
+			targetE<?php echo $uid; ?>.addEventListener('dragleave', function () {
+			    if (innerFlag<?php echo $uid; ?>) {
+			        innerFlag<?php echo $uid; ?> = false;
+			    } else {
+			        targetE<?php echo $uid; ?>.className = 'add_image_box';
+			    }
+			}, false);
+		<?php } ?>
+		<?php } ?>
+    });
+
+  	$('input[type="text"]').on('input', function(e) {
+		updateEdited(true);
+		calculate();
+  	});
+
+  	$('textarea').on('input', function(e) {
+		updateEdited(true);
+		calculate();
+  	});
+  	
+	// 自動改行
+  	$('.flex').on('input', function(e) {
+		updateEdited(true);
+    	var maxLines = 1;
+    	var targetRow = $(this).attr('target-row');
+    
+    	$('tr#' + targetRow + ' textarea').each(function(){
+    		var lines = ($(this).val() + '\n').match(/\n/g).length;
+    		if (lines > maxLines) {
+      			maxLines = lines;
+    		}
+    	});
+    	$('tr#' + targetRow + ' textarea').each(function(){
+    		$(this).height(lineHeight * maxLines);
+    	});
+    	calculate();
+  	});
+
+	// 提出先 自動改行
+   	$('.flex_company').on('input', function(e) {
+		updateEdited(true);
+    	var lines = ($(this).val() + '\n').match(/\n/g).length;
+    	$(this).height(lineHeightCompany * lines);
+  	});
+
+	// 備考 自動改行
+   	$('.flex_other').on('input', function(e) {
+		updateEdited(true);
+    	var lines = ($(this).val() + '\n').match(/\n/g).length;
+    	$(this).height(lineHeightOther * lines);
+  	});
+  			    
+    //
+    // 中止
+    //
+    $(".btn_back").click(function(){
+    	if (isEdited == true) {
+			jConfirm('保存せずに中止しますか', '　', function(r) {
+	            if(r) {
+	               location.href = '/transaction-invoice/list';
+	            } else {
+	                return false;
+	            }
+	        });
+        } else {
+	        location.href = '/transaction-invoice/list';
+        }
+	});
+
+    // PDFプレビュー
+    $('.btn_estimate_preview').click( function(){
+    	window.open('/transaction-invoice/preview/<?php echo $this->escape($this->id); ?>/請求書プレビュー_' + getTimeStamp() + '.pdf', '_blank');
+    });
+    
+    // 保存
+    $('.btn_estimate_save').click( function(){
+		showSpinner();
+        var $form = $('#register_form');var param = $form.serializeArray();
+        $.ajax({
+            type:'POST',
+            dataType:'json',
+            data: param,
+            success: function(res){
+            	stopSpinner();
+                var obj = res;
+                if (obj.result == 'timeout') {
+                    location.href = '/login';return;
+                } else if(obj.result == 'OK') {
+					if (obj.reload) {
+                		location.href = '/transaction-invoice/form?id=<?php echo $this->escape($this->id); ?>&pos=' + $(window).scrollTop();
+                		return;
+                	}
+                	
+                    updateEdited(false);
+                    return;
+                } else {
+                    jAlert('' + obj.message, '　');
+                }
+            },
+            error: function(){
+            	stopSpinner();
+                jAlert('予期せぬエラーが発生しました', 'エラー');
+            },
+            url: '/transaction-invoice/update?id=<?php echo $this->escape($this->id); ?>'
+		});
+	});
+
+
+    $('#order_form_type').change(function() {
+		$('.btn_estimate_save').click();
+    });
+
+
+    $('#language').change(function() {
+		$('.btn_estimate_save').click();
+    });
+
+    $('#including_tax').change(function() {
+		$('.btn_estimate_save').click();
+    });
+
+    $('#currency_id').change(function() {
+		updateEdited(true);
+    });
+    
+    //
+    // 承認申請
+    //
+    $('.btn_save').click( function(){
+		jQuery.alerts.yesButton = 'はい';
+		jQuery.alerts.cancelButton = 'もう一度確認';
+        jConfirm('この内容で承認申請しますか', '　', function(r) {
+            if(r) {
+				showSpinner();
+                var $form = $('#register_form');var param = $form.serializeArray();
+		        $.ajax({
+		            type:'POST',
+		            dataType:'json',
+		            data: param,
+		            success: function(res){
+		            	stopSpinner();
+		                var obj = res;
+		                if (obj.result == 'timeout') {
+		                    location.href = '/login';return;
+		                } else if(obj.result == 'OK') {
+                            reloadFlag = true;jAlert('承認申請しました', '　');return;
+		                } else {
+		                    jAlert('' + obj.message, '　');
+		                }
+		            },
+		            error: function(){
+		            	stopSpinner();
+		                jAlert('予期せぬエラーが発生しました', 'エラー');
+		            },
+		            url: '/transaction-invoice/apply-apploval?id=<?php echo $this->escape($this->id); ?>'
+				});
+            } else {
+                return false;
+            }
+        });	
+	});
+
+    $(document).on('click', '#popup_ok', function () {
+        if (reloadFlag) {
+            location.href = '/transaction-invoice/list';
+        }
+    });
+
+
+    $(".sortable_column").sortable({
+        items: ".sortable_frame:not(.not-sortable)",
+        update: function(event, ui){
+        	var categoryId = $(this).attr('target-category');
+            var result = $("#sortable_column_" + categoryId).sortable("toArray");
+            $('input#hidden_contents_order_' + categoryId).val(result);
+        },
+        handle:'.order_btn_frame',
+        delay: 100,
+        stop: function (event, ui) {},
+        start: function (event, ui) {}
+    });
+
+    // カラム追加
+    $(document).on('click', '.btn_add_column', function () {
+	    updateEdited(true);
+    	var categoryId = $(this).attr('target-category');
+		
+		if (categoryId == '3') {
+			var uuid = guid();
+			
+			$('.column_copy_base_' + categoryId + ' .direct_order_name').attr('id', uuid + '_direct_order_name');
+			$('.column_copy_base_' + categoryId + ' .direct_order_id').attr('id', uuid + '_direct_order_id').attr('name', uuid + '_direct_order_id');
+			$('.column_copy_base_' + categoryId + ' .select_order_recieved').attr('id', uuid + '_select_order_recieved').attr('name', uuid + '_select_order_recieved').attr('target-row', uuid);
+			$('.column_copy_base_' + categoryId + ' .clear_order_recieved').attr('id', uuid + '_clear_order_recieved').attr('name', uuid + '_clear_order_recieved').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('#sortable_column_' + categoryId).append($clone.attr('class', 'sortable_frame').attr('id', uuid).css('display', ''));
+	        
+	        
+	        $('.column_copy_base_' + categoryId + ' .direct_order_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .direct_order_id').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .select_order_recieved').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .clear_order_recieved').attr('id', '');
+	        
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result); 
+	        
+    	} else if (categoryId == '1') {
+	        var uuid = guid();
+	        rowCount++;
+	        $('.column_copy_base_' + categoryId + ' .count').html(rowCount);
+	        $('.column_copy_base_' + categoryId + ' textarea').height(lineHeight);
+	        
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', uuid + '_item_id').attr('name', uuid + '_item_id').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', uuid + '_item_name').attr('name', uuid + '_item_name').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', uuid + '_unit_price').attr('name', uuid + '_unit_price').attr('target-row', uuid);
+	        $('.column_copy_base_' + categoryId + ' .amount').attr('id', uuid + '_amount').attr('name', uuid + '_amount').attr('target-row', uuid);
+		    $('.column_copy_base_' + categoryId + ' .price_text').attr('id', uuid + '_price_text');
+		    $('.column_copy_base_' + categoryId + ' .price').attr('id', uuid + '_price').attr('name', uuid + '_price').attr('target-row', uuid);
+		        
+	        $('.column_copy_base .flex').attr('target-row', uuid);
+	        $('.column_copy_base .delete_button').attr('target-category', categoryId);
+	        $('.column_copy_base .delete_button').attr('target-row', uuid);
+	
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', 'sortable_frame').attr('id', uuid).css('display', ''));
+	        
+	        $('.column_copy_base_' + categoryId + ' .item_id').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .item_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .unit_price').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .amount').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .price_text').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .price').attr('id', '');
+				
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+	
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+        
+		} else if (categoryId == '2') {
+	        var uuid = guid();
+        	$('.column_copy_base_' + categoryId + ' .target_date').attr('id', uuid + '_target_date').attr('name', uuid + '_target_date');
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', uuid + '_file_name_text').attr('name', uuid + '_file_name_text');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', uuid + '_file_name').attr('name', uuid + '_file_name');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', uuid + '_temp_file_name').attr('name', uuid + '_temp_file_name');
+	        $('.column_copy_base_' + categoryId + ' .summary').attr('id', uuid + '_summary').attr('name', uuid + '_summary');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', uuid + '_add_image_box').attr('ondrop', "drop('" + uuid + "',event)");
+			$('.column_copy_base .delete_button').attr('target-category', categoryId);
+			$('.column_copy_base_' + categoryId + ' .delete_button').attr('target-row', uuid);
+			
+	        var $clone = $('.column_copy_base_' + categoryId).clone(true);
+	        $('tbody#sortable_column_' + categoryId).append($clone.attr('class', 'sortable_frame').attr('id', uuid).css('display', ''));
+
+	        $('.column_copy_base_' + categoryId + ' .file_name_text').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .file_name').attr('id', '');
+	        $('.column_copy_base_' + categoryId + ' .temp_file_name').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .summary').attr('id', '');
+			$('.column_copy_base_' + categoryId + ' .add_image_box').attr('id', '');
+
+	        // ファイルのドロップ時エフェクト
+			var targetE = document.getElementById(uuid + '_add_image_box');
+			var innerFlag = false;
+			
+			targetE.addEventListener('dragenter', function () {
+			    innerFlag = true;
+			}, false);
+			
+			targetE.addEventListener('dragover', function () {
+			    innerFlag = false;
+			    targetE.className = 'add_image_box over';
+			}, false);
+			
+			targetE.addEventListener('dragleave', function () {
+			    if (innerFlag) {
+			        innerFlag = false;
+			    } else {
+			        targetE.className = 'add_image_box';
+			    }
+			}, false);
+		
+	        $('.column_copy_base_' + categoryId + ' td.added_row').each(function(){
+	            $(this).css('width', $(this).width() +'px');
+	        });
+
+	        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+	        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+	    }
+        
+    });
+
+    // カラム削除
+    $(document).on('click', '.delete_button', function () {
+    	var categoryId = $(this).attr('target-category');
+    	var targetId   = $(this).attr('target-row');
+		$("#sortable_column_" + categoryId + ' tr#' + targetId).remove();
+
+        var result = $("#sortable_column_" + categoryId).sortable("toArray");
+        $('input#hidden_contents_order_' + categoryId).val(result);
+	        
+		if (categoryId == '1') {   
+	        // 番号振り直し
+	        var countUp = 0;
+	    	$('#sortable_column_' + categoryId + ' tr').each(function(){
+	    		countUp++;
+	    		$('#sortable_column_' + categoryId + ' tr#' + $(this).attr('id') + ' .count').html(countUp);
+	    	});
+	    	rowCount = countUp;
+	    	calculate();
+    	}
+    	updateEdited (true);
+    });
+    
+    // 取引先 選択ポップアップ表示
+    $(document).on('click', '#select_connection', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/connection/list-select', null, function () {stopSpinner();});
+    });
+
+	// 取引先 条件検索
+    $(document).on('click', '#search_connection', function () {
+		updateConnectionList(1);
+    });
+
+    // 見積作成者 ポップアップ表示
+    $(document).on('click', '#select_user', function () {
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/user/list-select', null, function () {stopSpinner();});
+    });
+    
+	// 見積作成者 条件検索
+    $(document).on('click', '#search_user', function () {
+		updateUserList(1);
+    });
+
+    // 受注管理 ポップアップ表示
+    $(document).on('click', '.select_order_recieved', function () {
+    	var connectionId = $('#target_connection_id').val();
+    	if (!connectionId) {
+    		jAlert('取引先を選択しましてください', '　');
+    		return;
+    	}
+		
+		targetRowDirectOrder = $(this).attr('target-row');
+		
+    	showSpinner();
+    	pos = $(window).scrollTop();
+    	$('#data_area').html('');
+    	$('body').addClass('body_fixed').css({'top': 0});
+		$('#glayLayer').show();
+		$('#overBoxLayer').show();
+		$('.menu_frame').css('height', window.innerHeight - 80);
+		$('#data_area').load('/transaction-order-recieved/list-select?connection_id=' + connectionId, null, function () {stopSpinner();});
+    });
+    
+	// 受注管理 条件検索
+    $(document).on('click', '#search_order_received', function () {
+		updateOrderRecievedList(1);
+    });
+
+	// 受注管理 選択解除
+    $(document).on('click', '.clear_order_recieved', function () {
+	    targetRowDirectOrder = $(this).attr('target-row');
+	    
+		$('#' + targetRowDirectOrder + '_direct_order_name').html('');
+		$('#' + targetRowDirectOrder + '_direct_order_id').val('');
+		updateEdited(true);
+    });
+
+	// 契約書 選択
+    $(document).on('click', '.select_document', function () {
+		jAlert('この機能は現在使用できません', '　');
+    });
+    
+    // ポップアップを閉じる
+    $(document).on('click', '.btn_close', function () {
+    	$('body').removeClass('body_fixed').css({'top': pos});
+    	$('html,body').scrollTop(pos);
+		$('#glayLayer').hide();
+		$('#overBoxLayer').hide();
+    });
+});
+
+// 取引先 一覧ページ切り替え
+function pageConnection(pageNo) {
+	updateConnectionList(pageNo)
+}
+
+// 取引先 一覧更新
+function updateConnectionList (pageNo) {
+    var $form = $('#connection_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data: param,
+        success: function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error: function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url: '/connection/list-select?page=' + pageNo,
+    });
+}
+
+// 取引先 選択完了
+function selectConnection(id, displayId, name) {
+	updateEdited (true);
+	
+	<?php if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) { ?>
+	$('#connection_name').val('MESSRS: ' + name);
+	<?php } else { ?>
+	$('#connection_name').val(name + ' 御中');
+	<?php } ?>
+	
+	$('#target_connection_id').val(id);
+	$('.btn_close').click();
+	
+    var lines = ($('#connection_name').val() + '\n').match(/\n/g).length;
+	$('#connection_name').height(lineHeightCompany * lines);
+}
+
+// 受注管理 一覧ページ切り替え
+function pageOrderRecieved(pageNo) {
+	updateOrderRecievedList(pageNo)
+}
+
+// 受注管理 一覧更新
+function updateOrderRecievedList (pageNo) {
+    var $form  = $('#order_recieved_condition_form');
+    var query  = $form.serialize();
+    var params = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/transaction-order-recieved/list-select?page=' + pageNo,
+    });
+}
+
+// 受注管理 選択完了
+function selectOrderRecieved(id, displayId, name) {
+	updateEdited (true);
+	
+	$('#' + targetRowDirectOrder + '_direct_order_name').html('<strong>' + displayId + '</strong> ' + name);
+	$('#' + targetRowDirectOrder + '_direct_order_id').val(id);
+	
+	$('.btn_close').click();
+}
+
+// 作成者 一覧ページ切り替え
+function pageUser(pageNo) {
+	updateUserList(pageNo)
+}
+
+// 作成者 一覧更新
+function updateUserList (pageNo) {
+    var $form = $('#user_condition_form');
+    var query = $form.serialize();
+    var param = $form.serializeArray();
+    $('#data_area').html('');
+    showSpinner();
+    $.ajax({
+        type:'POST',
+        dataType:'html',
+        data:params,
+        success:function(res){
+        	stopSpinner();
+			$('#data_area').html(res);
+        },
+        error:function(){
+            jAlert('予期せぬエラーが発生しました', 'エラー');
+        },
+        url:'/user/list-select?page=' + pageNo,
+    });
+}
+
+// 作成者 選択完了
+function selectUser(id, departmentName, name, departmentNameEn, nameEn) {
+	updateEdited (true);
+	
+	<?php if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) { ?>
+	$('#creater_user_name').html('PIC: ' + departmentNameEn + '　' + nameEn);
+	<?php } else { ?>
+	$('#creater_user_name').html('担当者: ' + departmentName + '　' + name);
+	<?php } ?>
+	
+	$('#created_user_id').val(id);
+	$('.btn_close').click();
+}
+
+function calculate() {
+	var subtotal = 0;
+	<?php if ($this->data['invoice_type'] === (string)Shared_Model_Code::INVOICE_TYPE_CREATE) { ?>
+		// each
+		$('table.invoice_form tr').each(function() {
+			var targetRow = $(this).attr('id');
+			var unitPrice    = parseFloat($('table.invoice_form textarea[name="' + targetRow + '_unit_price"]').val()); 
+			var amount       = parseFloat($('table.invoice_form textarea[name="' + targetRow + '_amount"]').val());		
+			if (unitPrice && amount) {
+				var price = unitPrice * amount;
+				$('table.invoice_form input[name="' + targetRow + '_price"]').val(price);
+				$('table.invoice_form p#' + targetRow + '_price_text').html(separate(price.toFixed(0)));
+				subtotal += price;
+			}
+		});
+		
+		<?php if ($this->data['including_tax'] === (string)Shared_Model_Code::INCLUDING_TAX_YES) { ?>
+	
+			$('#total_with_tax_text').html(separate(subtotal.toFixed(0)));
+			$('#total_with_tax').val(subtotal.toFixed(0));
+			$('#subtotal').val(subtotal.toFixed(0));
+			$('#tax').val('0');
+			$('#tax_percentage').val('0');
+			
+		<?php } else { ?>
+			var tax_percentage = parseFloat($('input[name="tax_percentage"]').val());
+		
+			var tax = subtotal * tax_percentage * 0.01;
+			var total    = subtotal + tax;
+			console.log('subtotal: ' + subtotal);
+			console.log('tax: ' + tax);
+			console.log('total: ' + total);
+			
+			$('#subtotal_text').html(separate(subtotal.toFixed(0)));
+			$('#subtotal').val(subtotal.toFixed(0));
+		
+			$('#tax_text').html(separate(tax.toFixed(0)));
+			$('#tax').val(tax.toFixed(0));
+			
+			$('#total_with_tax_text').html(separate(total.toFixed(0)));
+			$('#total_with_tax').val(total.toFixed(0));
+		<?php } ?>
+	<?php } ?>
+}
+</script>
+<style type="text/css">
+body input, body textarea, body select {color:#000;font-size:12px;}
+#from_logo {width:200px;}
+.from p {margin-bottom:0.4em;}
+.from p.company_name {font-size:1.3em}
+table.list_default tr td.column_label {border-right:none;width:265px;}
+table.list_default tr td.colon {border-right:none;width:20px;}
+table.list_default tr td.column_value {border-right:none;}
+table.list_default tr td.column_value p {padding-left:6px;}
+table.list_default tr td.column_value input[type="text"]{width:99%;display:block;}
+table.list_default tr td.column_value input.short[type="text"]{width:300px;}
+table.list_default tr td.column_value select.short {width:300px;}
+table.list_default tr td.td_action {width:56px;border-right:none;}
+table.list_default tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.list_default tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+
+
+table.stamp {width:auto;float:right;}
+table.stamp tr td {border:1px solid #000;text-align:center;width:60px;padding:0;}
+table.invoice_form tr td {padding:0;border-top:1px solid #000;border-bottom:1px solid #000;border-right:1px dotted #000;border-left:1px dotted #000;vertical-align:top}
+table.invoice_form tr td input[type="text"]{border:none;width:100%;padding-left:5px;padding-right:5px;}
+table.invoice_form tr td textarea{border:none;width:100%;}
+table.invoice_form tr td.td_item_action {width:50px;border-left:none;border-bottom:none;border-top:none;}
+table.invoice_form tr td.td_item_action .item_btn_frame {float:left;margin:8px 0 0 18px;}
+table.invoice_form tr td.td_item_action .item_btn_frame a {text-decoration:none;color:#000;font-size:1.6em;}
+table.invoice_form tr td.td_item_action .item_btn_frame a.select_product.active {color:#219c11}
+table.invoice_form tr td.td_action {width:50px;border-right:none;border-bottom:none;border-top:none;}
+table.invoice_form tr td.td_action .delete_btn_frame {float:left;margin:8px 0 0 12px;}
+table.invoice_form tr td.td_action .delete_btn_frame a {text-decoration:none;color:#ff0000;font-size:1.6em;}
+table.invoice_form tr td p.count,table.invoice_form tr td p.price_text {padding-left:5px;padding-right:5px;padding-top:12px;}
+textarea.flex {resize:none;padding:8px;line-height:20px;}
+textarea.flex_other {resize:none;padding:8px;line-height:14px;}
+
+.overlay_menu {position:fixed;}
+.menu_frame {background-color:#fff;width:1000px;margin:40px auto;padding:0 50px;overflow:auto;}
+.menu_frame .page_title {padding-top:2.0em;}
+.menu_frame div.condition_items div.condition_item {width:239px}
+.menu_frame a.option {margin:5px 8px 0px;padding:7px 15px 5px 15px;line-height:1}
+.align_right {text-align:right;}
+.align_center {text-align:center;}
+a.option {
+background:none repeat scroll 0 0 #00469b;border:medium none;border-radius:0;box-shadow:none;cursor:pointer;
+color:#fff !important;display:block;float:left;font-size:12px;margin:5px auto 10px;padding:7px 35px 5px 35px;text-shadow:none;transition:all 200ms ease-in 0s;text-decoration:none;
+}
+.add_row_button_frame {height:34px;margin-left:50px;margin-right:50px;}
+a.btn_add_column {display:block;padding-top:8px;width:200px;margin:0 auto;font-size:1.6em;}
+.private_memo {padding:40px 50px 50px;background-color:#e0feff;border:1px solid #32918c;margin:20px 120px 0}
+.private_memo p {font-size:1.4em;color:#32918c;font-weight:bold;margin:0.8em}
+.quote {margin:0 0 10px;padding:5px;background-color:#e3f2ff}
+.quote p {padding:6px 0 8px 12px;height:auto;}
+p.reference_title {float:left;width:750px;margin-top:15px;}
+</style>
+
+<div class="section anchor">
+<div class="light-wrapper">
+<div class="container inner" style="margin-bottom:500px;">
+<div class="row text-left base_frame">
+
+
+    <?php
+    /* copy base */
+    $categoryId = 3;
+    ?>
+	<div class="column_copy_base_<?php echo $categoryId; ?>" id="" style="display:none;">
+		<div class="clearfix" id="">
+			<p class="reference_title"><span class="direct_order_name"></span></p>
+			<input type="hidden" class="direct_order_id" id="" name="" value="" />
+			<div class="clearfix" style="float:right;width:280px;">
+				<a class="option select_order_recieved" id="" style="margin-left:12px;margin-right:6px;width:120px;text-align:center;padding:7px 0 5px 0;">受注管理引用</a>
+				<a class="option clear_order_recieved" id="" style="width:120px;text-align:center;padding:7px 0 5px 0;">引用解除</a>
+			</div>
+		</div>
+	</div>
+	
+	
+	<form id="register_form" action="javascript:void(0);" method="post">
+		<div class="col-xs-12">
+	        <div class="item_title clearfix" style="margin-top:0;">
+	        	<p class="item_name" style="float:left;padding-top:9px;margin-left:30px;">言語選択：</p>
+				<select id="language" name="language" style="float:left;width:200px;margin-top:0">
+                    <?php foreach ($languageList as $key => $val) { ?>
+                        <option value="<?php echo $key; ?>" <?php if ($this->data['language'] === (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                    <?php } ?>
+            	</select>
+				
+				<p class="item_name" style="float:left;padding-top:9px;margin-left:30px;">価格設定：</p>
+				<select id="including_tax" name="including_tax" style="float:left;width:200px;margin-top:0;">
+                    <?php foreach ($includingTaxList as $key => $val) { ?>
+                        <option value="<?php echo $key; ?>" <?php if ($this->data['including_tax'] === (string)$key) echo 'selected="selected"'; ?>><?php echo $this->escape($val); ?></option>
+                    <?php } ?>
+            	</select>
+	        </div>
+		</div>
+		
+	    <?php
+        /* 受注管理引用 */
+        $categoryId = 3;
+        ?>
+		<div class="quote clearfix">
+			<div class="" style="float:left;width:200px;">
+				<p class="reference_title" style="margin-bottom:15px;"><strong>受注管理引用：</strong></p>
+			</div>
+			<div style="float:left;width:1050px;">
+				<div class="sortable_column clearfix" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+					<?php $directOrderTable = new Shared_Model_Data_DirectOrder(); ?>
+					<?php if (!empty($this->data['direct_order_ids'])) { ?>
+						<?php foreach ($this->data['direct_order_ids'] as $eachOrderId) { ?>
+							<?php 
+								$orderData = $directOrderTable->getById($this->adminProperty['management_group_id'], $eachOrderId);
+								$directOrderName = '';
+								if (!empty($orderData)) {
+										$text = '';
+										if (!empty($orderData['items'])) {
+											$textList = array();
+											foreach ($orderData['items'] as $eachItem) {
+												$exploded = explode("\n", $eachItem['item_name']);
+												if (!empty($exploded[0])) {
+													$textList[] = str_replace("\n", '', $exploded[0]);
+												}
+											}
+											
+											$text = $this->escape(implode(" / ", $textList));
+										}
+										$text = $this->escape($text);
+										
+										$directOrderName = '<strong>' . $orderData['display_id'] . '</strong> '. $text;
+								}
+								
+							?>
+							<div class="select_order_frame sortable_frame clearfix" id="direct_order_<?php echo $this->escape($orderData['id']); ?>">
+								<p class="reference_title"><span id="direct_order_<?php echo $this->escape($orderData['id']); ?>_direct_order_name"><?php echo $directOrderName; ?></span></p>
+								<input type="hidden" id="direct_order_<?php echo $this->escape($orderData['id']); ?>_direct_order_id" name="direct_order_<?php echo $this->escape($orderData['id']); ?>_direct_order_id" value="<?php echo $this->escape($orderData['id']); ?>" />
+								<div class="clearfix" style="float:right;width:280px;">
+									<a class="option select_order_recieved" id="direct_order_<?php echo $this->escape($orderData['id']); ?>_select_order_recieved" target-row="direct_order_<?php echo $this->escape($orderData['id']); ?>" style="margin-left:12px;margin-right:6px;width:120px;text-align:center;padding:7px 0 5px 0;">受注管理引用</a>
+									<a class="option clear_order_recieved" id="direct_order_<?php echo $this->escape($orderData['id']); ?>_clear_order_recieved" target-row="direct_order_<?php echo $this->escape($orderData['id']); ?>" style="width:120px;text-align:center;padding:7px 0 5px 0;">引用解除</a>
+								</div>
+							</div>
+						<?php } ?>
+					<?php } ?>
+				</div>
+				
+		        <div class="add_row_button_frame" style="height:auto;">
+		            <p class="align_center"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" style="padding-top:0.7em;margin-bottom:0.3em;" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+		            <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="direct_order_id_list" value="" />
+		        </div>
+			</div>
+		</div>
+    
+		<div class="quote clearfix">
+			<p class="reference_title"><strong>契約書引用：</strong><span id="document_name"></span></p>
+			<input type="hidden" id="document_id" name="document_id" value="" />
+			<div class="clearfix" style="float:right;width:280px;">
+				<a class="option select_document" style="margin-left:12px;margin-right:6px;width:120px;text-align:center;padding:7px 0 5px 0;">契約書引用</a>
+				<a class="option clear_document" style="width:120px;text-align:center;padding:7px 0 5px 0;">引用解除</a>
+			</div>
+		</div>
+		
+			
+	    <?php
+        /* 請求書 */
+        $categoryId = 1;
+        
+        ?>
+		<?php if ($this->data['invoice_type'] === (string)Shared_Model_Code::INVOICE_TYPE_CREATE) { ?>
+		    <div style="border:1px solid #000;margin:0 120px 20px;">
+		    	<div class="clearfix" style="padding:50px 50px 40px 50px;">
+		    		<div class="clearfix" style="float:left;width:400px;">
+		    			<div style="float:left;width:100%;">
+		    				<textarea class="flex_company" id="connection_name" name="to_name" style="width:380px;font-size:1.5em;"><?php echo $this->escape($this->data['to_name']); ?></textarea>
+		    			</div>
+		    			<input type="hidden" id="target_connection_id" name="target_connection_id" value="<?php echo $this->escape($this->data['target_connection_id']); ?>" />
+		    			<a class="option" id="select_connection">提出先変更</a>
+		    		</div>
+		    		
+		    		<?php 
+		    			$companyName = $this->groupData['organization_name'];
+		    			$address     = '〒' . $this->groupData['postal_code'] . ' ' . $this->groupData['prefecture'] . $this->groupData['city'] . $this->groupData['address'];
+		    			$tel = $this->groupData['tel'];
+		    			$fax = $this->groupData['fax'];
+		    			
+		    			$numberLabel = '請求書管理番号';
+		    			
+		    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+		    				$companyName = $this->groupData['organization_name_en'];
+		    				$address = $this->groupData['address_en'] . ' ' . $this->groupData['city_en'] . ", " . $this->groupData['prefecture_en'] . ' JAPAN'. ' (Zip: ' . $this->groupData['postal_code'] . ')';
+			    			$tel = $this->groupData['tel_int'];
+			    			$fax = $this->groupData['fax_int'];
+			    			
+			    			$numberLabel = 'INVOICE No.';
+		    			}
+		    		?>
+		    		
+		    		<div class="from" style="float:right;width:330px">
+						<div class="clearfix" style="margin:0 auto 10px;text-align:right;">
+							<p style="margin-bottom:0;"><input type="text" class="datepicker" id="invoice_date" placeholder="請求書発行日" name="invoice_date" autocomplete="off" value="" /></p>
+						</div>
+		    			<img id="from_logo" src="/resource/logo_group/logo.png" style="margin-bottom:10px;" />
+	
+						<div class="clearfix">
+							<p class="company_name"><?php echo $this->escape($companyName); ?></p>
+						</div>
+						<div class="clearfix">
+							<p><?php echo $this->escape($address); ?></p>
+						</div>
+						<div class="clearfix">
+							<p>TEL <?php echo $this->escape($tel); ?>　　FAX <?php echo $this->escape($fax); ?></p>
+						</div>
+						<div class="clearfix" style="padding-top:2px;">
+							<p style="float:left;padding-top:5px;" id="creater_user_name">
+								<?php
+			                		if (!empty($this->createdUser)) {
+			                			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+			                				echo 'PIC: ' . $this->escape($this->createdUser['department_name_en']) . '　' . $this->escape($this->createdUser['user_name_en']);
+			                			} else {
+			                				echo '担当者: ' . $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']);
+			                			}
+			                		} else {
+			                			echo '---';
+			                		}
+								?>
+							</p>
+							<input type="hidden" id="created_user_id" name="created_user_id" value="<?php echo $this->escape($this->data['created_user_id']); ?>" />
+							<a class="option" id="select_user" style="padding:3px 10px 1px 10px;margin-top:-3px;margin-right:4px;float:right;">選択</a>
+						</div>
+			    		<?php 
+			    			$author   = '作成';
+			    			$approval = '承認';
+			    			
+			    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+			    				$author   = 'PIC';
+			    				$approval = 'approval';
+			    			}
+			    			
+			    		?>
+		    			<div class="clearfix" style="margin-top:10px">
+		    				<table class="stamp">
+		    					<tr>
+									<td><?php echo $author; ?></td>
+									<td><?php echo $approval; ?></td>
+		    					</tr>
+		    					<tr>
+		    						<td style="height:60px;">&nbsp;</td>
+		    						<td>&nbsp;</td>
+		    					</tr>
+		    				</table>
+		    			</div>
+		    		</div>
+		    	</div>
+		    	
+				<div style="margin:0 auto 10px;width: 650px;">
+					<div style="border-bottom:3px solid #000;">
+						<input style="display:block;width:600px;margin:0 auto 10px;font-size:1.8em;text-align:center;" type="text" name="title" value="<?php echo $this->escape($this->data['title']); ?>" maxlength="" />		
+					</div>
+					<div class="clearfix" style="padding:0 0 30px;">
+		    			<div style="float:right;text-align:right;padding-right:5px">
+		    				<?php echo $numberLabel; ?>：<?php echo $this->escape($this->data['display_id']); ?>
+		    			</div>
+		    		</div>
+				</div>
+				
+				<div style="padding-bottom:10px;">
+					<div class="clearfix" style="margin-left:50px;margin-right:50px;border-bottom:2px solid #000;">
+						<?php /*<a class="option" style="float:right" href="">オプション</a>*/ ?>&nbsp;
+					</div>
+						
+					<input type="hidden" name="label_count" value="4">
+					<table class="invoice_form" style="margin:0;">
+						<thead>
+							<tr id="0">
+								<td class="td_item_action">&nbsp;</td>
+								<td style="width:40px;"><textarea class="flex align_center" target-row="0" name="label_1"><?php echo $this->data['labels']['label_1']; ?></textarea></td>
+								<td><textarea class="flex" target-row="0" name="label_2"><?php echo $this->data['labels']['label_2']; ?></textarea></td>
+								<td style="width:90px;"><textarea class="flex align_center" target-row="0" name="label_4"><?php echo $this->data['labels']['label_4']; ?></textarea></td>
+								<td style="width:70px;"><textarea class="flex align_center" target-row="0" name="label_5"><?php echo $this->data['labels']['label_5']; ?></textarea></td>
+								<td style="width:90px;"><textarea class="flex align_center" target-row="0" name="label_6"><?php echo $this->data['labels']['label_6']; ?></textarea></td>
+								<td class="td_action">&nbsp;</td>
+							</tr>
+						</thead>
+						<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+							<?php if (!empty($this->data['item_list'])) { ?>
+							<?php foreach ($this->data['item_list'] as $each) {?>
+							<tr id="<?php echo $this->escape($each['id']); ?>" class="sortable_frame">
+								<td class="td_item_action">
+									<div class="item_btn_frame">
+										<!--
+										<a id="<?php echo $this->escape($each['id']); ?>_select_product" class="select_product <?php if (!empty($each['item_id'])) { echo 'active'; } ?>" href="javascript:void(0);" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-th-large"></i></a>
+										<input type="hidden" id="<?php echo $this->escape($each['id']); ?>_item_id" name="<?php echo $this->escape($each['id']); ?>_item_id" value="<?php echo $this->escape($each['item_id']); ?>" />
+										-->
+									</div>
+								</td>
+								<td><p class="count align_right"><?php echo $this->escape($each['id']); ?></p></td>
+								<td><textarea class="flex" target-row="<?php echo $this->escape($each['id']); ?>" id="<?php echo $this->escape($each['id']); ?>_item_name" name="<?php echo $this->escape($each['id']); ?>_item_name"><?php echo $this->escape($each['item_name']); ?></textarea></td>
+								<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_unit_price"><?php echo $this->escape($each['unit_price']); ?></textarea></td>
+								<td><textarea class="flex align_right" target-row="<?php echo $this->escape($each['id']); ?>" name="<?php echo $this->escape($each['id']); ?>_amount"><?php echo $this->escape($each['amount']); ?></textarea></td>
+								<td>
+									<p class="align_right price_text" id="<?php echo $this->escape($each['id']); ?>_price_text"><?php if (!empty($each['price'])) { echo number_format($this->escape($each['price'])); } else { echo '0';} ?></p>
+									<input type="hidden" target-row="<?php echo $this->escape($each['id']); ?>" id="<?php echo $this->escape($each['id']); ?>_price" name="<?php echo $this->escape($each['id']); ?>_price" value="<?php echo $this->escape($each['price']); ?>" />
+								</td>
+					            <td class="td_action">
+					            	<div class="delete_btn_frame">
+					            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+					            	</div>
+					            </td>
+							</tr>
+							<?php } ?>
+							<?php } ?>
+						</tbody>
+					</table>
+	
+			        <div class="add_row_button_frame" style="border-top:2px solid #000;">
+			            <p class="align_center"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+			            <input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="invoice_item_list" value="" />
+			        </div>
+				        
+			        <?php 
+		    			$subTotalLabel = '合計（税別）';
+		    			$taxLabel      = '消費税';
+		    			$totalLabel    = '合計（税込）';
+		    			
+		    			if ($this->data['language'] == Shared_Model_Code::LANGUAGE_EN) {
+		    				$subTotalLabel = 'SUB TOTAL';
+		    				$taxLabel      = 'TAX';
+		    				$totalLabel    = 'GRAND TOTAL';
+		    			}
+		    		?>
+		    		
+		    		<?php if (!empty($this->data['including_tax'])) { ?>
+						<div class="clearfix" style="margin-left:50px;margin-right:50px;">
+							<div class="clearfix" style="padding-top:5px;border-bottom:2px solid #000;">
+								<div style="width:150px;float:left;text-align:left">
+									&nbsp;
+								</div>
+								<div id="total_with_tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['total_with_tax'])) { echo number_format($this->escape($this->data['total_with_tax'])); } else { echo '0'; } ?></div>
+								<div style="width:150px;float:right;font-size:1.3em;text-align:left"><?php echo $totalLabel; ?></div>
+								<input type="hidden" id="total_with_tax" name="total_with_tax" value="<?php echo $this->escape($this->data['total_with_tax']); ?>" />
+							</div>
+							
+							<div class="clearfix" style="margin-left:50px;margin-right:50px;">
+								<div style="width:150px;float:left;text-align:left">
+					            	<p style="float:left;margin-top:8px;">通貨：</p>
+					            	<select id="currency_id" name="currency_id" style="width:150px;">
+					                	<?php foreach ($this->currencyList as $each) { ?>
+					                        <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] === $this->data['currency_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']) . '&nbsp;(' . $this->escape($each['symbol']) . ')'; ?></option>
+					                    <?php } ?>
+					                </select>
+				                </div>
+							</div>
+						</div>
+						<input type="hidden" id="tax" name="tax" value="<?php echo $this->escape($this->data['tax']); ?>" />
+						<input type="hidden" id="subtotal" name="subtotal" value="<?php echo $this->escape($this->data['subtotal']); ?>" />
+						<input type="hidden" id="tax_percentage" name="tax_percentage" value="<?php echo $this->escape($this->data['tax_percentage']); ?>" />
+		    		<?php } else { ?>
+						<div class="clearfix" style="margin-left:50px;margin-right:50px;">
+							<div class="clearfix" style="padding-top:5px;border-bottom:2px solid #000;">
+								<div id="subtotal_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['subtotal'])) { echo number_format($this->escape($this->data['subtotal'])); } else { echo '0'; } ?></div>
+								<div style="width:150px;float:right;font-size:1.3em;text-align:left;padding-top:0.2em"><?php echo $subTotalLabel; ?></div>
+								<input type="hidden" id="subtotal" name="subtotal" value="<?php echo $this->escape($this->data['subtotal']); ?>" />
+							</div>
+							<div class="clearfix" style="padding-top:5px;">
+								<div id="tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['tax'])) { echo number_format($this->escape($this->data['tax'])); } else { echo '0'; } ?></div>
+								<div style="width:150px;float:right;font-size:1.3em;text-align:left"><?php echo $taxLabel; ?>（<input type="text" id="tax_percentage" name="tax_percentage" style="width:35px;text-align:center;padding-left:0;padding-right:0;" value="<?php echo $this->escape($this->data['tax_percentage']); ?>">%）</div>
+								<input type="hidden" id="tax" name="tax" value="<?php echo $this->escape($this->data['tax']); ?>" />
+							</div>
+							<div class="clearfix" style="padding-top:5px;">
+								<div style="width:150px;float:left;text-align:left">
+									<p style="float:left;margin-top:8px;">通貨：</p>
+									<select id="currency_id" name="currency_id" style="float:left;width:100px;margin-top:0;">
+					                    <option value="">---</option>
+					                	<?php foreach ($this->currencyList as $each) { ?>
+					                        <option value="<?php echo $each['id']; ?>" <?php if ($each['id'] === $this->data['currency_id']) echo 'selected="selected"'; ?>><?php echo $this->escape($each['name']) . '&nbsp;(' . $this->escape($each['symbol']) . ')'; ?></option>
+					                    <?php } ?>
+					                </select>
+								</div>
+								<div id="total_with_tax_text" style="width:150px;float:right;font-size:1.3em;text-align:right;margin-right:6px;"><?php if (!empty($this->data['total_with_tax'])) { echo number_format($this->escape($this->data['total_with_tax'])); } else { echo '0'; } ?></div>
+								<div style="width:150px;float:right;font-size:1.3em;text-align:left"><?php echo $totalLabel; ?></div>
+								<input type="hidden" id="total_with_tax" name="total_with_tax" value="<?php echo $this->escape($this->data['total_with_tax']); ?>" />
+							</div>
+						</div>
+					<?php } ?>
+				</div>
+				
+				<div style="padding:0 50px 50px 50px;">
+					<textarea  class="flex_other" id="memo" name="memo" placeholder="備考欄" style="height:150px;width:760px;"><?php echo $this->escape($this->data['memo']); ?></textarea>
+				</div>
+		    </div>
+	    
+	    <?php } else { ?>
+			<table class="list_default" style="margin-bottom:0;">
+	            <tr>
+	                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+	                    <p class="label_text strong">基本情報</p>
+	                </th>
+	            </tr>
+			</table>
+	        <table class="list_default" style="margin-bottom:13px;">
+	            <tr>
+		            <td class="column_label"><p class="label_text">請求書管理番号</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<p><?php echo $this->escape($this->data['display_id']); ?></p>
+		            </td>
+	            </tr>
+
+	            <tr>
+	                <td class="column_label"><p class="label_text">内容<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+						<textarea name="title" style="margin-bottom:5px;height:100px;"><?php echo $this->escape($this->data['title']); ?></textarea>
+	                </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">提出先<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p class="connection_name" id="connection_name"><?php echo '<strong>' . $this->connectionData['display_id'] . '</strong>　' . $this->escape($this->connectionData['company_name']); ?></p>
+	                    <a class="option" id="select_connection">提出先選択</a>
+	                    <input type="hidden" id="target_connection_id" name="target_connection_id" value="<?php echo $this->escape($this->data['target_connection_id']); ?>">
+	                    <input type="hidden" id="connection_name" name="to_name" value="<?php echo $this->escape($this->data['to_name']); ?>" />
+	                </td>
+	            </tr>
+	            
+	            <tr>
+		            <td class="column_label"><p class="label_text">請求書発行日<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<input type="text" class="datepicker" style="width:120px;" id="invoice_date" name="invoice_date" autocomplete="off" value="">
+		            </td>
+	            </tr>
+	            
+	            <tr>
+	                <td class="column_label"><p class="label_text">担当者<span class="require">＊</span></p></td>
+	                <td class="colon"><p class="label_text">：</p></td>
+	                <td class="column_value">
+	                	<p id="creater_user_name"><?php echo $this->escape($this->createdUser['department_name']) . '　' . $this->escape($this->createdUser['user_name']); ?></p>
+	                    <a class="option" id="select_user">選択</a>
+	                    <input type="hidden" id="created_user_id" name="created_user_id" value="<?php echo $this->escape($this->data['created_user_id']); ?>">
+	                </td>
+	            </tr>
+	            
+	            
+	            <?php
+	            	$currencyText = '';
+	            	foreach ($this->currencyList as $eachCurrency) {
+	            		if ($this->data['currency_id'] == $eachCurrency['id']) {
+	            			$currencyText = $eachCurrency['name'];
+	            		}
+	            	}
+	            ?>
+	            <tr>
+		            <td class="column_label"><p class="label_text">合計金額(税別)</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<input type="text" style="float:left;width:230px;text-align:right;" id="subtotal" name="subtotal" value="<?php echo $this->escape($this->data['subtotal']); ?>" />
+                        <select style="float:left;width:90px;margin-left:5px;" id="currency_id" name="currency_id">
+                            <option value="">(通貨単位)</option>
+                        	<?php foreach ($this->currencyList as $eachCurrency) { ?>
+                                <option value="<?php echo $eachCurrency['id']; ?>" <?php if ($this->data['currency_id'] == $eachCurrency['id']) { echo 'selected="selected"'; $currencyText = $eachCurrency['name']; } ?>><?php echo $this->escape($eachCurrency['name']); ?></option>
+                            <?php } ?>
+                        </select>
+		            </td>
+	            </tr>
+            
+	            <tr>
+		            <td class="column_label"><p class="label_text">税率・税額</p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<div style="float:left;width:110px;">
+		            		<input type="text" style="float:left;width:45px;" id="tax_percentage" name="tax_percentage" value="<?php echo $this->escape($this->data['tax_percentage']); ?>" />
+		            		<p style="float:left;margin-left:5px">%</p>
+		            	</div>
+		            	<div style="float:left;width:300px;">
+			            	<input type="text" style="float:left;width:120px;text-align:right;" id="tax" name="tax" value="<?php echo $this->escape($this->data['tax']); ?>" />
+			            	<p class="currency_unit"><?php echo $this->escape($currencyText); ?></p>
+		            	</div>
+		            </td>
+	            </tr>
+	            
+	            <tr>
+		            <td class="column_label"><p class="label_text">合計金額(税込)<span class="require">＊</span></p></td>
+		            <td class="colon"><p class="label_text">：</p></td>
+		            <td class="column_value">
+		            	<input type="text" style="float:left;width:230px;text-align:right;" id="total_with_tax" name="total_with_tax" value="<?php echo $this->escape($this->data['total_with_tax']); ?>" />
+		            	<p class="currency_unit"><?php echo $this->escape($currencyText); ?></p>
+		            </td>
+	            </tr>
+
+	        </table>
+	    <?php } ?>
+	    
+
+
+
+
+	    <?php
+        /* 添付資料 */
+        $categoryId = 2;
+        ?>
+        <div style="margin-bottom:13px;">
+		<table class="list_default" style="margin-bottom:0;">
+            <tr>
+                <th style="border:1px solid #cfcfcf;background-color:#f1f1f1;">
+                    <p class="label_text strong">添付資料</p>
+                </th>
+            </tr>
+		</table>
+		<table class="list_default" style="margin-bottom:0;">
+			<tbody class="sortable_column" id="sortable_column_<?php echo $categoryId; ?>" target-category="<?php echo $categoryId; ?>">
+		        <?php if (!empty($this->data['file_list'])) { ?>
+			        <?php foreach ($this->data['file_list'] as $each) { ?>
+				        <tr id="<?php echo $this->escape($each['id']); ?>" class="sortable_frame">
+							<td class="column_value">
+								<div class="clearfix">
+									<div style="float:left;width:360px;">
+										<div class="clearfix" style="margin-bottom:5px">
+											<div style="float:left;width:50px;padding:15px 0 0 10px;">
+												<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+											</div>
+											<div style="float:left;width:300px;">
+												<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="<?php echo $this->escape($each['id']); ?>_file_name_text"><?php echo $this->escape($each['file_name']); ?></span></div>
+												<p style="padding-left:18px;">file size：<?php echo $this->byteFormat(Shared_Model_Resource_Invoice::getFileSize($this->id, $each['file_name']), 2); ?></p>
+												<input type="hidden" class="file_name" id="<?php echo $this->escape($each['id']); ?>_file_name" name="<?php echo $this->escape($each['id']); ?>_file_name" value="<?php echo $this->escape($each['file_name']); ?>" />
+												<input type="hidden" class="temp_file_name" id="<?php echo $this->escape($each['id']); ?>_temp_file_name" name="<?php echo $this->escape($each['id']); ?>_temp_file_name" value="" />  
+											</div>
+										</div>
+										<div class="edit_value_<?php echo $categoryId; ?> clearfix">
+											<div class="add_image_box" id="<?php echo $this->escape($each['id']); ?>_add_image_box" ondragover="dragover(event)" ondrop="drop('<?php echo $this->escape($each['id']); ?>',event)" style="margin-bottom:13px;">
+												<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&amp;ドロップしてください
+											</div>
+										</div>
+									</div>
+									<div style="float:left;margin-left:10px;width:670px;">
+										<p>メモ:</p>
+					                	<div class="edit_value_<?php echo $categoryId; ?> clearfix">
+					                    	<textarea class="summary" name="<?php echo $this->escape($each['id']); ?>_summary" style="margin-top:9px;height:176px;margin-bottom:6px;"><?php echo $this->escape($each['summary']); ?></textarea>
+					                    </div>	
+									</div>
+								</div>
+							</td>
+				            <td class="td_action">
+				            	<div class="delete_btn_frame clearfix">
+				            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row="<?php echo $this->escape($each['id']); ?>"><i class="icon-cancel"></i></a>
+				            	</div>
+				            </td>
+				        </tr>
+			        <?php } ?>
+		        <?php } ?>
+        	</tbody>
+    	</table>
+    	<div class style="border-bottom:1px solid #ccc;height:34px;">
+            <p style="text-align:center;"><a class="btn_add_column" target-category="<?php echo $categoryId; ?>" href="javascript:void(0);"><i class="icon-plus"></i></a></p>
+        </div>
+    	<input type="hidden" id="hidden_contents_order_<?php echo $categoryId; ?>" name="file_list" value="" />
+        </div>
+
+	    
+	    <div class="private_memo">
+	    	<p>社内共有メモ（ここに入力した内容は請求書には記載されません）</p>
+	    	<textarea  class="flex_other" id="memo_private" name="memo_private" style="height:150px;width:760px;"><?php echo $this->escape($this->data['memo_private']); ?></textarea>
+	    </div>
+	    
+    	<?php if (!empty($this->data['approval_comment'])){ ?>
+	    	<div class="private_memo">
+	    		<p>修正依頼コメント</p>
+	    		<div class="multi_rows_padding"><?php echo nl2br($this->escape($this->data['approval_comment'])); ?></div>
+	    	</div>
+    	<?php } ?>
+    </form>
+    
+    
+    <?php
+    /* copy base */
+    $categoryId = 1;
+    ?>
+	<table style="margin:0;display:none;">
+		<tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+			<td class="td_item_action">
+				<?php /*
+				<div class="item_btn_frame">
+					<a id="###_select_product" class="select_product" href="javascript:void(0);" target-row=""><i class="icon-th-large"></i></a>
+					<input type="hidden" class="item_id" name="###_item_id" value="" />
+				</div>
+				*/ ?>
+			</td>
+			<td><p class="count align_right">###</p></td>
+			<td><textarea class="flex item_name" target-row="" name="" style=""></textarea></td>
+			<td><textarea class="flex align_right unit_price" target-row="" name="" style=""></textarea></td>
+			<td><textarea class="flex align_right amount" target-row="" name=""></textarea></td>
+			<td>
+				<p class="align_right price_text" id="##_price_text"></p>
+				<input type="hidden" class="price" target-row="" id="##_price" name="##_price" value="" />
+			</td>
+					            
+            <td class="td_action">
+            	<div class="delete_btn_frame">
+            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+            	</div>
+            </td>
+		</tr>
+	</table>
+   
+    <?php
+    /* 添付資料 */
+    $categoryId = 2;
+    ?>
+    <!-- copy base -->
+    <table class="list_default" style="display:none;">
+        <tr class="column_copy_base_<?php echo $categoryId; ?>" id="">
+			<td class="column_value">
+				<div class="clearfix">
+					<div style="float:left;width:360px;">
+						<div class="clearfix" style="margin-bottom:5px">
+							<div style="float:left;width:50px;padding:15px 0 0 10px;">
+								<i class="budicon-equal" style="color:#aaa;font-size:48px;"></i>
+							</div>
+							<div style="float:left;width:300px;">
+								<div class="multi_rows_padding" style="padding-left:18px;"><span class="file_name_text" id="##_file_name_text">(ファイル名)</span></div>
+								<input type="hidden" class="file_name" id="##_file_name" name="##_file_name" value="" />
+								<input type="hidden" class="temp_file_name" id="##_temp_file_name" name="##_temp_file_name" value="" />  
+							</div>
+						</div>
+						<div class="add_image_box" id="##_add_image_box" ondragover="dragover(event)" ondrop="drop(##,event)" style="margin-bottom:13px;">
+							<i class="icon-upload-cloud" style="font-size:60px;color:#888;"></i><br>ファイルをドラッグ&amp;ドロップしてください
+						</div>
+					</div>
+					<div style="float:left;margin-left:10px;width:670px;">
+						<p>メモ:</p>
+						<textarea class="summary" name="##_summary" style="margin-top:9px;height:176px;margin-bottom:6px;"></textarea>
+					</div>
+				</div>
+			</td>
+            <td class="td_action">
+            	<div class="delete_btn_frame">
+            		<a class="delete_button" href="javascript:void(0);" target-category="<?php echo $categoryId; ?>" target-row=""><i class="icon-cancel"></i></a>
+            	</div>
+            </td>
+        </tr>
+    </table>    
+	<!-- copy base -->
+               
+</div>
+<div id="glayLayer" style="display:none;"><div>&nbsp;</div></div>
+<div id="overBoxLayer" style="display:none;">
+    <div class="menu_frame">
+		<div id="data_area">
+		
+		</div>
+    </div><!-- menu_frame -->
+</div>
+</div>
+</div>
+</div>
+
+
+
